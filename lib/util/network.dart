@@ -10,6 +10,7 @@ import 'package:sphia/app/notifier/core_state.dart';
 import 'package:sphia/app/notifier/proxy.dart';
 import 'package:sphia/app/state/core_state.dart';
 import 'package:sphia/core/helper.dart';
+import 'package:validator_regex/validator_regex.dart';
 
 part 'network.g.dart';
 
@@ -101,6 +102,10 @@ class NetworkUtil extends _$NetworkUtil {
       final response = await getHttpResponse('https://api.ip.sb/ip');
       final responseBody =
           (await response.transform(utf8.decoder).join()).trim();
+      final isValidIp = Validator.ipAddress(responseBody);
+      if (!isValidIp) {
+        throw Exception('Invalid ip: $responseBody');
+      }
       return responseBody;
     } on Exception catch (e) {
       logger.e('Failed to get ip: $e');
