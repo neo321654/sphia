@@ -7,11 +7,13 @@ import 'package:sphia/l10n/generated/l10n.dart';
 class ColorsCard extends ConsumerWidget {
   final Map<int, String> items;
   final void Function(int value) updater;
+  final String? tooltip;
 
   const ColorsCard({
     super.key,
     required this.items,
     required this.updater,
+    this.tooltip,
   });
 
   @override
@@ -20,7 +22,7 @@ class ColorsCard extends ConsumerWidget {
         sphiaConfigNotifierProvider.select((value) => value.useMaterial3));
     final value = ref
         .watch(sphiaConfigNotifierProvider.select((value) => value.themeColor));
-    return ListTile(
+    final listTile = ListTile(
       shape: SphiaTheme.listTileShape(useMaterial3),
       title: Text(S.of(context).themeColor),
       trailing: Text(
@@ -68,5 +70,12 @@ class ColorsCard extends ConsumerWidget {
         }
       },
     );
+    if (tooltip != null) {
+      return Tooltip(
+        message: tooltip!,
+        child: listTile,
+      );
+    }
+    return listTile;
   }
 }

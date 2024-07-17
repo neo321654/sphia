@@ -67,7 +67,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "autoGetIp": MessageLookupByLibrary.simpleMessage("自动获取 IP"),
         "autoGetIpMsg": MessageLookupByLibrary.simpleMessage("自动获取 IP，默认关闭"),
         "autoRoute": MessageLookupByLibrary.simpleMessage("自动路由"),
-        "autoRouteMsg": MessageLookupByLibrary.simpleMessage("Tun 自动配置路由，默认开启"),
         "autoRunServer": MessageLookupByLibrary.simpleMessage("自动运行服务器"),
         "autoRunServerMsg":
             MessageLookupByLibrary.simpleMessage("在 Sphia 启动时自动运行上次选择的服务器"),
@@ -104,7 +103,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "customLocalHttpPort":
             MessageLookupByLibrary.simpleMessage("自定义本地 HTTP 端口 (-1 表示关闭)"),
         "darkMode": MessageLookupByLibrary.simpleMessage("深色模式"),
-        "darkModeMsg": MessageLookupByLibrary.simpleMessage("启用深色模式，默认开启"),
         "dashboard": MessageLookupByLibrary.simpleMessage("仪表盘"),
         "delete": MessageLookupByLibrary.simpleMessage("删除"),
         "deleteCore": MessageLookupByLibrary.simpleMessage("删除核心"),
@@ -139,8 +137,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "edit": MessageLookupByLibrary.simpleMessage("编辑"),
         "editGroup": MessageLookupByLibrary.simpleMessage("编辑分组"),
         "editorPath": MessageLookupByLibrary.simpleMessage("编辑器路径"),
-        "editorPathMsg":
-            MessageLookupByLibrary.simpleMessage("编辑器路径，默认为 /usr/bin/code"),
         "enableCoreLog": MessageLookupByLibrary.simpleMessage("启用核心日志"),
         "enableCoreLogMsg": MessageLookupByLibrary.simpleMessage("启用核心日志，默认开启"),
         "enableIpv4": MessageLookupByLibrary.simpleMessage("启用 IPv4"),
@@ -165,8 +161,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "encryption": MessageLookupByLibrary.simpleMessage("加密"),
         "endpointIndependentNat":
             MessageLookupByLibrary.simpleMessage("Endpoint Independent NAT"),
-        "endpointIndependentNatMsg": MessageLookupByLibrary.simpleMessage(
-            "Endpoint Independent NAT，默认关闭"),
         "enterValidNumberMsg": MessageLookupByLibrary.simpleMessage("请输入有效的数字"),
         "exit": MessageLookupByLibrary.simpleMessage("退出"),
         "exportToClipboard": MessageLookupByLibrary.simpleMessage("导出到剪贴板"),
@@ -191,8 +185,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "hysteriaProtocol": MessageLookupByLibrary.simpleMessage("Hysteria 协议"),
         "hysteriaProvider":
             MessageLookupByLibrary.simpleMessage("Hysteria 提供者"),
-        "hysteriaProviderMsg":
-            MessageLookupByLibrary.simpleMessage("Hysteria 提供者，默认为 sing-box"),
         "import": MessageLookupByLibrary.simpleMessage("导入"),
         "importCoreFailed": MessageLookupByLibrary.simpleMessage("导入核心失败"),
         "importCoreSuccessfully":
@@ -223,7 +215,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "mixedPortMsg":
             MessageLookupByLibrary.simpleMessage("混合端口，仅适用于 sing-box"),
         "mtu": MessageLookupByLibrary.simpleMessage("MTU"),
-        "mtuMsg": MessageLookupByLibrary.simpleMessage("Tun MTU，默认为 9000"),
         "multiOutboundSupport": MessageLookupByLibrary.simpleMessage("多出站支持"),
         "multiOutboundSupportMsg": MessageLookupByLibrary.simpleMessage(
             "多出站支持，默认关闭。sing-box 在此选项开启时不支持流量统计"),
@@ -231,8 +222,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "name": MessageLookupByLibrary.simpleMessage("名称"),
         "nameEnterMsg": MessageLookupByLibrary.simpleMessage("请输入名称"),
         "navigationStyle": MessageLookupByLibrary.simpleMessage("导航栏样式"),
-        "navigationStyleMsg":
-            MessageLookupByLibrary.simpleMessage("导航栏样式，默认为 rail"),
         "newVersionAvailable": MessageLookupByLibrary.simpleMessage("有新版本可用"),
         "no": MessageLookupByLibrary.simpleMessage("否"),
         "noConfigurationFileGenerated":
@@ -273,8 +262,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "resetRules": MessageLookupByLibrary.simpleMessage("重置规则"),
         "resetRulesConfirm": MessageLookupByLibrary.simpleMessage("确定要重置规则吗？"),
         "routingProvider": MessageLookupByLibrary.simpleMessage("路由提供者"),
-        "routingProviderMsg":
-            MessageLookupByLibrary.simpleMessage("路由提供者，默认为 sing-box"),
         "rule": MessageLookupByLibrary.simpleMessage("规则"),
         "ruleData": MessageLookupByLibrary.simpleMessage("规则数据"),
         "rules": MessageLookupByLibrary.simpleMessage("规则"),
@@ -294,8 +281,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "settings": MessageLookupByLibrary.simpleMessage("设置"),
         "shadowsocksProvider":
             MessageLookupByLibrary.simpleMessage("Shadowsocks 提供者"),
-        "shadowsocksProviderMsg": MessageLookupByLibrary.simpleMessage(
-            "Shadowsocks 提供者，默认为 sing-box"),
         "shortId": MessageLookupByLibrary.simpleMessage("ShortID"),
         "show": MessageLookupByLibrary.simpleMessage("显示"),
         "showAddress": MessageLookupByLibrary.simpleMessage("显示地址"),
@@ -312,7 +297,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "speed": MessageLookupByLibrary.simpleMessage("速度"),
         "spiderX": MessageLookupByLibrary.simpleMessage("SpiderX"),
         "stack": MessageLookupByLibrary.simpleMessage("Stack"),
-        "stackMsg": MessageLookupByLibrary.simpleMessage("Tun 栈，默认为 system"),
         "startOnBoot": MessageLookupByLibrary.simpleMessage("开机启动"),
         "startOnBootMsg":
             MessageLookupByLibrary.simpleMessage("开机启动，支持 Windows，Linux，MacOS"),
@@ -320,7 +304,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "stopCoreBeforeDelete":
             MessageLookupByLibrary.simpleMessage("删除核心前请先停止核心"),
         "strictRoute": MessageLookupByLibrary.simpleMessage("严格路由"),
-        "strictRouteMsg": MessageLookupByLibrary.simpleMessage("Tun 严格路由，默认关闭"),
         "subscription": MessageLookupByLibrary.simpleMessage("订阅"),
         "systemProxy": MessageLookupByLibrary.simpleMessage("系统代理"),
         "themeColor": MessageLookupByLibrary.simpleMessage("主题颜色"),
@@ -334,11 +317,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "traffic": MessageLookupByLibrary.simpleMessage("流量"),
         "transport": MessageLookupByLibrary.simpleMessage("传输"),
         "trojanProvider": MessageLookupByLibrary.simpleMessage("Trojan 提供者"),
-        "trojanProviderMsg":
-            MessageLookupByLibrary.simpleMessage("Trojan 提供者，默认为 sing-box"),
         "tunProvider": MessageLookupByLibrary.simpleMessage("Tun 提供者"),
-        "tunProviderMsg":
-            MessageLookupByLibrary.simpleMessage("Tun 提供者，默认为 sing-box"),
         "unknown": MessageLookupByLibrary.simpleMessage("未知"),
         "upMbps": MessageLookupByLibrary.simpleMessage("上行速率 (Mbps)"),
         "upMbpsEnterMsg": MessageLookupByLibrary.simpleMessage("请输入上行速率"),
@@ -362,8 +341,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "upload": MessageLookupByLibrary.simpleMessage("上传"),
         "uploadSpeed": MessageLookupByLibrary.simpleMessage("上传速度"),
         "useMaterial3": MessageLookupByLibrary.simpleMessage("使用 Material 3"),
-        "useMaterial3Msg":
-            MessageLookupByLibrary.simpleMessage("使用 Material 3，默认关闭"),
         "user": MessageLookupByLibrary.simpleMessage("用户"),
         "userAgent": MessageLookupByLibrary.simpleMessage("User-Agent"),
         "userAgentMsg": MessageLookupByLibrary.simpleMessage(
@@ -372,11 +349,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "uuid": MessageLookupByLibrary.simpleMessage("UUID"),
         "uuidEnterMsg": MessageLookupByLibrary.simpleMessage("请输入 UUID"),
         "vlessProvider": MessageLookupByLibrary.simpleMessage("Vless 提供者"),
-        "vlessProviderMsg":
-            MessageLookupByLibrary.simpleMessage("Vless 提供者，默认为 sing-box"),
         "vmessProvider": MessageLookupByLibrary.simpleMessage("VMess 提供者"),
-        "vmessProviderMsg":
-            MessageLookupByLibrary.simpleMessage("VMess 提供者，默认为 sing-box"),
         "warning": MessageLookupByLibrary.simpleMessage("警告"),
         "yes": MessageLookupByLibrary.simpleMessage("是")
       };

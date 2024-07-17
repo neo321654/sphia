@@ -9,6 +9,7 @@ class CheckboxCard extends ConsumerWidget {
   final bool Function(SphiaConfig value) selector;
   final void Function(bool value) updater;
   final bool enabled;
+  final String? tooltip;
 
   const CheckboxCard({
     super.key,
@@ -16,6 +17,7 @@ class CheckboxCard extends ConsumerWidget {
     required this.selector,
     required this.updater,
     this.enabled = true,
+    this.tooltip,
   });
 
   @override
@@ -23,7 +25,7 @@ class CheckboxCard extends ConsumerWidget {
     final useMaterial3 = ref.watch(
         sphiaConfigNotifierProvider.select((value) => value.useMaterial3));
     final value = ref.watch(sphiaConfigNotifierProvider.select(selector));
-    return ListTile(
+    final listTile = ListTile(
       enabled: enabled,
       shape: SphiaTheme.listTileShape(useMaterial3),
       title: Text(title),
@@ -37,5 +39,12 @@ class CheckboxCard extends ConsumerWidget {
       ),
       onTap: enabled ? () => updater(!value) : null,
     );
+    if (tooltip != null) {
+      return Tooltip(
+        message: tooltip!,
+        child: listTile,
+      );
+    }
+    return listTile;
   }
 }

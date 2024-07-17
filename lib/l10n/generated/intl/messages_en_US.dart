@@ -77,8 +77,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "autoGetIpMsg": MessageLookupByLibrary.simpleMessage(
             "Automatically get current IP, default off"),
         "autoRoute": MessageLookupByLibrary.simpleMessage("Auto Route"),
-        "autoRouteMsg": MessageLookupByLibrary.simpleMessage(
-            "Tun automatically configure routes, default on"),
         "autoRunServer":
             MessageLookupByLibrary.simpleMessage("Auto Run Server"),
         "autoRunServerMsg": MessageLookupByLibrary.simpleMessage(
@@ -123,8 +121,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "customLocalHttpPort": MessageLookupByLibrary.simpleMessage(
             "Custom Local HTTP Port (-1 to disable)"),
         "darkMode": MessageLookupByLibrary.simpleMessage("Dark Mode"),
-        "darkModeMsg": MessageLookupByLibrary.simpleMessage(
-            "Enable dark mode, default on"),
         "dashboard": MessageLookupByLibrary.simpleMessage("Dashboard"),
         "delete": MessageLookupByLibrary.simpleMessage("Delete"),
         "deleteCore": MessageLookupByLibrary.simpleMessage("Delete Core"),
@@ -163,8 +159,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "edit": MessageLookupByLibrary.simpleMessage("Edit"),
         "editGroup": MessageLookupByLibrary.simpleMessage("Edit Group"),
         "editorPath": MessageLookupByLibrary.simpleMessage("Editor Path"),
-        "editorPathMsg": MessageLookupByLibrary.simpleMessage(
-            "Editor path, default is /usr/bin/code"),
         "enableCoreLog":
             MessageLookupByLibrary.simpleMessage("Enable Core Log"),
         "enableCoreLogMsg": MessageLookupByLibrary.simpleMessage(
@@ -196,8 +190,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "encryption": MessageLookupByLibrary.simpleMessage("Encryption"),
         "endpointIndependentNat":
             MessageLookupByLibrary.simpleMessage("Endpoint Independent NAT"),
-        "endpointIndependentNatMsg": MessageLookupByLibrary.simpleMessage(
-            "Endpoint Independent NAT, default off"),
         "enterValidNumberMsg":
             MessageLookupByLibrary.simpleMessage("Please enter a valid number"),
         "exit": MessageLookupByLibrary.simpleMessage("Exit"),
@@ -229,8 +221,6 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Hysteria Protocol"),
         "hysteriaProvider":
             MessageLookupByLibrary.simpleMessage("Hysteria Provider"),
-        "hysteriaProviderMsg": MessageLookupByLibrary.simpleMessage(
-            "Hysteria provider, default is sing-box"),
         "import": MessageLookupByLibrary.simpleMessage("Import"),
         "importCoreFailed":
             MessageLookupByLibrary.simpleMessage("Failed to import core"),
@@ -269,8 +259,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "mixedPortMsg": MessageLookupByLibrary.simpleMessage(
             "Mixed port, only applicable to sing-box"),
         "mtu": MessageLookupByLibrary.simpleMessage("MTU"),
-        "mtuMsg":
-            MessageLookupByLibrary.simpleMessage("Tun MTU, default is 9000"),
         "multiOutboundSupport":
             MessageLookupByLibrary.simpleMessage("Multi Outbound Support"),
         "multiOutboundSupportMsg": MessageLookupByLibrary.simpleMessage(
@@ -281,8 +269,6 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Please enter a name"),
         "navigationStyle":
             MessageLookupByLibrary.simpleMessage("Navigation Style"),
-        "navigationStyleMsg": MessageLookupByLibrary.simpleMessage(
-            "Navigation style, default is rail"),
         "newVersionAvailable":
             MessageLookupByLibrary.simpleMessage("New version available"),
         "no": MessageLookupByLibrary.simpleMessage("No"),
@@ -337,8 +323,6 @@ class MessageLookup extends MessageLookupByLibrary {
             "Are you sure to reset the rules?"),
         "routingProvider":
             MessageLookupByLibrary.simpleMessage("Routing Provider"),
-        "routingProviderMsg": MessageLookupByLibrary.simpleMessage(
-            "Routing provider, default is sing-box"),
         "rule": MessageLookupByLibrary.simpleMessage("Rule"),
         "ruleData": MessageLookupByLibrary.simpleMessage("Rule Data"),
         "rules": MessageLookupByLibrary.simpleMessage("Rules"),
@@ -361,8 +345,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "settings": MessageLookupByLibrary.simpleMessage("Settings"),
         "shadowsocksProvider":
             MessageLookupByLibrary.simpleMessage("Shadowsocks Provider"),
-        "shadowsocksProviderMsg": MessageLookupByLibrary.simpleMessage(
-            "Shadowsocks provider, default is sing-box"),
         "shortId": MessageLookupByLibrary.simpleMessage("ShortID"),
         "show": MessageLookupByLibrary.simpleMessage("Show"),
         "showAddress": MessageLookupByLibrary.simpleMessage("Show Address"),
@@ -379,8 +361,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "speed": MessageLookupByLibrary.simpleMessage("Speed"),
         "spiderX": MessageLookupByLibrary.simpleMessage("SpiderX"),
         "stack": MessageLookupByLibrary.simpleMessage("Stack"),
-        "stackMsg": MessageLookupByLibrary.simpleMessage(
-            "Tun stack, default is system"),
         "startOnBoot": MessageLookupByLibrary.simpleMessage("Start on Boot"),
         "startOnBootMsg": MessageLookupByLibrary.simpleMessage(
             "Start on boot, supports Windows, Linux, MacOS"),
@@ -389,8 +369,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "stopCoreBeforeDelete": MessageLookupByLibrary.simpleMessage(
             "Please stop the core before deleting"),
         "strictRoute": MessageLookupByLibrary.simpleMessage("Strict Route"),
-        "strictRouteMsg": MessageLookupByLibrary.simpleMessage(
-            "Tun strict route, default off"),
         "subscription": MessageLookupByLibrary.simpleMessage("Subscription"),
         "systemProxy": MessageLookupByLibrary.simpleMessage("System Proxy"),
         "themeColor": MessageLookupByLibrary.simpleMessage("Theme Color"),
@@ -405,11 +383,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "transport": MessageLookupByLibrary.simpleMessage("Transport"),
         "trojanProvider":
             MessageLookupByLibrary.simpleMessage("Trojan Provider"),
-        "trojanProviderMsg": MessageLookupByLibrary.simpleMessage(
-            "Trojan provider, default is sing-box"),
         "tunProvider": MessageLookupByLibrary.simpleMessage("Tun Provider"),
-        "tunProviderMsg": MessageLookupByLibrary.simpleMessage(
-            "Tun provider, default is sing-box"),
         "unknown": MessageLookupByLibrary.simpleMessage("Unknown"),
         "upMbps": MessageLookupByLibrary.simpleMessage("Up Mbps"),
         "upMbpsEnterMsg":
@@ -438,8 +412,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "upload": MessageLookupByLibrary.simpleMessage("Upload"),
         "uploadSpeed": MessageLookupByLibrary.simpleMessage("Upload Speed"),
         "useMaterial3": MessageLookupByLibrary.simpleMessage("Use Material 3"),
-        "useMaterial3Msg":
-            MessageLookupByLibrary.simpleMessage("Use Material 3, default off"),
         "user": MessageLookupByLibrary.simpleMessage("User"),
         "userAgent": MessageLookupByLibrary.simpleMessage("User-Agent"),
         "userAgentMsg": MessageLookupByLibrary.simpleMessage(
@@ -450,11 +422,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "uuidEnterMsg":
             MessageLookupByLibrary.simpleMessage("Please enter a UUID"),
         "vlessProvider": MessageLookupByLibrary.simpleMessage("Vless Provider"),
-        "vlessProviderMsg": MessageLookupByLibrary.simpleMessage(
-            "Vless provider, default is sing-box"),
         "vmessProvider": MessageLookupByLibrary.simpleMessage("VMess Provider"),
-        "vmessProviderMsg": MessageLookupByLibrary.simpleMessage(
-            "VMess provider, default is sing-box"),
         "warning": MessageLookupByLibrary.simpleMessage("Warning"),
         "yes": MessageLookupByLibrary.simpleMessage("Yes")
       };

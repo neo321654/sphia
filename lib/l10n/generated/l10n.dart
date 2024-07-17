@@ -290,16 +290,6 @@ class S {
     );
   }
 
-  /// `Tun automatically configure routes, default on`
-  String get autoRouteMsg {
-    return Intl.message(
-      'Tun automatically configure routes, default on',
-      name: 'autoRouteMsg',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Auto Run Server`
   String get autoRunServer {
     return Intl.message(
@@ -590,16 +580,6 @@ class S {
     );
   }
 
-  /// `Enable dark mode, default on`
-  String get darkModeMsg {
-    return Intl.message(
-      'Enable dark mode, default on',
-      name: 'darkModeMsg',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Dashboard`
   String get dashboard {
     return Intl.message(
@@ -880,16 +860,6 @@ class S {
     );
   }
 
-  /// `Editor path, default is /usr/bin/code`
-  String get editorPathMsg {
-    return Intl.message(
-      'Editor path, default is /usr/bin/code',
-      name: 'editorPathMsg',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Enable Core Log`
   String get enableCoreLog {
     return Intl.message(
@@ -1065,16 +1035,6 @@ class S {
     return Intl.message(
       'Endpoint Independent NAT',
       name: 'endpointIndependentNat',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Endpoint Independent NAT, default off`
-  String get endpointIndependentNatMsg {
-    return Intl.message(
-      'Endpoint Independent NAT, default off',
-      name: 'endpointIndependentNatMsg',
       desc: '',
       args: [],
     );
@@ -1285,16 +1245,6 @@ class S {
     return Intl.message(
       'Hysteria Provider',
       name: 'hysteriaProvider',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Hysteria provider, default is sing-box`
-  String get hysteriaProviderMsg {
-    return Intl.message(
-      'Hysteria provider, default is sing-box',
-      name: 'hysteriaProviderMsg',
       desc: '',
       args: [],
     );
@@ -1550,16 +1500,6 @@ class S {
     );
   }
 
-  /// `Tun MTU, default is 9000`
-  String get mtuMsg {
-    return Intl.message(
-      'Tun MTU, default is 9000',
-      name: 'mtuMsg',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Multi Outbound Support`
   String get multiOutboundSupport {
     return Intl.message(
@@ -1615,16 +1555,6 @@ class S {
     return Intl.message(
       'Navigation Style',
       name: 'navigationStyle',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Navigation style, default is rail`
-  String get navigationStyleMsg {
-    return Intl.message(
-      'Navigation style, default is rail',
-      name: 'navigationStyleMsg',
       desc: '',
       args: [],
     );
@@ -1990,16 +1920,6 @@ class S {
     );
   }
 
-  /// `Routing provider, default is sing-box`
-  String get routingProviderMsg {
-    return Intl.message(
-      'Routing provider, default is sing-box',
-      name: 'routingProviderMsg',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Rule`
   String get rule {
     return Intl.message(
@@ -2170,16 +2090,6 @@ class S {
     );
   }
 
-  /// `Shadowsocks provider, default is sing-box`
-  String get shadowsocksProviderMsg {
-    return Intl.message(
-      'Shadowsocks provider, default is sing-box',
-      name: 'shadowsocksProviderMsg',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `ShortID`
   String get shortId {
     return Intl.message(
@@ -2310,16 +2220,6 @@ class S {
     );
   }
 
-  /// `Tun stack, default is system`
-  String get stackMsg {
-    return Intl.message(
-      'Tun stack, default is system',
-      name: 'stackMsg',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Start on Boot`
   String get startOnBoot {
     return Intl.message(
@@ -2365,16 +2265,6 @@ class S {
     return Intl.message(
       'Strict Route',
       name: 'strictRoute',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Tun strict route, default off`
-  String get strictRouteMsg {
-    return Intl.message(
-      'Tun strict route, default off',
-      name: 'strictRouteMsg',
       desc: '',
       args: [],
     );
@@ -2480,31 +2370,11 @@ class S {
     );
   }
 
-  /// `Trojan provider, default is sing-box`
-  String get trojanProviderMsg {
-    return Intl.message(
-      'Trojan provider, default is sing-box',
-      name: 'trojanProviderMsg',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Tun Provider`
   String get tunProvider {
     return Intl.message(
       'Tun Provider',
       name: 'tunProvider',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Tun provider, default is sing-box`
-  String get tunProviderMsg {
-    return Intl.message(
-      'Tun provider, default is sing-box',
-      name: 'tunProviderMsg',
       desc: '',
       args: [],
     );
@@ -2690,16 +2560,6 @@ class S {
     );
   }
 
-  /// `Use Material 3, default off`
-  String get useMaterial3Msg {
-    return Intl.message(
-      'Use Material 3, default off',
-      name: 'useMaterial3Msg',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `User`
   String get user {
     return Intl.message(
@@ -2770,31 +2630,11 @@ class S {
     );
   }
 
-  /// `Vless provider, default is sing-box`
-  String get vlessProviderMsg {
-    return Intl.message(
-      'Vless provider, default is sing-box',
-      name: 'vlessProviderMsg',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `VMess Provider`
   String get vmessProvider {
     return Intl.message(
       'VMess Provider',
       name: 'vmessProvider',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `VMess provider, default is sing-box`
-  String get vmessProviderMsg {
-    return Intl.message(
-      'VMess provider, default is sing-box',
-      name: 'vmessProviderMsg',
       desc: '',
       args: [],
     );

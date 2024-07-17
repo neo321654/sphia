@@ -10,6 +10,7 @@ class TextCard extends ConsumerWidget {
   final String Function(SphiaConfig value) selector;
   final void Function(String value) updater;
   final bool enabled;
+  final String? tooltip;
 
   const TextCard({
     super.key,
@@ -17,6 +18,7 @@ class TextCard extends ConsumerWidget {
     required this.selector,
     required this.updater,
     this.enabled = true,
+    this.tooltip,
   });
 
   @override
@@ -24,7 +26,7 @@ class TextCard extends ConsumerWidget {
     final useMaterial3 = ref.watch(
         sphiaConfigNotifierProvider.select((value) => value.useMaterial3));
     final value = ref.watch(sphiaConfigNotifierProvider.select(selector));
-    return ListTile(
+    final listTile = ListTile(
       enabled: enabled,
       shape: SphiaTheme.listTileShape(useMaterial3),
       title: Text(title),
@@ -62,5 +64,12 @@ class TextCard extends ConsumerWidget {
         }
       },
     );
+    if (tooltip != null) {
+      return Tooltip(
+        message: tooltip!,
+        child: listTile,
+      );
+    }
+    return listTile;
   }
 }
