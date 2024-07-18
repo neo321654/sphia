@@ -618,7 +618,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
       }
       await SphiaWidget.showDialogWithMsg(
         context: context,
-        message: '${S.current.coreStartFailed}: $e',
+        message: '${S.of(context).coreStartFailed}: $e',
       );
     }
   }

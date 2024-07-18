@@ -36,7 +36,8 @@ class ShadowsocksServerDialog extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => _ShadowsocksServerDialogState();
+  State<ShadowsocksServerDialog> createState() =>
+      _ShadowsocksServerDialogState();
 }
 
 class _ShadowsocksServerDialogState extends State<ShadowsocksServerDialog> {

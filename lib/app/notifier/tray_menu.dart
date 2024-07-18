@@ -6,11 +6,11 @@ import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/core_state.dart';
 import 'package:sphia/app/notifier/data/rule_group.dart';
-import 'package:sphia/app/notifier/data/server_lite.dart';
+import 'package:sphia/app/notifier/data/server.dart';
 import 'package:sphia/app/notifier/proxy.dart';
 import 'package:sphia/app/state/core_state.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
-import 'package:sphia/server/server_model_lite.dart';
+import 'package:sphia/server/server_model.dart';
 import 'package:sphia/util/system.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
@@ -29,7 +29,7 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
         ref.watch(proxyNotifierProvider.select((value) => value.tunMode));
     final isCustom =
         ref.watch(proxyNotifierProvider.select((value) => value.customConfig));
-    final servers = ref.watch(serverLiteNotifierProvider);
+    final servers = ref.watch(serverNotifierProvider);
     final ruleGroups = ref.watch(ruleGroupNotifierProvider);
     return [
       MenuItem.checkbox(
@@ -152,7 +152,7 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
     ];
   }
 
-  List<MenuItem> _generateServerItems(List<ServerModelLite> servers) {
+  List<MenuItem> _generateServerItems(List<ServerModel> servers) {
     final items = <MenuItem>[];
     for (final server in servers) {
       final menuItem = MenuItem.checkbox(
@@ -172,7 +172,7 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
             serverConfigNotifier.updateValue('selectedServerId', server.id);
             if (proxyState.coreRunning) {
               await coreStateNotifier.stopCores(keepSysProxy: true);
-              await coreStateNotifier.startCores(await server.toServerModel());
+              await coreStateNotifier.startCores(server);
             }
           } else {
             serverConfigNotifier.updateValue('selectedServerId', 0);

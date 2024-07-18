@@ -11,7 +11,6 @@ import 'package:sphia/server/shadowsocks/server.dart';
 import 'package:sphia/server/trojan/server.dart';
 import 'package:sphia/server/xray/server.dart';
 import 'package:sphia/util/system.dart';
-import 'package:sphia/view/dialog/rule.dart';
 
 class SingBoxGenerate {
   static Future<Dns> dns({
@@ -85,7 +84,7 @@ class SingBoxGenerate {
     }
     for (var rule in rules) {
       singBoxRules.add(rule.toSingBoxRule()
-        ..outbound = OutboundTagHelper.determineOutboundTag(rule.outboundTag));
+        ..outbound = CoreHelper.determineOutboundTag(rule.outboundTag));
     }
     return Route(
       geoip: Geoip(path: p.join(binPath, 'geoip.db')),

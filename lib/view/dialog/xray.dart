@@ -53,7 +53,7 @@ class XrayServerDialog extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => _XrayServerDialogState();
+  State<XrayServerDialog> createState() => _XrayServerDialogState();
 }
 
 class _XrayServerDialogState extends State<XrayServerDialog> {

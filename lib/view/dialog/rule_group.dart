@@ -13,7 +13,7 @@ class RuleGroupDialog extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => _RuleGroupDialogState();
+  State<RuleGroupDialog> createState() => _RuleGroupDialogState();
 }
 
 class _RuleGroupDialogState extends State<RuleGroupDialog> {

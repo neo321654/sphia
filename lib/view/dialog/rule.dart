@@ -1,10 +1,9 @@
-import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sphia/app/database/dao/rule.dart';
-import 'package:sphia/app/database/database.dart';
+import 'package:sphia/app/notifier/data/outbound_tag.dart';
 import 'package:sphia/core/rule/rule_model.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
-import 'package:sphia/server/server_model_lite.dart';
 import 'package:sphia/view/widget/widget.dart';
 
 const network = [
@@ -18,7 +17,7 @@ const protocol = [
   'tls',
 ];
 
-class RuleDialog extends StatefulWidget {
+class RuleDialog extends ConsumerStatefulWidget {
   final String title;
   final RuleModel rule;
 
@@ -29,13 +28,13 @@ class RuleDialog extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => _RuleDialogState();
+  ConsumerState<RuleDialog> createState() => _RuleDialogState();
 }
 
-class _RuleDialogState extends State<RuleDialog> {
+class _RuleDialogState extends ConsumerState<RuleDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  int _outboundTag = outboundProxyId;
+  late int _outboundTag = widget.rule.outboundTag;
   final _domainController = TextEditingController();
   final _ipController = TextEditingController();
   final _portController = TextEditingController();
@@ -49,7 +48,6 @@ class _RuleDialogState extends State<RuleDialog> {
   void initState() {
     super.initState();
     _initControllers();
-    _outboundTag = widget.rule.outboundTag;
   }
 
   @override
@@ -60,6 +58,12 @@ class _RuleDialogState extends State<RuleDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final outboundTags = ref.watch(outboundTagNotifierProvider);
+    if (!outboundTags.containsKey(widget.rule.outboundTag)) {
+      // maybe the outbound tag is deleted
+      _outboundTag = outboundProxyId;
+    }
+
     final widgets = [
       SphiaWidget.textInput(
         controller: _nameController,
@@ -71,19 +75,22 @@ class _RuleDialogState extends State<RuleDialog> {
           return null;
         },
       ),
-      FutureBuilder(
-        future: OutboundTagHelper.determineOutboundTagDisplay(_outboundTag),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            final outboundTagDisplay = snapshot.data as String;
-            final darkMode = Theme.of(context).brightness == Brightness.dark;
-            return _buildDropdownSearch(
-              context: context,
-              outboundTagDisplay: outboundTagDisplay,
-              darkMode: darkMode,
-            );
-          } else {
-            return const CircularProgressIndicator();
+      DropdownButtonFormField<int>(
+        decoration: const InputDecoration(labelText: 'Outbound Tag'),
+        value: _outboundTag,
+        items: outboundTags.entries
+            .map(
+              (entry) => DropdownMenuItem<int>(
+                value: entry.key,
+                child: Text(entry.value),
+              ),
+            )
+            .toList(),
+        onChanged: (value) {
+          if (value != null) {
+            setState(() {
+              _outboundTag = value;
+            });
           }
         },
       ),
@@ -204,94 +211,5 @@ class _RuleDialogState extends State<RuleDialog> {
     _sourcePortController.dispose();
     _protocolController.dispose();
     _processNameController.dispose();
-  }
-
-  Widget _buildDropdownSearch({
-    required BuildContext context,
-    required String outboundTagDisplay,
-    required bool darkMode,
-  }) {
-    return DropdownSearch<ServerModelLite>(
-      popupProps: PopupProps.menu(
-          scrollbarProps: const ScrollbarProps(
-            thickness: 0,
-          ),
-          showSearchBox: true,
-          constraints: BoxConstraints.tightFor(
-            height: MediaQuery.of(context).size.height * 1 / 3,
-          ),
-          containerBuilder: (context, child) {
-            final color = darkMode
-                ? Color.lerp(Colors.black, Colors.grey[700], 0.6)
-                : Color.lerp(Colors.white, Colors.grey[300], 0.6);
-            return Ink(
-              color: color,
-              child: child,
-            );
-          }),
-      asyncItems: (query) async {
-        List<ServerModelLite> items = [
-          ServerModelLite(
-            id: outboundProxyId,
-            remark: 'proxy',
-          ),
-          ServerModelLite(
-            id: outboundDirectId,
-            remark: 'direct',
-          ),
-          ServerModelLite(
-            id: outboundBlockId,
-            remark: 'block',
-          ),
-        ];
-        final servers = await serverDao.getServers();
-        for (var i = 0; i < servers.length; i++) {
-          items.add(
-              ServerModelLite(id: servers[i].id, remark: servers[i].remark));
-        }
-        return items;
-      },
-      dropdownDecoratorProps: const DropDownDecoratorProps(
-        dropdownSearchDecoration: InputDecoration(
-          labelText: 'Outbound Tag',
-        ),
-      ),
-      onChanged: (value) {
-        if (value != null) {
-          _outboundTag = value.id;
-        }
-      },
-      selectedItem: ServerModelLite(
-        id: _outboundTag,
-        remark: outboundTagDisplay,
-      ),
-    );
-  }
-}
-
-class OutboundTagHelper {
-  static String determineOutboundTag(int outboundTag) {
-    if (outboundTag == outboundProxyId) {
-      return 'proxy';
-    } else if (outboundTag == outboundDirectId) {
-      return 'direct';
-    } else if (outboundTag == outboundBlockId) {
-      return 'block';
-    } else {
-      return 'proxy-$outboundTag';
-    }
-  }
-
-  static Future<String> determineOutboundTagDisplay(int outboundTag) async {
-    if (outboundTag == outboundProxyId) {
-      return 'proxy';
-    } else if (outboundTag == outboundDirectId) {
-      return 'direct';
-    } else if (outboundTag == outboundBlockId) {
-      return 'block';
-    } else {
-      final serverRemark = await serverDao.getServerRemarkById(outboundTag);
-      return serverRemark;
-    }
   }
 }

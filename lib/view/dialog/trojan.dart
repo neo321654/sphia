@@ -15,7 +15,7 @@ class TrojanServerDialog extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => _TrojanServerDialogState();
+  State<TrojanServerDialog> createState() => _TrojanServerDialogState();
 }
 
 class _TrojanServerDialogState extends State<TrojanServerDialog> {

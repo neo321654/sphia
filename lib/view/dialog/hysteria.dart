@@ -19,7 +19,7 @@ class HysteriaServerDialog extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => _HysteriaServerDialogState();
+  State<HysteriaServerDialog> createState() => _HysteriaServerDialogState();
 }
 
 class _HysteriaServerDialogState extends State<HysteriaServerDialog> {

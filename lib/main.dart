@@ -144,7 +144,6 @@ Future<void> configureApp() async {
   final serverGroupId = serverConfig.selectedServerGroupId;
   final servers =
       await serverDao.getOrderedServerModelsByGroupId(serverGroupId);
-  final serversLite = servers.map((e) => e.toLite()).toList();
   final ruleGroupId = ruleConfig.selectedRuleGroupId;
   final ruleGroups = await ruleGroupDao.getOrderedRuleGroups();
   final rules = await ruleDao.getOrderedRuleModelsByGroupId(ruleGroupId);
@@ -180,7 +179,6 @@ Future<void> configureApp() async {
         versionConfigProvider.overrideWithValue(versionConfig),
         serverGroupsProvider.overrideWithValue(serverGroups),
         serversProvider.overrideWithValue(servers),
-        serversLiteProvider.overrideWithValue(serversLite),
         ruleGroupsProvider.overrideWithValue(ruleGroups),
         rulesProvider.overrideWithValue(rules),
       ],

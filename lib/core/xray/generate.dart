@@ -1,4 +1,5 @@
 import 'package:sphia/app/database/database.dart';
+import 'package:sphia/core/helper.dart';
 import 'package:sphia/core/rule/extension.dart';
 import 'package:sphia/core/rule/xray.dart';
 import 'package:sphia/core/xray/config.dart';
@@ -7,7 +8,6 @@ import 'package:sphia/server/shadowsocks/server.dart';
 import 'package:sphia/server/trojan/server.dart';
 import 'package:sphia/server/xray/server.dart';
 import 'package:sphia/util/uri/uri.dart';
-import 'package:sphia/view/dialog/rule.dart';
 
 class XrayGenerate {
   static Dns dns(String remoteDns, String directDns) {
@@ -306,8 +306,7 @@ class XrayGenerate {
     }
     for (var rule in rules) {
       xrayRules.add(rule.toXrayRule()
-        ..outboundTag =
-            OutboundTagHelper.determineOutboundTag(rule.outboundTag));
+        ..outboundTag = CoreHelper.determineOutboundTag(rule.outboundTag));
     }
     return Routing(
       domainStrategy: domainStrategy,

@@ -178,4 +178,16 @@ class CoreHelper {
     }
     return outboundTags;
   }
+
+  static String determineOutboundTag(int outboundTag) {
+    if (outboundTag == outboundProxyId) {
+      return 'proxy';
+    } else if (outboundTag == outboundDirectId) {
+      return 'direct';
+    } else if (outboundTag == outboundBlockId) {
+      return 'block';
+    } else {
+      return 'proxy-$outboundTag';
+    }
+  }
 }

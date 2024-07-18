@@ -4,11 +4,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
+import 'package:sphia/app/notifier/data/outbound_tag.dart';
 import 'package:sphia/app/notifier/data/rule.dart';
 import 'package:sphia/app/theme.dart';
 import 'package:sphia/core/rule/rule_model.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
-import 'package:sphia/view/dialog/rule.dart';
 import 'package:sphia/view/page/agent/rule.dart';
 import 'package:sphia/view/widget/widget.dart';
 
@@ -36,17 +36,8 @@ class RuleCard extends ConsumerWidget with RuleAgent {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                FutureBuilder(
-                  future: OutboundTagHelper.determineOutboundTagDisplay(
-                      rule.outboundTag),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      final outboundTagDisplay = snapshot.data as String;
-                      return Text('Outbound Tag: $outboundTagDisplay');
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  },
+                Text(
+                  'Outbound Tag: ${ref.watch(outboundTagNotifierProvider)[rule.outboundTag] ?? 'null'}',
                 ),
                 if (rule.domain != null)
                   Text(

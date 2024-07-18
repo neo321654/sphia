@@ -13,7 +13,7 @@ class ServerGroupDialog extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => _ServerGroupDialogState();
+  State<ServerGroupDialog> createState() => _ServerGroupDialogState();
 }
 
 class _ServerGroupDialogState extends State<ServerGroupDialog> {
@@ -53,7 +53,7 @@ class _ServerGroupDialogState extends State<ServerGroupDialog> {
               labelText: S.of(context).groupName,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return S.current.groupNameEnterMsg;
+                  return S.of(context).groupNameEnterMsg;
                 }
                 return null;
               },
