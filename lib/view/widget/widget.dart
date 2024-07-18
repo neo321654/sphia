@@ -9,15 +9,16 @@ class SphiaWidget {
   static Widget iconButton({
     required IconData icon,
     required void Function()? onTap,
+    bool enabled = true,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Icon(icon),
+          child: Icon(icon, color: enabled ? null : Colors.grey),
         ),
       ),
     );

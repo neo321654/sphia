@@ -8,5 +8,6 @@ class CoreInfo with _$CoreInfo {
     required String coreName,
     required String repoUrl,
     String? latestVersion,
+    required bool isUpdating,
   }) = _CoreInfo;
 }

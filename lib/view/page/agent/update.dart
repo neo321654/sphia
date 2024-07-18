@@ -26,6 +26,7 @@ class CoreInfoList extends _$CoreInfoList {
         coreName: coreName,
         repoUrl: repoUrl,
         latestVersion: null,
+        isUpdating: false,
       );
     }).toList();
   }
@@ -43,6 +44,15 @@ class CoreInfoList extends _$CoreInfoList {
     state = state.map((info) {
       if (info.coreName == coreName) {
         return info.copyWith(latestVersion: null);
+      }
+      return info;
+    }).toList();
+  }
+
+  void updateIsUpdating(String coreName, bool isUpdating) {
+    state = state.map((info) {
+      if (info.coreName == coreName) {
+        return info.copyWith(isUpdating: isUpdating);
       }
       return info;
     }).toList();

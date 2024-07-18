@@ -76,11 +76,17 @@ class CoreInfoCard extends ConsumerWidget with UpdateAgent {
               message: S.of(context).checkUpdate,
               child: SphiaWidget.iconButton(
                 icon: Icons.refresh,
-                onTap: () async => await checkUpdate(
-                  coreName: info.coreName,
-                  showDialog: true,
-                  ref: ref,
-                ),
+                onTap: () async {
+                  final notifier = ref.read(coreInfoListProvider.notifier);
+                  notifier.updateIsUpdating(info.coreName, true);
+                  await checkUpdate(
+                    coreName: info.coreName,
+                    showDialog: true,
+                    ref: ref,
+                  );
+                  notifier.updateIsUpdating(info.coreName, false);
+                },
+                enabled: !info.isUpdating,
               ),
             ),
             const SizedBox(width: 8),
@@ -88,11 +94,17 @@ class CoreInfoCard extends ConsumerWidget with UpdateAgent {
               message: S.of(context).update,
               child: SphiaWidget.iconButton(
                 icon: Icons.update,
-                onTap: () async => await updateCore(
-                  coreInfo: info,
-                  currentVersion: currentVersion,
-                  ref: ref,
-                ),
+                onTap: () async {
+                  final notifier = ref.read(coreInfoListProvider.notifier);
+                  notifier.updateIsUpdating(info.coreName, true);
+                  await updateCore(
+                    coreInfo: info,
+                    currentVersion: currentVersion,
+                    ref: ref,
+                  );
+                  notifier.updateIsUpdating(info.coreName, false);
+                },
+                enabled: !info.isUpdating,
               ),
             ),
             const SizedBox(width: 8),
