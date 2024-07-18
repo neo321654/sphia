@@ -23,4 +23,11 @@ class TrayUtil {
       }
     }
   }
+
+  static Future<void> setToolTip(String toolTip) async {
+    if (SystemUtil.os == OS.linux) {
+      return;
+    }
+    await trayManager.setToolTip(toolTip);
+  }
 }

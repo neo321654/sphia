@@ -167,6 +167,7 @@ Future<void> configureApp() async {
     // Build tray
     logger.i('Building tray');
     await TrayUtil.setIcon(coreRunning: false);
+    await TrayUtil.setToolTip('Sphia');
   }
 
   // Run app

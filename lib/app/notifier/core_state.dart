@@ -100,6 +100,7 @@ class CoreStateNotifier extends _$CoreStateNotifier {
         final proxyNotifier = ref.read(proxyNotifierProvider.notifier);
         proxyNotifier.setCoreRunningAndCustomConfig(true, true);
         await TrayUtil.setIcon(coreRunning: true);
+        await TrayUtil.setToolTip(selectedServer.remark);
         return;
       }
     } else {
@@ -130,6 +131,7 @@ class CoreStateNotifier extends _$CoreStateNotifier {
 
     proxyNotifier.setCoreRunning(true);
     await TrayUtil.setIcon(coreRunning: true);
+    await TrayUtil.setToolTip(selectedServer.remark);
 
     final enableStatistics = !isCustom && sphiaConfig.enableStatistics;
     if (enableStatistics) {
@@ -315,6 +317,7 @@ class CoreStateNotifier extends _$CoreStateNotifier {
         }
       }
       await TrayUtil.setIcon(coreRunning: false);
+      await TrayUtil.setToolTip('Sphia');
       proxyNotifier.setTunMode(false);
       state = const AsyncValue.data(CoreState(cores: []));
     }
