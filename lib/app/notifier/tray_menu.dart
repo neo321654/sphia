@@ -63,8 +63,12 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
       MenuItem.checkbox(
         label: S.current.systemProxy,
         checked: systemProxy,
-        disabled: !coreRunning || tunMode,
+        disabled: !coreRunning || tunMode, // why doesn't work on linux
         onClick: (menuItem) async {
+          final proxyState = ref.read(proxyNotifierProvider);
+          if (!proxyState.coreRunning) {
+            return;
+          }
           final proxyStateNotifier = ref.read(proxyNotifierProvider.notifier);
           if (menuItem.checked != null && menuItem.checked!) {
             SystemUtil.disableSystemProxy();
