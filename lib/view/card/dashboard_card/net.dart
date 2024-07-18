@@ -32,28 +32,6 @@ class NetCard extends ConsumerWidget {
     super.key,
   });
 
-  Widget _buildIpText(BuildContext context, WidgetRef ref) {
-    ref.listen(proxyNotifierProvider, (previous, next) {
-      if (previous != null) {
-        if (previous.coreRunning != next.coreRunning) {
-          ref.read(currentIpNotifierProvider.notifier).refresh();
-        }
-      }
-    });
-    final currentIp = ref.watch(currentIpNotifierProvider);
-    return currentIp.when(
-      data: (data) {
-        return Text('${S.of(context).currentIp}: $data');
-      },
-      loading: () {
-        return Text(S.of(context).gettingIp);
-      },
-      error: (error, _) {
-        return Text(S.of(context).getIpFailed);
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final autoGetIp = ref
@@ -61,7 +39,7 @@ class NetCard extends ConsumerWidget {
     final cardNet = CardData(
       title: Row(
         children: [
-          autoGetIp ? _buildIpText(context, ref) : Text(S.of(context).speed),
+          autoGetIp ? const IpText() : Text(S.of(context).speed),
           const Spacer(),
           autoGetIp
               ? Align(
@@ -92,5 +70,32 @@ class NetCard extends ConsumerWidget {
       ),
     );
     return buildCard(cardNet);
+  }
+}
+
+class IpText extends ConsumerWidget {
+  const IpText({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(proxyNotifierProvider, (previous, next) {
+      if (previous != null) {
+        if (previous.coreRunning != next.coreRunning) {
+          ref.read(currentIpNotifierProvider.notifier).refresh();
+        }
+      }
+    });
+    final currentIp = ref.watch(currentIpNotifierProvider);
+    return currentIp.when(
+      data: (data) {
+        return Text('${S.of(context).currentIp}: $data');
+      },
+      loading: () {
+        return Text(S.of(context).gettingIp);
+      },
+      error: (error, _) {
+        return Text(S.of(context).getIpFailed);
+      },
+    );
   }
 }
