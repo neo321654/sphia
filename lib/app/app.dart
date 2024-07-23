@@ -57,12 +57,12 @@ class _SphiaAppState extends ConsumerState<SphiaApp> with WindowListener {
   }
 
   void _init() async {
-    await windowManager.setPreventClose(true);
     if (SystemUtil.os != OS.macos) {
       await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
     } else {
       await windowManager.setTitle('Sphia - $sphiaVersion');
     }
+    await windowManager.setPreventClose(true); // wtf
     setState(() {});
   }
 
