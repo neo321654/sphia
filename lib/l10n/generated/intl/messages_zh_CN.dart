@@ -100,8 +100,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "customConfig": MessageLookupByLibrary.simpleMessage("自定义配置"),
         "customConfigSwitchUnsupported":
             MessageLookupByLibrary.simpleMessage("自定义配置不支持切换规则分组"),
-        "customLocalHttpPort":
-            MessageLookupByLibrary.simpleMessage("自定义本地 HTTP 端口 (-1 表示关闭)"),
+        "customCoreApiPort":
+            MessageLookupByLibrary.simpleMessage("自定义核心 API 端口 (-1 表示关闭)"),
+        "customHttpPort":
+            MessageLookupByLibrary.simpleMessage("自定义 HTTP 端口 (-1 表示关闭)"),
         "darkMode": MessageLookupByLibrary.simpleMessage("深色模式"),
         "dashboard": MessageLookupByLibrary.simpleMessage("仪表盘"),
         "delete": MessageLookupByLibrary.simpleMessage("删除"),

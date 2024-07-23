@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/server/server_model.dart';
+import 'package:sphia/view/dialog/custom_config.dart';
 
 class CustomConfigServer extends ServerModel {
   String configString;
@@ -28,7 +29,7 @@ class CustomConfigServer extends ServerModel {
         groupId: defaultServerGroupId,
         remark: '',
         address: '',
-        port: 0,
+        port: portUnset | (portUnset << 17),
         configString: '',
         configFormat: 'json',
       );

@@ -61,7 +61,7 @@ abstract class Core {
     }
   }
 
-  Future<void> stop([bool checkPorts = true]) async {
+  Future<void> stop({bool checkPorts = true}) async {
     if (_process == null) {
       logger.w('Core process is null');
       return;

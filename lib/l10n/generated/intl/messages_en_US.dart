@@ -118,8 +118,10 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Custom Configuration"),
         "customConfigSwitchUnsupported": MessageLookupByLibrary.simpleMessage(
             "Custom configuration does not support switching rule groups"),
-        "customLocalHttpPort": MessageLookupByLibrary.simpleMessage(
-            "Custom Local HTTP Port (-1 to disable)"),
+        "customCoreApiPort": MessageLookupByLibrary.simpleMessage(
+            "Custom Core API Port (-1 to disable)"),
+        "customHttpPort": MessageLookupByLibrary.simpleMessage(
+            "Custom HTTP Port (-1 to disable)"),
         "darkMode": MessageLookupByLibrary.simpleMessage("Dark Mode"),
         "dashboard": MessageLookupByLibrary.simpleMessage("Dashboard"),
         "delete": MessageLookupByLibrary.simpleMessage("Delete"),

@@ -21,19 +21,27 @@ class TrafficNotifier extends _$TrafficNotifier {
     final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
     final coreState = ref.read(coreStateNotifierProvider).valueOrNull;
     final routingName = coreState?.routing.name;
-    if (routingName == null) {
+    if (coreState == null || routingName == null) {
       logger.e('Core state is null');
       throw Exception('Core state is null');
     }
+    final proxyState = ref.read(proxyNotifierProvider);
+    int coreApiPort = sphiaConfig.coreApiPort;
+    if (proxyState.customConfig) {
+      coreApiPort = coreState.customApiPort;
+    }
     if (routingName == 'sing-box') {
-      state = TrafficState(traffic: SingBoxTraffic(sphiaConfig.coreApiPort));
-    } else {
+      state = TrafficState(traffic: SingBoxTraffic(coreApiPort));
+    } else if (routingName == 'xray-core') {
       state = TrafficState(
         traffic: XrayTraffic(
-          sphiaConfig.coreApiPort,
+          coreApiPort,
           sphiaConfig.multiOutboundSupport,
         ),
       );
+    } else {
+      logger.e('Unsupported API: $routingName');
+      throw Exception('Unsupported API: $routingName');
     }
 
     try {
@@ -82,7 +90,9 @@ class TrafficNotifier extends _$TrafficNotifier {
       return;
     }
 
-    if (sphiaConfig.multiOutboundSupport) {
+    final proxyState = ref.read(proxyNotifierProvider);
+
+    if (sphiaConfig.multiOutboundSupport && !proxyState.customConfig) {
       final servers = coreState!.routing.servers;
       if (servers.isEmpty) {
         // probably server is deleted

@@ -25,6 +25,16 @@ extension CoreStateExt on CoreState {
     return cores.firstWhere((core) => core.isRouting);
   }
 
+  int get customHttpPort {
+    final portInDb = routing.servers.first.port;
+    return portInDb & 0x1FFFF;
+  }
+
+  int get customApiPort {
+    final portInDb = routing.servers.first.port;
+    return (portInDb >> 17) & 0x1FFFF;
+  }
+
   Stream<String> get logStream {
     return switch (routing) {
       SingBoxCore singBoxCore => singBoxCore.logStream,

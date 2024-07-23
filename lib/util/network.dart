@@ -51,7 +51,7 @@ class NetworkUtil extends _$NetworkUtil {
 
       late final int port;
       if (proxyState.customConfig) {
-        port = coreState.cores.first.servers.first.port;
+        port = coreState.customHttpPort;
         if (port == -1) {
           logger.w('HTTP port is not set');
         } else {

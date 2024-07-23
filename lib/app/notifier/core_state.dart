@@ -14,6 +14,7 @@ import 'package:sphia/server/xray/server.dart';
 import 'package:sphia/util/network.dart';
 import 'package:sphia/util/system.dart';
 import 'package:sphia/util/tray.dart';
+import 'package:sphia/view/dialog/custom_config.dart';
 
 part 'core_state.g.dart';
 
@@ -95,10 +96,13 @@ class CoreStateNotifier extends _$CoreStateNotifier {
 
     late final int httpPort;
     if (isCustom) {
-      httpPort = selectedServer.port;
-      if (httpPort == -1) {
+      httpPort = state.value!.customHttpPort;
+      if (httpPort == portUnset) {
         final proxyNotifier = ref.read(proxyNotifierProvider.notifier);
-        proxyNotifier.setCoreRunningAndCustomConfig(true, true);
+        proxyNotifier.setCoreRunningAndCustomConfig(
+          coreRunning: true,
+          customConfig: true,
+        );
         await TrayUtil.setIcon(coreRunning: true);
         await TrayUtil.setToolTip(selectedServer.remark);
         return;
@@ -129,11 +133,15 @@ class CoreStateNotifier extends _$CoreStateNotifier {
       proxyNotifier.setTunMode(true);
     }
 
-    proxyNotifier.setCoreRunning(true);
+    proxyNotifier.setCoreRunningAndCustomConfig(
+      coreRunning: true,
+      customConfig: isCustom,
+    );
     await TrayUtil.setIcon(coreRunning: true);
     await TrayUtil.setToolTip(selectedServer.remark);
 
-    final enableStatistics = !isCustom && sphiaConfig.enableStatistics;
+    final enableStatistics = isCustom || sphiaConfig.enableStatistics;
+    // try to check statistics availability when using custom config
     if (enableStatistics) {
       final trafficNotifier = ref.read(trafficNotifierProvider.notifier);
       await trafficNotifier.start();
@@ -307,9 +315,12 @@ class CoreStateNotifier extends _$CoreStateNotifier {
       final isCustom =
           ref.read(proxyNotifierProvider.select((value) => value.customConfig));
       if (isCustom) {
-        proxyNotifier.setCoreRunningAndCustomConfig(false, false);
+        proxyNotifier.setCoreRunningAndCustomConfig(
+          coreRunning: false,
+          customConfig: false,
+        );
         // only one core
-        await preState.cores.first.stop(false);
+        await preState.cores.first.stop(checkPorts: false);
       } else {
         proxyNotifier.setCoreRunning(false);
         for (var core in preState.cores) {

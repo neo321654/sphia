@@ -12,6 +12,7 @@ import 'package:sphia/app/state/core_state.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 import 'package:sphia/server/server_model.dart';
 import 'package:sphia/util/system.dart';
+import 'package:sphia/view/dialog/custom_config.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -82,10 +83,10 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
               throw Exception('Core state is null');
             }
 
-            if (isCustom) {
+            if (isCustom && coreState.customHttpPort != portUnset) {
               SystemUtil.enableSystemProxy(
                 sphiaConfig.listen,
-                coreState.cores.first.servers.first.port,
+                coreState.customHttpPort,
                 // ugly
               );
               proxyStateNotifier.setSystemProxy(true);

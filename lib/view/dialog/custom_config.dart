@@ -10,6 +10,7 @@ import 'package:sphia/view/widget/widget.dart';
 import 'package:path/path.dart' as p;
 
 const configFormat = ['json'];
+const portUnset = 131071;
 
 class CustomConfigServerDialog extends ConsumerStatefulWidget {
   final String title;
@@ -30,7 +31,8 @@ class _CustomConfigServerDialogState
     extends ConsumerState<CustomConfigServerDialog> {
   final _formKey = GlobalKey<FormState>();
   final _remarkController = TextEditingController();
-  final _portController = TextEditingController();
+  final _httpPortController = TextEditingController();
+  final _apiPortController = TextEditingController();
   final _configFilePathController = TextEditingController();
   late String _configFormat;
   late int _coreProvider;
@@ -56,8 +58,22 @@ class _CustomConfigServerDialogState
         labelText: S.of(context).remark,
       ),
       SphiaWidget.textInput(
-        controller: _portController,
-        labelText: S.of(context).customLocalHttpPort,
+        controller: _httpPortController,
+        labelText: S.of(context).customHttpPort,
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return S.of(context).portEnterMsg;
+          }
+          final newValue = int.tryParse(value);
+          if (newValue == null || newValue < -1 || newValue > 65535) {
+            return S.of(context).portInvalidMsg;
+          }
+          return null;
+        },
+      ),
+      SphiaWidget.textInput(
+        controller: _apiPortController,
+        labelText: S.of(context).customCoreApiPort,
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
             return S.of(context).portEnterMsg;
@@ -140,12 +156,21 @@ class _CustomConfigServerDialogState
                 );
                 return;
               }
+              int port = int.parse(_httpPortController.text);
+              int apiPort = int.parse(_apiPortController.text);
+              if (port == -1) {
+                port = portUnset;
+              }
+              if (apiPort == -1) {
+                apiPort = portUnset;
+              }
+              final portInDb = port | (apiPort << 17);
               final server = CustomConfigServer(
                 id: widget.server.id,
                 groupId: widget.server.groupId,
                 protocol: widget.server.protocol,
                 address: '',
-                port: int.parse(_portController.text),
+                port: portInDb,
                 uplink: widget.server.uplink,
                 downlink: widget.server.downlink,
                 remark: _remarkController.text,
@@ -165,7 +190,11 @@ class _CustomConfigServerDialogState
   void _initControllers() {
     final server = widget.server;
     _remarkController.text = server.remark;
-    _portController.text = server.port.toString();
+    final portInDb = server.port;
+    final port = portInDb & 0x1FFFF;
+    _httpPortController.text = port == portUnset ? '-1' : port.toString();
+    final apiPort = (portInDb >> 17) & 0x1FFFF;
+    _apiPortController.text = apiPort == portUnset ? '-1' : apiPort.toString();
     if (server.configString.isEmpty) {
       _configFilePathController.text = '';
     } else {
@@ -183,7 +212,8 @@ class _CustomConfigServerDialogState
 
   void _disposeControllers() {
     _remarkController.dispose();
-    _portController.dispose();
+    _httpPortController.dispose();
+    _apiPortController.dispose();
     _configFilePathController.dispose();
     if (tempConfigFile != null) {
       tempConfigFile!.deleteSync();

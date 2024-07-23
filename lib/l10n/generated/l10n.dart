@@ -560,11 +560,21 @@ class S {
     );
   }
 
-  /// `Custom Local HTTP Port (-1 to disable)`
-  String get customLocalHttpPort {
+  /// `Custom Core API Port (-1 to disable)`
+  String get customCoreApiPort {
     return Intl.message(
-      'Custom Local HTTP Port (-1 to disable)',
-      name: 'customLocalHttpPort',
+      'Custom Core API Port (-1 to disable)',
+      name: 'customCoreApiPort',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Custom HTTP Port (-1 to disable)`
+  String get customHttpPort {
+    return Intl.message(
+      'Custom HTTP Port (-1 to disable)',
+      name: 'customHttpPort',
       desc: '',
       args: [],
     );
