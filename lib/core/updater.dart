@@ -288,7 +288,7 @@ class CoreUpdater extends _$CoreUpdater {
 
     final extractDir = Directory(p.join(tempPath, 'extracted'));
     if (!flag) {
-      extractArchiveToDisk(archive, extractDir.path);
+      await extractArchiveToDisk(archive, extractDir.path);
       final extractedFile = _findFile(extractDir, coreFileName);
       if (extractedFile != null) {
         extractedFile.copySync(p.join(binPath, coreFileName));
