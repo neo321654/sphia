@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/config/version.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/provider/config.dart';
+import 'package:sphia/core/core_info.dart';
 
 part 'version_config.g.dart';
 
@@ -13,24 +14,24 @@ class VersionConfigNotifier extends _$VersionConfigNotifier {
     return config;
   }
 
-  void updateVersion(String coreName, String version) async {
+  void updateVersion(ProxyRes coreName, String version) async {
     switch (coreName) {
-      case 'sing-box':
+      case ProxyRes.sing:
         state = state.copyWith(singBoxVersion: version);
         break;
-      case 'xray-core':
+      case ProxyRes.xray:
         state = state.copyWith(xrayCoreVersion: version);
         break;
-      case 'shadowsocks-rust':
+      case ProxyRes.ssrust:
         state = state.copyWith(shadowsocksRustVersion: version);
         break;
-      case 'hysteria':
+      case ProxyRes.hysteria:
         state = state.copyWith(hysteriaVersion: version);
         break;
-      case 'sing-box-rules':
+      case ProxyRes.singRules:
         state = state.copyWith(singBoxRulesVersion: version);
         break;
-      case 'v2ray-rules-dat':
+      case ProxyRes.v2rayRules:
         state = state.copyWith(v2rayRulesVersion: version);
         break;
       default:
@@ -39,24 +40,24 @@ class VersionConfigNotifier extends _$VersionConfigNotifier {
     versionConfigDao.saveConfig(state);
   }
 
-  void removeVersion(String coreName) {
+  void removeVersion(ProxyRes coreName) {
     switch (coreName) {
-      case 'sing-box':
+      case ProxyRes.sing:
         state = state.copyWith(singBoxVersion: null);
         break;
-      case 'xray-core':
+      case ProxyRes.xray:
         state = state.copyWith(xrayCoreVersion: null);
         break;
-      case 'shadowsocks-rust':
+      case ProxyRes.ssrust:
         state = state.copyWith(shadowsocksRustVersion: null);
         break;
-      case 'hysteria':
+      case ProxyRes.hysteria:
         state = state.copyWith(hysteriaVersion: null);
         break;
-      case 'sing-box-rules':
+      case ProxyRes.singRules:
         state = state.copyWith(singBoxRulesVersion: null);
         break;
-      case 'v2ray-rules-dat':
+      case ProxyRes.v2rayRules:
         state = state.copyWith(v2rayRulesVersion: null);
         break;
       default:

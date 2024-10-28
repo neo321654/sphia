@@ -1,19 +1,19 @@
 import 'package:path/path.dart' as p;
 import 'package:sphia/app/database/database.dart';
+import 'package:sphia/app/helper/io.dart';
 import 'package:sphia/app/log.dart';
-import 'package:sphia/core/helper.dart';
 import 'package:sphia/core/rule/extension.dart';
 import 'package:sphia/core/rule/sing.dart';
 import 'package:sphia/core/sing/config.dart';
+import 'package:sphia/core/sing/core.dart';
 import 'package:sphia/server/hysteria/server.dart';
 import 'package:sphia/server/server_model.dart';
 import 'package:sphia/server/shadowsocks/server.dart';
 import 'package:sphia/server/trojan/server.dart';
 import 'package:sphia/server/xray/server.dart';
-import 'package:sphia/util/system.dart';
 
-class SingBoxGenerate {
-  static Future<Dns> dns({
+extension SingBoxGenerate on SingBoxCore {
+  Future<Dns> genDns({
     required String remoteDns,
     required String directDns,
     required String dnsResolver,
@@ -24,18 +24,18 @@ class SingBoxGenerate {
       directDns = directDns.replaceFirst('+local', '');
     }
 
-    final dnsRules = <SingBoxDnsRule>[
+    final dnsRules = [
       if (serverAddress != '127.0.0.1') ...[
         SingBoxDnsRule(
           domain: [serverAddress],
           server: 'local',
         )
       ],
-      SingBoxDnsRule(
+      const SingBoxDnsRule(
         domain: ['geosite:geolocation-!cn'],
         server: 'remote',
       ),
-      SingBoxDnsRule(
+      const SingBoxDnsRule(
         domain: ['geosite:cn'],
         server: 'local',
       ),
@@ -68,24 +68,25 @@ class SingBoxGenerate {
     );
   }
 
-  static Route route(List<Rule> rules, bool configureDns) {
-    List<SingBoxRule> singBoxRules = [];
+  Route genRoute(List<Rule> rules, bool configureDns) {
+    final singBoxRules = <SingBoxRule>[];
     singBoxRules.add(SingBoxRule(
-      processName: CoreHelper.getCoreFileNames(),
+      processName: _getCoreFileNames(),
       outbound: 'direct',
     ));
     if (configureDns) {
       singBoxRules.add(
-        SingBoxRule(
+        const SingBoxRule(
           protocol: ['dns'],
           outbound: 'dns-out',
         ),
       );
     }
     for (var rule in rules) {
-      singBoxRules.add(rule.toSingBoxRule()
-        ..outbound = CoreHelper.determineOutboundTag(rule.outboundTag));
+      singBoxRules
+          .add(rule.toSingBoxRule(determineOutboundTag(rule.outboundTag)));
     }
+    final binPath = IoHelper.binPath;
     return Route(
       geoip: Geoip(path: p.join(binPath, 'geoip.db')),
       geosite: Geosite(path: p.join(binPath, 'geosite.db')),
@@ -95,8 +96,17 @@ class SingBoxGenerate {
     );
   }
 
-  static Inbound mixedInbound(
-      String listen, int listenPort, List<User>? users) {
+  List<String> _getCoreFileNames() {
+    final fileNames = <String>[];
+    for (var info in proxyResInfoList) {
+      if (info.isCore) {
+        fileNames.add(info.binFileName);
+      }
+    }
+    return fileNames;
+  }
+
+  Inbound genMixedInbound(String listen, int listenPort, List<User>? users) {
     return Inbound(
       type: 'mixed',
       listen: listen,
@@ -106,7 +116,7 @@ class SingBoxGenerate {
     );
   }
 
-  static Inbound tunInbound({
+  Inbound genTunInbound({
     required String? inet4Address,
     required String? inet6Address,
     required int mtu,
@@ -129,51 +139,48 @@ class SingBoxGenerate {
     );
   }
 
-  static Outbound generateOutbound(ServerModel server) {
-    late Outbound outbound;
+  Outbound genOutbound({required ServerModel server, String? outboundTag}) {
+    final tag = outboundTag ?? 'proxy';
     switch (server.protocol) {
-      case 'socks':
-      case 'vmess':
-      case 'vless':
-        outbound = xrayOutbound(server as XrayServer);
-        break;
-      case 'shadowsocks':
-        outbound = shadowsocksOutbound(server as ShadowsocksServer);
-        break;
-      case 'trojan':
-        outbound = trojanOutbound(server as TrojanServer);
-        break;
-      case 'hysteria':
-        outbound = hysteriaOutbound(server as HysteriaServer);
-        break;
+      case Protocol.socks:
+      case Protocol.vmess:
+      case Protocol.vless:
+        return _genXrayOutbound(server as XrayServer, tag);
+      case Protocol.shadowsocks:
+        return _genShadowsocksOutbound(server as ShadowsocksServer, tag);
+      case Protocol.trojan:
+        return _genTrojanOutbound(server as TrojanServer, tag);
+      case Protocol.hysteria:
+        return _genHysteriaOutbound(server as HysteriaServer, tag);
       default:
         throw Exception(
             'Sing-Box does not support this server type: ${server.protocol}');
     }
-    return outbound;
   }
 
-  static Outbound xrayOutbound(XrayServer server) {
-    if (server.protocol == 'socks') {
-      return socksOutbound(server);
-    } else if (server.protocol == 'vmess' || server.protocol == 'vless') {
-      return vProtocolOutbound(server);
+  Outbound _genXrayOutbound(XrayServer server, String outboundTag) {
+    if (server.protocol == Protocol.socks) {
+      return _genSocksOutbound(server, outboundTag);
+    } else if (server.protocol == Protocol.vmess ||
+        server.protocol == Protocol.vless) {
+      return _genVProtocolOutbound(server, outboundTag);
     } else {
       throw Exception(
           'Sing-Box does not support this server type: ${server.protocol}');
     }
   }
 
-  static Outbound socksOutbound(XrayServer server) {
+  Outbound _genSocksOutbound(XrayServer server, String outboundTag) {
     return Outbound(
       type: 'socks',
       server: server.address,
       serverPort: server.port,
       version: '5',
+      tag: outboundTag,
     );
   }
 
-  static Outbound vProtocolOutbound(XrayServer server) {
+  Outbound _genVProtocolOutbound(XrayServer server, String outboundTag) {
     final utls = UTls(
       enabled: server.fingerprint != null && server.fingerprint != 'none',
       fingerprint: server.fingerprint,
@@ -202,7 +209,7 @@ class SingBoxGenerate {
           }
           transport = Transport(
             type: 'ws',
-            earlyDataHeaderName: "Sec-WebSocket-Protocol",
+            earlyDataHeaderName: 'Sec-WebSocket-Protocol',
             maxEarlyData: earlyData,
             path: path,
             headers: Headers(
@@ -228,19 +235,23 @@ class SingBoxGenerate {
       }
     }
     return Outbound(
-      type: server.protocol,
+      type: server.protocol.name,
       server: server.address,
       serverPort: server.port,
       uuid: server.authPayload,
       flow: server.flow,
-      alterId: server.protocol == 'vmess' ? server.alterId : null,
-      security: server.protocol == 'vmess' ? server.encryption : null,
+      alterId: server.protocol == Protocol.vmess ? server.alterId : null,
+      security: server.protocol == Protocol.vmess ? server.encryption : null,
       tls: tls,
       transport: transport,
+      tag: outboundTag,
     );
   }
 
-  static Outbound shadowsocksOutbound(ShadowsocksServer server) {
+  Outbound _genShadowsocksOutbound(
+    ShadowsocksServer server,
+    String outboundTag,
+  ) {
     return Outbound(
       type: 'shadowsocks',
       server: server.address,
@@ -249,10 +260,11 @@ class SingBoxGenerate {
       password: server.authPayload,
       plugin: server.plugin,
       pluginOpts: server.plugin,
+      tag: outboundTag,
     );
   }
 
-  static Outbound trojanOutbound(TrojanServer server) {
+  Outbound _genTrojanOutbound(TrojanServer server, String outboundTag) {
     final tls = Tls(
       enabled: true,
       serverName: server.serverName ?? server.address,
@@ -265,10 +277,11 @@ class SingBoxGenerate {
       password: server.authPayload,
       network: 'tcp',
       tls: tls,
+      tag: outboundTag,
     );
   }
 
-  static Outbound hysteriaOutbound(HysteriaServer server) {
+  Outbound _genHysteriaOutbound(HysteriaServer server, String outboundTag) {
     final tls = Tls(
       enabled: true,
       serverName: server.serverName ?? server.address,
@@ -291,6 +304,7 @@ class SingBoxGenerate {
       recvWindowConn: server.recvWindowConn,
       recvWindow: server.recvWindow,
       tls: tls,
+      tag: outboundTag,
     );
   }
 }

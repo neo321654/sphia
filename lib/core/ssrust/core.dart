@@ -3,18 +3,23 @@ import 'dart:core';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/core/core.dart';
+import 'package:sphia/core/ssrust/core_info.dart';
+import 'package:sphia/server/server_model.dart';
 import 'package:sphia/server/shadowsocks/server.dart';
 
-class ShadowsocksRustCore extends Core {
-  late final Ref ref;
-
-  ShadowsocksRustCore() : super('shadowsocks-rust', [], '');
+class ShadowsocksRustCore extends Core with ProxyCore {
+  ShadowsocksRustCore(Ref ref)
+      : super(
+          info: const ShadowsocksRustInfo(),
+          args: [],
+          ref: ref,
+        );
 
   @override
   Future<void> configure() async {
     final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
-    final server = servers.first as ShadowsocksServer;
-    if (server.protocol == 'shadowsocks') {
+    final server = runningServer as ShadowsocksServer;
+    if (server.protocol == Protocol.shadowsocks) {
       final arguments = [
         '-s',
         '${server.address}:${server.port}',
@@ -34,7 +39,7 @@ class ShadowsocksRustCore extends Core {
   }
 
   @override
-  Future<String> generateConfig(ConfigParameters parameters) {
+  Future<String> generateConfig(CoreConfigParameters parameters) {
     throw UnimplementedError();
   }
 

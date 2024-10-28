@@ -7,26 +7,28 @@ import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/notifier/data/server.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
+import 'package:sphia/server/server_model.dart';
+import 'package:sphia/view/page/server.dart';
 
 class TrafficDialog extends ConsumerWidget {
-  final String option;
+  final ActionRange range;
 
   const TrafficDialog({
     super.key,
-    required this.option,
+    required this.range,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final Future<void> operation = clearTraffic(option, ref);
+      final Future<void> operation = clearTraffic(range, ref);
       await operation;
       if (context.mounted) {
         Navigator.of(context).pop();
       }
     });
     return AlertDialog(
-      title: Text(S.of(context).clearTraffic),
+      title: Text(L10n.of(context)!.clearTraffic),
       content: const Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -36,43 +38,54 @@ class TrafficDialog extends ConsumerWidget {
     );
   }
 
-  Future<void> clearTraffic(String option, WidgetRef ref) async {
-    logger.i('Clearing Traffic: option=$option');
+  Future<void> clearTraffic(ActionRange option, WidgetRef ref) async {
+    logger.i('Clearing Traffic: range=${option.name}');
     try {
-      if (option == 'SelectedServer') {
-        final notifier = ref.read(serverNotifierProvider.notifier);
-        final serverConfig = ref.read(serverConfigNotifierProvider);
-        final id = serverConfig.selectedServerId;
-        final server = await serverDao.getServerModelById(id);
-        if (server == null) {
-          logger.w('Selected server not exists');
-          return;
-        }
-        if (server.protocol == 'custom') {
-          logger.w('Custom server does not support traffic clearing');
-          return;
-        }
-        await serverDao.updateTraffic(server.id, null, null);
-        notifier.updateServer(
-          server
-            ..uplink = null
-            ..downlink = null,
-          shouldUpdateLite: false,
-        );
-      } else {
-        // option == 'CurrentGroup'
-        final servers = ref.read(serverNotifierProvider);
-        servers.removeWhere((server) => server.protocol == 'custom');
-        if (servers.isEmpty) {
-          logger.w('No server to clear traffic');
-          return;
-        }
-        for (var i = 0; i < servers.length; i++) {
-          if (!ref.context.mounted) {
+      switch (option) {
+        case ActionRange.selectedServer:
+          final notifier = ref.read(serverNotifierProvider.notifier);
+          final serverConfig = ref.read(serverConfigNotifierProvider);
+          final id = serverConfig.selectedServerId;
+          final server = await serverDao.getServerModelById(id);
+          if (server == null) {
+            logger.w('Selected server not exists');
             return;
           }
-          await serverDao.updateTraffic(servers[i].id, null, null);
-        }
+          if (server.protocol == Protocol.custom) {
+            logger.w('Custom server does not support traffic clearing');
+            return;
+          }
+          await serverDao.updateTraffic(server.id, null, null);
+          notifier.updateServerState(
+            server.withTraffic(
+              null,
+              null,
+            ),
+          );
+          break;
+        case ActionRange.currentGroup:
+          final servers = ref.read(serverNotifierProvider).valueOrNull ?? [];
+          servers.removeWhere((server) => server.protocol == Protocol.custom);
+          if (servers.isEmpty) {
+            logger.w('No server to clear traffic');
+            return;
+          }
+          final notifier = ref.read(serverNotifierProvider.notifier);
+          for (var i = 0; i < servers.length; i++) {
+            if (!ref.context.mounted) {
+              return;
+            }
+            await serverDao.updateTraffic(servers[i].id, null, null);
+            notifier.updateServerState(
+              servers[i].withTraffic(
+                null,
+                null,
+              ),
+            );
+          }
+          break;
+        default:
+          return;
       }
     } catch (e) {
       logger.e('Failed to clear traffic: $e');

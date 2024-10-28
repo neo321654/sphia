@@ -50,3 +50,4 @@ app.*.map.json
 /temp/
 *.g.dart
 *.freezed.dart
+lib/l10n/generated/

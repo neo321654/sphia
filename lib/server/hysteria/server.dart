@@ -44,7 +44,7 @@ class HysteriaServer extends ServerModel {
   factory HysteriaServer.defaults() => HysteriaServer(
         id: defaultServerId,
         groupId: defaultServerGroupId,
-        protocol: 'hysteria',
+        protocol: Protocol.hysteria,
         remark: '',
         address: '',
         port: 0,

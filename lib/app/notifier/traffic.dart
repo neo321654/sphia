@@ -1,5 +1,8 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/database/database.dart';
+import 'package:sphia/app/helper/traffic/traffic.dart';
 import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
@@ -8,9 +11,14 @@ import 'package:sphia/app/notifier/data/server.dart';
 import 'package:sphia/app/notifier/proxy.dart';
 import 'package:sphia/app/state/core_state.dart';
 import 'package:sphia/app/state/traffic.dart';
-import 'package:sphia/util/traffic/traffic.dart';
 
 part 'traffic.g.dart';
+
+@riverpod
+Stream<TrafficData> trafficStream(Ref ref) {
+  final trafficHelper = ref.watch(trafficNotifierProvider);
+  return trafficHelper.traffic?.apiStream ?? Stream.value((-1, -1, -1, -1));
+}
 
 @Riverpod(keepAlive: true)
 class TrafficNotifier extends _$TrafficNotifier {
@@ -20,28 +28,30 @@ class TrafficNotifier extends _$TrafficNotifier {
   Future<void> start() async {
     final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
     final coreState = ref.read(coreStateNotifierProvider).valueOrNull;
-    final routingName = coreState?.routing.name;
-    if (coreState == null || routingName == null) {
+    if (coreState == null) {
       logger.e('Core state is null');
       throw Exception('Core state is null');
     }
     final proxyState = ref.read(proxyNotifierProvider);
-    int coreApiPort = sphiaConfig.coreApiPort;
-    if (proxyState.customConfig) {
-      coreApiPort = coreState.customApiPort;
-    }
-    if (routingName == 'sing-box') {
-      state = TrafficState(traffic: SingBoxTraffic(coreApiPort));
-    } else if (routingName == 'xray-core') {
-      state = TrafficState(
-        traffic: XrayTraffic(
-          coreApiPort,
-          sphiaConfig.multiOutboundSupport,
-        ),
-      );
-    } else {
-      logger.e('Unsupported API: $routingName');
-      throw Exception('Unsupported API: $routingName');
+    final coreApiPort = proxyState.customConfig
+        ? coreState.customApiPort
+        : sphiaConfig.coreApiPort;
+    final routingProvider = coreState.routingProvider;
+    switch (routingProvider) {
+      case RoutingProvider.sing:
+        state = TrafficState(traffic: SingBoxTrafficHelper(coreApiPort));
+        break;
+      case RoutingProvider.xray:
+        state = TrafficState(
+          traffic: XrayTrafficHelper(
+            coreApiPort,
+            sphiaConfig.multiOutboundSupport,
+          ),
+        );
+        break;
+      default:
+        logger.e('Unsupported API: ${routingProvider.toString()}');
+        throw Exception('Unsupported API: ${routingProvider.toString()}');
     }
 
     try {
@@ -51,15 +61,11 @@ class TrafficNotifier extends _$TrafficNotifier {
       logger.e('Failed to start/stop traffic: $e');
       return;
     }
-    final proxyNotifier = ref.read(proxyNotifierProvider.notifier);
-    proxyNotifier.setTrafficRunning(true);
   }
 
   Future<void> stop() async {
     if (state.traffic != null) {
       await _updateServerTraffic();
-      final proxyNotifier = ref.read(proxyNotifierProvider.notifier);
-      proxyNotifier.setTrafficRunning(false);
       await state.traffic!.stop();
       state = const TrafficState();
     }
@@ -75,14 +81,14 @@ class TrafficNotifier extends _$TrafficNotifier {
 
     final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
     final coreState = ref.read(coreStateNotifierProvider).valueOrNull;
-    final routingName = coreState?.routing.name;
 
-    if (routingName == null) {
+    if (coreState == null) {
       logger.e('Core state is null');
       throw Exception('Core state is null');
     }
 
-    if (sphiaConfig.multiOutboundSupport && routingName == 'sing-box') {
+    if (sphiaConfig.multiOutboundSupport &&
+        coreState.routingProvider == RoutingProvider.sing) {
       /*
       sing-box does not support traffic statistics for each outbound
       when multiOutboundSupport is enabled
@@ -93,7 +99,7 @@ class TrafficNotifier extends _$TrafficNotifier {
     final proxyState = ref.read(proxyNotifierProvider);
 
     if (sphiaConfig.multiOutboundSupport && !proxyState.customConfig) {
-      final servers = coreState!.routing.servers;
+      final servers = coreState.routingServers;
       if (servers.isEmpty) {
         // probably server is deleted
         return;
@@ -109,10 +115,9 @@ class TrafficNotifier extends _$TrafficNotifier {
           outboundTag = 'proxy-${server.id}';
         }
 
-        final proxyLink = await (state.traffic as XrayTraffic)
+        int uplink, downlink;
+        (uplink, downlink) = await (state.traffic as XrayTrafficHelper)
             .queryProxyLinkByOutboundTag(outboundTag);
-        int uplink = proxyLink.item1;
-        int downlink = proxyLink.item2;
         if (server.uplink != null) {
           uplink += server.uplink!;
         }
@@ -141,11 +146,11 @@ class TrafficNotifier extends _$TrafficNotifier {
           server.downlink == null ? downlink : server.downlink! + downlink;
       await serverDao.updateTraffic(server.id, newUplink, newDownlink);
       final serverNotifier = ref.read(serverNotifierProvider.notifier);
-      serverNotifier.updateServer(
-        server
-          ..uplink = newUplink
-          ..downlink = newDownlink,
-        shouldUpdateLite: false,
+      serverNotifier.updateServerState(
+        server.withTraffic(
+          newUplink,
+          newDownlink,
+        ),
       );
     }
   }

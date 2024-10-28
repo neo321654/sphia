@@ -12,18 +12,8 @@ class ProxyNotifier extends _$ProxyNotifier {
     state = state.copyWith(coreRunning: coreRunning);
   }
 
-  void setCoreRunningAndCustomConfig({
-    required bool coreRunning,
-    required bool customConfig,
-  }) {
-    state = state.copyWith(
-      coreRunning: coreRunning,
-      customConfig: customConfig,
-    );
-  }
-
-  void setTrafficRunning(bool trafficRunning) {
-    state = state.copyWith(trafficRunning: trafficRunning);
+  void setCustomConfig(bool customConfig) {
+    state = state.copyWith(customConfig: customConfig);
   }
 
   void setSystemProxy(bool systemProxy) {

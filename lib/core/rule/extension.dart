@@ -6,11 +6,11 @@ const defaultRuleId = -1;
 const defaultRuleGroupId = -1;
 
 extension RuleExtension on Rule {
-  XrayRule toXrayRule() {
+  XrayRule toXrayRule(String? outboundTag) {
     final domain = this.domain?.split(',');
     final ip = this.ip?.split(',');
     return XrayRule(
-      outboundTag: outboundTag.toString(),
+      outboundTag: outboundTag ?? this.outboundTag.toString(),
       domain: domain,
       ip: ip,
       port: port,
@@ -21,17 +21,17 @@ extension RuleExtension on Rule {
     );
   }
 
-  SingBoxRule toSingBoxRule() {
-    List<String> geosite = [];
-    List<String> domain = [];
-    List<String> geoip = [];
-    List<String> ipCidr = [];
-    List<int> port = [];
-    List<String> portRange = [];
-    List<String> sourceGeoip = [];
-    List<String> sourceIpCidr = [];
-    List<int> sourcePort = [];
-    List<String> sourcePortRange = [];
+  SingBoxRule toSingBoxRule(String? outboundTag) {
+    final geosite = <String>[];
+    final domain = <String>[];
+    final geoip = <String>[];
+    final ipCidr = <String>[];
+    final port = <int>[];
+    final portRange = <String>[];
+    final sourceGeoip = <String>[];
+    final sourceIpCidr = <String>[];
+    final sourcePort = <int>[];
+    final sourcePortRange = <String>[];
     if (this.domain != null) {
       for (var domainItem in this.domain!.split(',')) {
         if (domainItem.startsWith('geosite:')) {
@@ -84,7 +84,7 @@ extension RuleExtension on Rule {
       }
     }
     return SingBoxRule(
-      outbound: outboundTag.toString(),
+      outbound: outboundTag ?? this.outboundTag.toString(),
       geosite: geosite.isEmpty ? null : geosite,
       domain: domain.isEmpty ? null : domain,
       geoip: geoip.isEmpty ? null : geoip,

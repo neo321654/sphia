@@ -1,53 +1,47 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/config/version.dart';
+import 'package:sphia/app/helper/update.dart';
 import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/version_config.dart';
-import 'package:sphia/app/state/core_info.dart';
-import 'package:sphia/core/helper.dart';
+import 'package:sphia/app/state/core_info_state.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
-import 'package:sphia/view/page/agent/update.dart';
+import 'package:sphia/view/card/shadow_card.dart';
 import 'package:sphia/view/widget/widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 part 'core_card.g.dart';
 
 @riverpod
-CoreInfo currentCore(Ref ref) => throw UnimplementedError();
+CoreInfoState currentCore(Ref ref) => throw UnimplementedError();
 
-class CoreInfoCard extends ConsumerWidget with UpdateAgent {
+class CoreInfoCard extends ConsumerWidget with UpdateHelper {
   const CoreInfoCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final info = ref.watch(currentCoreProvider);
-    final currentVersion = ref.watch(versionConfigNotifierProvider
-        .select((value) => value.getVersion(info.coreName)));
-    String? displayVersion;
-    if (currentVersion != null) {
-      displayVersion = currentVersion;
-    } else {
-      if (CoreHelper.coreExists(info.coreName)) {
-        displayVersion = S.of(context).unknown;
-      }
-    }
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+    final infoState = ref.watch(currentCoreProvider);
+    final coreInfo = infoState.info;
+    final latestVersion = infoState.latestVersion;
+    return ShadowCard(
       child: ListTile(
-        title: Text(info.coreName),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6.0),
+        ),
+        title: Text(coreInfo.name.toString()),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text.rich(
               TextSpan(
-                text: '${S.of(context).repoUrl}: ${info.repoUrl}',
+                text: '${L10n.of(context)!.repoUrl}: ${coreInfo.repoUrl}',
                 recognizer: TapGestureRecognizer()
                   ..onTap = () async {
                     try {
-                      await launchUrl(Uri.parse(info.repoUrl));
+                      await launchUrl(Uri.parse(coreInfo.repoUrl));
                     } on Exception catch (e) {
                       logger.e('Failed to launch url: $e');
                       if (!context.mounted) {
@@ -55,17 +49,34 @@ class CoreInfoCard extends ConsumerWidget with UpdateAgent {
                       }
                       await SphiaWidget.showDialogWithMsg(
                         context: context,
-                        message: '${S.of(context).launchUrlFailed}: $e',
+                        message: '${L10n.of(context)!.launchUrlFailed}: $e',
                       );
                     }
                   },
               ),
             ),
-            if (displayVersion != null) ...[
-              Text('${S.of(context).currentVersion}: $displayVersion')
-            ],
-            if (info.latestVersion != null) ...[
-              Text('${S.of(context).latestVersion}: ${info.latestVersion}')
+            Consumer(
+              builder: (context, ref, child) {
+                String? displayVersion;
+                final currentVersion = ref.watch(versionConfigNotifierProvider
+                    .select((value) => value.getVersion(infoState.info.name)));
+                if (currentVersion != null) {
+                  displayVersion = currentVersion;
+                } else {
+                  if (coreInfo.existsSync()) {
+                    displayVersion = L10n.of(context)!.unknown;
+                  }
+                }
+                if (displayVersion != null) {
+                  return Text(
+                      '${L10n.of(context)!.currentVersion}: $displayVersion');
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
+            ),
+            if (latestVersion != null) ...[
+              Text('${L10n.of(context)!.latestVersion}: $latestVersion')
             ],
           ],
         ),
@@ -73,47 +84,51 @@ class CoreInfoCard extends ConsumerWidget with UpdateAgent {
           mainAxisSize: MainAxisSize.min,
           children: [
             Tooltip(
-              message: S.of(context).checkUpdate,
+              message: L10n.of(context)!.checkUpdate,
               child: SphiaWidget.iconButton(
-                icon: Icons.refresh,
+                icon: Symbols.refresh,
                 onTap: () async {
-                  final notifier = ref.read(coreInfoListProvider.notifier);
-                  notifier.updateIsUpdating(info.coreName, true);
+                  final notifier = ref.read(coreInfoStateListProvider.notifier);
+                  notifier.updateIsUpdating(coreInfo.name, true);
                   await checkUpdate(
-                    coreName: info.coreName,
+                    coreInfo: coreInfo,
                     showDialog: true,
                     ref: ref,
                   );
-                  notifier.updateIsUpdating(info.coreName, false);
+                  notifier.updateIsUpdating(coreInfo.name, false);
                 },
-                enabled: !info.isUpdating,
+                enabled: !infoState.isUpdating,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 16),
             Tooltip(
-              message: S.of(context).update,
+              message: L10n.of(context)!.update,
               child: SphiaWidget.iconButton(
-                icon: Icons.update,
+                icon: Symbols.update,
                 onTap: () async {
-                  final notifier = ref.read(coreInfoListProvider.notifier);
-                  notifier.updateIsUpdating(info.coreName, true);
+                  final notifier = ref.read(coreInfoStateListProvider.notifier);
+                  notifier.updateIsUpdating(coreInfo.name, true);
+                  final currentVersion = ref.read(
+                      versionConfigNotifierProvider.select(
+                          (value) => value.getVersion(infoState.info.name)));
                   await updateCore(
-                    coreInfo: info,
+                    coreInfo: coreInfo,
                     currentVersion: currentVersion,
+                    shouldUpdate: latestVersion == null,
                     ref: ref,
                   );
-                  notifier.updateIsUpdating(info.coreName, false);
+                  notifier.updateIsUpdating(coreInfo.name, false);
                 },
-                enabled: !info.isUpdating,
+                enabled: !infoState.isUpdating,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 16),
             Tooltip(
-              message: S.of(context).delete,
+              message: L10n.of(context)!.delete,
               child: SphiaWidget.iconButton(
-                icon: Icons.delete,
+                icon: Symbols.delete,
                 onTap: () async => await deleteCore(
-                  coreName: info.coreName,
+                  coreInfo: coreInfo,
                   ref: ref,
                 ),
               ),

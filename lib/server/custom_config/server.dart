@@ -10,7 +10,7 @@ class CustomConfigServer extends ServerModel {
   CustomConfigServer({
     required super.id,
     required super.groupId,
-    super.protocol = 'custom',
+    super.protocol = Protocol.custom,
     required super.remark,
     super.address = '',
     super.port = 0,

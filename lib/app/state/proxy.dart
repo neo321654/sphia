@@ -6,7 +6,6 @@ part 'proxy.freezed.dart';
 class ProxyState with _$ProxyState {
   const factory ProxyState({
     @Default(false) bool coreRunning,
-    @Default(false) bool trafficRunning,
     @Default(false) bool systemProxy,
     @Default(false) bool tunMode,
     @Default(false) bool customConfig,

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:core';
 
@@ -9,62 +8,63 @@ import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/config/version.dart';
 import 'package:sphia/app/database/dao/rule.dart';
 import 'package:sphia/app/database/database.dart';
+import 'package:sphia/app/helper/io.dart';
+import 'package:sphia/app/helper/latency.dart';
 import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/rule_config.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/config/version_config.dart';
 import 'package:sphia/core/core.dart';
-import 'package:sphia/core/helper.dart';
+import 'package:sphia/core/core_info.dart';
 import 'package:sphia/core/sing/config.dart';
+import 'package:sphia/core/sing/core_info.dart';
 import 'package:sphia/core/sing/generate.dart';
-import 'package:sphia/util/latency.dart';
-import 'package:sphia/util/system.dart';
 
 const cacheDbFileName = 'cache.db';
 
-class SingBoxCore extends Core {
-  late final Ref ref;
-  final _logStreamController = StreamController<String>.broadcast();
-
-  Stream<String> get logStream => _logStreamController.stream;
-
-  SingBoxCore()
+class SingBoxCore extends Core with RoutingCore, ProxyResInfoList {
+  SingBoxCore(Ref ref, {List<String>? args})
       : super(
-          'sing-box',
-          ['run', '-c', p.join(tempPath, 'sing-box.json'), '--disable-color'],
-          'sing-box.json',
+          info: const SingBoxInfo(),
+          args: args ??
+              [
+                'run',
+                '-c',
+                p.join(IoHelper.tempPath, 'sing-box.json'),
+                '--disable-color'
+              ],
+          configFileName: 'sing-box.json',
+          ref: ref,
         );
+
+  factory SingBoxCore.latencyTest(Ref ref) => SingBoxCore(
+        ref,
+        args: [
+          'run',
+          '-c',
+          p.join(IoHelper.tempPath, 'latency.json'),
+          '--disable-color'
+        ],
+      )
+        ..isRouting = true
+        ..configFileName = 'latency.json';
 
   @override
   Future<void> stop({bool checkPorts = true}) async {
     await super.stop();
+    final tempPath = IoHelper.tempPath;
     if (configFileName == 'latency.json') {
       // do not delete cache file which currently used by other core
-      SystemUtil.deleteFileIfExists(
+      await IoHelper.deleteFileIfExists(
         p.join(tempPath, latencyCacheDbFileName),
         'Deleting cache file: $latencyCacheDbFileName',
       );
     } else {
-      SystemUtil.deleteFileIfExists(
+      await IoHelper.deleteFileIfExists(
         p.join(tempPath, cacheDbFileName),
         'Deleting cache file: $cacheDbFileName',
       );
     }
-    if (!_logStreamController.isClosed) {
-      await _logStreamController.close();
-    }
-  }
-
-  @override
-  void listenToProcessStream(Stream<List<int>> stream) {
-    logSubscription = stream.transform(utf8.decoder).listen((data) {
-      if (data.trim().isNotEmpty) {
-        _logStreamController.add(data);
-        if (isPreLog) {
-          preLogList.add(data);
-        }
-      }
-    });
   }
 
   @override
@@ -73,7 +73,7 @@ class SingBoxCore extends Core {
     final ruleConfig = ref.read(ruleConfigNotifierProvider);
     final versionConfig = ref.read(versionConfigNotifierProvider);
     final outbounds = [
-      SingBoxGenerate.generateOutbound(servers.first)..tag = 'proxy',
+      genOutbound(server: runningServer),
     ];
     final rules =
         await ruleDao.getOrderedRulesByGroupId(ruleConfig.selectedRuleGroupId);
@@ -83,13 +83,13 @@ class SingBoxCore extends Core {
     rules.removeWhere((rule) => !rule.enabled);
 
     if (sphiaConfig.multiOutboundSupport) {
-      final serversOnRoutingId = await CoreHelper.getRuleOutboundTagList(rules);
+      final serversOnRoutingId = await getRuleOutboundTagList(rules);
       final serversOnRouting =
           await serverDao.getServerModelsByIdList(serversOnRoutingId);
       // add servers on routing to outbounds, outbound.tag is proxy-serverId
       for (final server in serversOnRouting) {
         outbounds.add(
-          SingBoxGenerate.generateOutbound(server)..tag = 'proxy-${server.id}',
+          genOutbound(server: server, outboundTag: 'proxy-${server.id}'),
         );
       }
       servers.addAll(serversOnRouting);
@@ -120,14 +120,13 @@ class SingBoxCore extends Core {
   }
 
   @override
-  Future<String> generateConfig(ConfigParameters parameters) async {
+  Future<String> generateConfig(CoreConfigParameters parameters) async {
     final paras = parameters as SingConfigParameters;
     final sphiaConfig = paras.sphiaConfig;
 
-    String level = sphiaConfig.logLevel.name;
-    if (level == 'warning') {
-      level = 'warn';
-    }
+    final level = sphiaConfig.logLevel == LogLevel.warning
+        ? 'warn'
+        : sphiaConfig.logLevel.name;
     final log = Log(
       disabled: level == 'none',
       level: level == 'none' ? null : level,
@@ -137,18 +136,18 @@ class SingBoxCore extends Core {
 
     Dns? dns;
     if (paras.configureDns) {
-      dns = await SingBoxGenerate.dns(
+      dns = await genDns(
         remoteDns: sphiaConfig.remoteDns,
         directDns: sphiaConfig.directDns,
         dnsResolver: sphiaConfig.dnsResolver,
-        serverAddress: servers.first.address,
+        serverAddress: runningServer.address,
         ipv4Only: !sphiaConfig.enableIpv6,
       );
     }
 
-    List<Inbound> inbounds = [];
+    final inbounds = <Inbound>[];
     if (paras.addMixedInbound) {
-      inbounds.add(SingBoxGenerate.mixedInbound(
+      inbounds.add(genMixedInbound(
         sphiaConfig.listen,
         sphiaConfig.mixedPort,
         sphiaConfig.authentication
@@ -165,7 +164,7 @@ class SingBoxCore extends Core {
 
     if (paras.enableTun) {
       inbounds.add(
-        SingBoxGenerate.tunInbound(
+        genTunInbound(
           inet4Address: sphiaConfig.enableIpv4 ? sphiaConfig.ipv4Address : null,
           inet6Address: sphiaConfig.enableIpv6 ? sphiaConfig.ipv6Address : null,
           mtu: sphiaConfig.mtu,
@@ -180,7 +179,7 @@ class SingBoxCore extends Core {
 
     Route? route;
     if (paras.configureDns) {
-      route = SingBoxGenerate.route(
+      route = genRoute(
         paras.rules,
         paras.configureDns,
       );
@@ -190,12 +189,12 @@ class SingBoxCore extends Core {
 
     if (paras.configureDns) {
       outbounds.add(
-        Outbound(type: 'dns', tag: 'dns-out'),
+        const Outbound(type: 'dns', tag: 'dns-out'),
       );
     }
     outbounds.addAll([
-      Outbound(type: 'direct', tag: 'direct'),
-      Outbound(type: 'block', tag: 'block'),
+      const Outbound(type: 'direct', tag: 'direct'),
+      const Outbound(type: 'block', tag: 'block'),
     ]);
 
     Experimental? experimental;
@@ -206,6 +205,7 @@ class SingBoxCore extends Core {
         logger.e('SingBox version is null');
         throw Exception('SingBox version is null');
       }
+      final tempPath = IoHelper.tempPath;
       if (Version.parse(singBoxVersion) >= Version.parse('1.8.0')) {
         experimental = Experimental(
           clashApi: ClashApi(
@@ -241,7 +241,7 @@ class SingBoxCore extends Core {
   }
 }
 
-class SingConfigParameters extends ConfigParameters {
+class SingConfigParameters extends CoreConfigParameters {
   final List<Outbound> outbounds;
   final List<Rule> rules;
   final bool configureDns;
@@ -253,7 +253,7 @@ class SingConfigParameters extends ConfigParameters {
   final VersionConfig versionConfig;
   final String cacheDbFileName;
 
-  SingConfigParameters({
+  const SingConfigParameters({
     required this.outbounds,
     required this.rules,
     required this.configureDns,

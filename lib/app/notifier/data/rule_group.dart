@@ -1,5 +1,7 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/database/database.dart';
+import 'package:sphia/app/notifier/config/rule_config.dart';
 import 'package:sphia/app/provider/data.dart';
 
 part 'rule_group.g.dart';
@@ -36,4 +38,18 @@ class RuleGroupNotifier extends _$RuleGroupNotifier {
   void clearGroups() {
     state = [];
   }
+}
+
+@Riverpod(keepAlive: true)
+RuleGroup selectedRuleGroup(Ref ref) {
+  final selectedGroupId = ref.watch(
+      ruleConfigNotifierProvider.select((value) => value.selectedRuleGroupId));
+  final ruleGroup = ref.watch(
+    ruleGroupNotifierProvider.select(
+      (value) => value.firstWhere(
+        (group) => group.id == selectedGroupId,
+      ),
+    ),
+  );
+  return ruleGroup;
 }

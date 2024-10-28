@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
+import 'package:sphia/app/database/dao/config.dart';
 import 'package:sphia/app/database/database.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/server/server_model.dart';
 
 const additionalServerId = -1;
@@ -8,7 +8,7 @@ const additionalServerId = -1;
 class ServerDao {
   final Database _db;
 
-  ServerDao(this._db);
+  const ServerDao(this._db);
 
   Future<List<Server>> getServers() {
     return _db.select(_db.servers).get();
@@ -32,16 +32,9 @@ class ServerDao {
     });
   }
 
-  Future<List<ServerModel>> getOrderedServerModelsByGroupId(int groupId) async {
-    logger.i('Getting ordered servers by group id: $groupId');
-    final order = await getServersOrder(groupId);
-    final servers = await getServerModelsByGroupId(groupId);
-    final orderedServers = <ServerModel>[];
-    for (final id in order) {
-      final server = servers.firstWhere((element) => element.id == id);
-      orderedServers.add(server);
-    }
-    return orderedServers;
+  Future<List<ServerModel>> getOrderedServerModelsByGroupId(int groupId) {
+    return getOrderedList(() => getServersOrder(groupId),
+        () => getServerModelsByGroupId(groupId), (server) => server.id);
   }
 
   Future<String> getServerRemarkById(int id) {

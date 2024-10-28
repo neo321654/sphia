@@ -1,36 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
-import 'package:sphia/app/theme.dart';
 
-class ItemsCard extends ConsumerWidget {
+class ItemsCard<T extends Enum> extends ConsumerWidget {
   final String title;
-  final List<String> items;
-  final int Function(SphiaConfig value) selector;
-  final void Function(int value) updater;
+  final List<T> items;
+  final int Function(SphiaConfig value) idxSelector;
+  final void Function(T value) updater;
   final String? tooltip;
 
   const ItemsCard({
     super.key,
     required this.title,
     required this.items,
-    required this.selector,
+    required this.idxSelector,
     required this.updater,
     this.tooltip,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final useMaterial3 = ref.watch(
-        sphiaConfigNotifierProvider.select((value) => value.useMaterial3));
-    final value = ref.watch(sphiaConfigNotifierProvider.select(selector));
+    final value = ref.watch(sphiaConfigNotifierProvider.select(idxSelector));
+    final currItem = items[value];
     final listTile = ListTile(
-      shape: SphiaTheme.listTileShape(useMaterial3),
       title: Text(title),
-      trailing: Text(items[value]),
+      trailing: Text(currItem.toString()),
       onTap: () async {
-        int? newValue = await showDialog<int>(
+        final newValue = await showDialog<T>(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
@@ -41,14 +39,14 @@ class ItemsCard extends ConsumerWidget {
                   shrinkWrap: true,
                   itemCount: items.length,
                   itemBuilder: (BuildContext context, int index) {
+                    final item = items[index];
                     return ListTile(
-                      shape: SphiaTheme.listTileShape(useMaterial3),
-                      title: Text(items[index]),
+                      title: Text(item.toString()),
                       trailing: Icon(
-                        index == value ? Icons.check : null,
+                        index == value ? Symbols.check : null,
                       ),
                       onTap: () {
-                        Navigator.of(context).pop(index);
+                        Navigator.of(context).pop(item);
                       },
                     );
                   },
@@ -62,12 +60,10 @@ class ItemsCard extends ConsumerWidget {
         }
       },
     );
-    if (tooltip != null) {
-      return Tooltip(
-        message: tooltip!,
-        child: listTile,
-      );
-    }
-    return listTile;
+    return Tooltip(
+      message: tooltip ?? '',
+      waitDuration: const Duration(milliseconds: 500),
+      child: listTile,
+    );
   }
 }

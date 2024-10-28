@@ -28,7 +28,7 @@ class ShadowsocksServer extends ServerModel {
   factory ShadowsocksServer.defaults() => ShadowsocksServer(
         id: defaultServerId,
         groupId: defaultServerGroupId,
-        protocol: 'shadowsocks',
+        protocol: Protocol.shadowsocks,
         remark: '',
         address: '',
         port: 0,

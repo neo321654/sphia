@@ -8,6 +8,17 @@ import 'package:sphia/server/xray/server.dart';
 const defaultServerGroupId = -2;
 const defaultServerId = -2;
 
+enum Protocol {
+  vmess,
+  vless,
+  shadowsocks,
+  trojan,
+  hysteria,
+  custom,
+  socks,
+  clipboard,
+}
+
 /*
 because members of a class in drift are immutable
 ServerModel is used to create a new instance of a server record
@@ -16,7 +27,7 @@ and to convert a server record to a ServerModel instance
 class ServerModel {
   int id;
   int groupId;
-  String protocol;
+  Protocol protocol;
   String remark;
   String address;
   int port;
@@ -44,17 +55,17 @@ class ServerModel {
 
   factory ServerModel.fromServer(Server server) {
     switch (server.protocol) {
-      case 'hysteria':
+      case Protocol.hysteria:
         return HysteriaServer.fromServer(server);
-      case 'shadowsocks':
+      case Protocol.shadowsocks:
         return ShadowsocksServer.fromServer(server);
-      case 'trojan':
+      case Protocol.trojan:
         return TrojanServer.fromServer(server);
-      case 'vmess':
-      case 'vless':
-      case 'socks':
+      case Protocol.vmess:
+      case Protocol.vless:
+      case Protocol.socks:
         return XrayServer.fromServer(server);
-      case 'custom':
+      case Protocol.custom:
         return CustomConfigServer.fromServer(server);
       default:
         throw Exception('Unsupported protocol: ${server.protocol}');
@@ -63,17 +74,17 @@ class ServerModel {
 
   ServersCompanion toCompanion() {
     switch (protocol) {
-      case 'hysteria':
+      case Protocol.hysteria:
         return (this as HysteriaServer).toCompanion();
-      case 'shadowsocks':
+      case Protocol.shadowsocks:
         return (this as ShadowsocksServer).toCompanion();
-      case 'trojan':
+      case Protocol.trojan:
         return (this as TrojanServer).toCompanion();
-      case 'vmess':
-      case 'vless':
-      case 'socks':
+      case Protocol.vmess:
+      case Protocol.vless:
+      case Protocol.socks:
         return (this as XrayServer).toCompanion();
-      case 'custom':
+      case Protocol.custom:
         return (this as CustomConfigServer).toCompanion();
       default:
         throw Exception('Unsupported protocol: $protocol');
@@ -113,5 +124,39 @@ class ServerModel {
         protocolProvider.hashCode ^
         authPayload.hashCode ^
         latency.hashCode;
+  }
+
+  ServerModel withTraffic(int? uplink, int? downlink) {
+    return ServerModel(
+      id: id,
+      groupId: groupId,
+      protocol: protocol,
+      remark: remark,
+      address: address,
+      port: port,
+      uplink: uplink,
+      downlink: downlink,
+      routingProvider: routingProvider,
+      protocolProvider: protocolProvider,
+      authPayload: authPayload,
+      latency: latency,
+    );
+  }
+
+  ServerModel withLatency(int? latency) {
+    return ServerModel(
+      id: id,
+      groupId: groupId,
+      protocol: protocol,
+      remark: remark,
+      address: address,
+      port: port,
+      uplink: uplink,
+      downlink: downlink,
+      routingProvider: routingProvider,
+      protocolProvider: protocolProvider,
+      authPayload: authPayload,
+      latency: latency,
+    );
   }
 }

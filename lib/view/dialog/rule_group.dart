@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 import 'package:sphia/view/widget/widget.dart';
 
-class RuleGroupDialog extends StatefulWidget {
+class RuleGroupDialog extends HookWidget {
   final String title;
   final String groupName;
 
@@ -13,41 +14,24 @@ class RuleGroupDialog extends StatefulWidget {
   });
 
   @override
-  State<RuleGroupDialog> createState() => _RuleGroupDialogState();
-}
-
-class _RuleGroupDialogState extends State<RuleGroupDialog> {
-  final _groupNameController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-
-  @override
-  void initState() {
-    super.initState();
-    _groupNameController.text = widget.groupName;
-  }
-
-  @override
-  void dispose() {
-    _groupNameController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final groupNameController = useTextEditingController(text: groupName);
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+
     return AlertDialog(
-      title: Text(widget.title),
+      title: Text(title),
       scrollable: true,
       content: Form(
-        key: _formKey,
+        key: formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             SphiaWidget.textInput(
-              controller: _groupNameController,
-              labelText: S.of(context).groupName,
+              controller: groupNameController,
+              labelText: L10n.of(context)!.groupName,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return S.of(context).groupNameEnterMsg;
+                  return L10n.of(context)!.groupNameEnterMsg;
                 }
                 return null;
               },
@@ -55,19 +39,17 @@ class _RuleGroupDialogState extends State<RuleGroupDialog> {
           ],
         ),
       ),
-      actions: <Widget>[
+      actions: [
         TextButton(
-          child: Text(S.of(context).cancel),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          child: Text(L10n.of(context)!.cancel),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         TextButton(
-          child: Text(S.of(context).save),
+          child: Text(L10n.of(context)!.save),
           onPressed: () {
-            if (_formKey.currentState!.validate()) {
+            if (formKey.currentState!.validate()) {
               Navigator.of(context).pop(
-                _groupNameController.text.trim(),
+                groupNameController.text.trim(),
               );
             }
           },

@@ -12,61 +12,38 @@ import 'package:sphia/app/database/dao/server_group.dart';
 import 'package:sphia/app/database/migration.dart';
 import 'package:sphia/app/database/tables.dart';
 import 'package:sphia/app/log.dart';
-import 'package:sphia/util/system.dart';
+import 'package:sphia/server/server_model.dart';
 
 part 'database.g.dart';
 
-const sphiaConfigId = 1;
-const serverConfigId = 2;
-const ruleConfigId = 3;
-const versionConfigId = 4;
-const serverGroupsOrderId = 1;
-const ruleGroupsOrderId = 2;
-
-final sphiaConfigDao = SphiaDatabase.sphiaConfigDao;
-final serverConfigDao = SphiaDatabase.serverConfigDao;
-final ruleConfigDao = SphiaDatabase.ruleConfigDao;
-final versionConfigDao = SphiaDatabase.versionConfigDao;
-final serverGroupDao = SphiaDatabase.serverGroupDao;
-final ruleGroupDao = SphiaDatabase.ruleGroupDao;
-final serverDao = SphiaDatabase.serverDao;
-final ruleDao = SphiaDatabase.ruleDao;
+final sphiaConfigDao = SphiaConfigDao(SphiaDatabase.db);
+final serverConfigDao = ServerConfigDao(SphiaDatabase.db);
+final ruleConfigDao = RuleConfigDao(SphiaDatabase.db);
+final versionConfigDao = VersionConfigDao(SphiaDatabase.db);
+final serverGroupDao = ServerGroupDao(SphiaDatabase.db);
+final ruleGroupDao = RuleGroupDao(SphiaDatabase.db);
+final serverDao = ServerDao(SphiaDatabase.db);
+final ruleDao = RuleDao(SphiaDatabase.db);
 
 class SphiaDatabase {
-  static late Database _database;
+  static late final Database _database;
 
-  static Future<void> init() async {
-    _database = Database();
+  static Database get db => _database;
+
+  static Future<void> init(String configPath) async {
+    _database = Database(configPath);
   }
 
   static Future<void> enableForeignKeys() async {
     await _database.customStatement('PRAGMA foreign_keys = ON');
   }
 
-  static Database get I => _database;
-
-  static SphiaConfigDao get sphiaConfigDao => _database.sphiaConfigDao;
-
-  static ServerConfigDao get serverConfigDao => _database.serverConfigDao;
-
-  static RuleConfigDao get ruleConfigDao => _database.ruleConfigDao;
-
-  static VersionConfigDao get versionConfigDao => _database.versionConfigDao;
-
-  static ServerGroupDao get serverGroupDao => _database.serverGroupDao;
-
-  static RuleGroupDao get ruleGroupDao => _database.ruleGroupDao;
-
-  static ServerDao get serverDao => _database.serverDao;
-
-  static RuleDao get ruleDao => _database.ruleDao;
-
   static Future<void> close() async {
     logger.i('Closing database');
     await _database.close();
   }
 
-  static Future<void> backupDatabase() async {
+  static Future<void> backupDatabase(String configPath) async {
     // close database before backup
     await _database.close();
     final file = File(p.join(configPath, 'sphia.db'));
@@ -95,23 +72,7 @@ class SphiaDatabase {
   RulesOrder,
 ])
 class Database extends _$Database {
-  SphiaConfigDao get sphiaConfigDao => SphiaConfigDao(this);
-
-  ServerConfigDao get serverConfigDao => ServerConfigDao(this);
-
-  RuleConfigDao get ruleConfigDao => RuleConfigDao(this);
-
-  VersionConfigDao get versionConfigDao => VersionConfigDao(this);
-
-  ServerGroupDao get serverGroupDao => ServerGroupDao(this);
-
-  RuleGroupDao get ruleGroupDao => RuleGroupDao(this);
-
-  ServerDao get serverDao => ServerDao(this);
-
-  RuleDao get ruleDao => RuleDao(this);
-
-  Database() : super(_openDatabase());
+  Database(String configPath) : super(_openDatabase(configPath));
 
   @override
   int get schemaVersion => 4;
@@ -132,7 +93,7 @@ class Database extends _$Database {
   }
 }
 
-QueryExecutor _openDatabase() {
+QueryExecutor _openDatabase(String configPath) {
   return LazyDatabase(() async {
     final file = File(p.join(configPath, 'sphia.db'));
     if (!await file.exists()) {

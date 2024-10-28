@@ -1,63 +1,64 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/database/database.dart';
-import 'package:sphia/app/notifier/data/rule_group.dart';
-import 'package:sphia/app/provider/data.dart';
+import 'package:sphia/app/notifier/config/rule_config.dart';
 import 'package:sphia/core/rule/rule_model.dart';
-import 'package:sphia/view/page/agent/rule.dart';
 
 part 'rule.g.dart';
 
 @Riverpod(keepAlive: true)
 class RuleNotifier extends _$RuleNotifier {
   @override
-  List<RuleModel> build() {
-    final rules = ref.read(rulesProvider);
-    return rules;
+  Future<List<RuleModel>> build() async {
+    final selectedRuleGroupId = ref.watch(ruleConfigNotifierProvider
+        .select((value) => value.selectedRuleGroupId));
+    return await ruleDao.getOrderedRuleModelsByGroupId(selectedRuleGroupId);
   }
 
   void addRule(RuleModel rule) {
-    state = [...state, rule];
+    state.whenData((s) {
+      state = AsyncValue.data([...s, rule]);
+    });
   }
 
   void removeRule(int id) {
-    state = state.where((s) => s.id != id).toList();
+    state.whenData((s) {
+      state = AsyncValue.data(s.where((rule) => rule.id != id).toList());
+    });
   }
 
   void updateRule(RuleModel rule) {
-    state = state.map((s) {
-      if (s.id == rule.id) {
-        return rule;
-      }
-      return s;
-    }).toList();
+    state.whenData((s) {
+      state = AsyncValue.data(s.map((r) {
+        if (r.id == rule.id) {
+          return rule;
+        }
+        return r;
+      }).toList());
+    });
   }
 
   void updateRuleEnabled(int id, bool enabled) {
-    state = state.map((s) {
-      if (s.id == id) {
-        return s.copyWith(enabled: enabled);
-      }
-      return s;
-    }).toList();
-  }
-
-  Future<void> loadRules() async {
-    final notifier = ref.read(ruleNotifierProvider.notifier);
-    final index = ref.read(ruleGroupIndexNotifierProvider);
-    final ruleGroup = ref.read(ruleGroupNotifierProvider)[index];
-    final rules = await ruleDao.getOrderedRuleModelsByGroupId(ruleGroup.id);
-    notifier.setRules(rules);
+    state.whenData((s) {
+      state = AsyncValue.data(s.map((r) {
+        if (r.id == id) {
+          return r.copyWith(enabled: enabled);
+        }
+        return r;
+      }).toList());
+    });
   }
 
   void setRules(List<RuleModel> rules) {
-    state = [...rules];
+    state = AsyncValue.data([...rules]);
   }
 
   void reorderRules(List<int> order) {
-    state = order.map((i) => state[i]).toList();
+    state.whenData((s) {
+      state = AsyncValue.data(order.map((i) => s[i]).toList());
+    });
   }
 
   void clearRules() {
-    state = [];
+    state = const AsyncValue.data([]);
   }
 }

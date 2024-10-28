@@ -1,39 +1,26 @@
 import 'package:drift/drift.dart';
+import 'package:sphia/app/database/dao/config.dart';
 import 'package:sphia/app/database/database.dart';
-import 'package:sphia/app/log.dart';
+
+const ruleGroupsOrderId = 2;
 
 class RuleGroupDao {
   final Database _db;
 
-  RuleGroupDao(this._db);
+  const RuleGroupDao(this._db);
 
   Future<List<RuleGroup>> getRuleGroups() {
     return _db.select(_db.ruleGroups).get();
   }
 
-  Future<List<RuleGroup>> getOrderedRuleGroups() async {
-    logger.i('Getting ordered rule groups');
-    final order = await getRuleGroupsOrder();
-    final groups = await getRuleGroups();
-    final orderedGroups = <RuleGroup>[];
-    for (final id in order) {
-      final group = groups.firstWhere((element) => element.id == id);
-      orderedGroups.add(group);
-    }
-    return orderedGroups;
+  Future<List<RuleGroup>> getOrderedRuleGroups() {
+    return getOrderedList(
+        getRuleGroupsOrder, getRuleGroups, (group) => group.id);
   }
 
   Future<RuleGroup?> getRuleGroupById(int id) {
     return (_db.select(_db.ruleGroups)..where((tbl) => tbl.id.equals(id)))
         .getSingleOrNull();
-  }
-
-  Future<String?> getRuleGroupNameById(int id) async {
-    final ruleGroup = await getRuleGroupById(id);
-    if (ruleGroup == null) {
-      return null;
-    }
-    return ruleGroup.name;
   }
 
   Future<int> getDefaultRuleGroupId() {
@@ -49,7 +36,7 @@ class RuleGroupDao {
             name: name,
           ),
         );
-    await _db.ruleDao.createEmptyRulesOrder(groupId);
+    await ruleDao.createEmptyRulesOrder(groupId);
     return groupId;
   }
 
@@ -74,8 +61,7 @@ class RuleGroupDao {
       if (value.isEmpty) {
         return [];
       }
-      final data = value.last.data;
-      return data.split(',').map((e) => int.parse(e)).toList();
+      return value.last.data.split(',').map(int.parse).toList();
     });
   }
 

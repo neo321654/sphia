@@ -2,32 +2,48 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/log.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 
 class SphiaWidget {
   static Widget iconButton({
     required IconData icon,
-    required void Function()? onTap,
+    double size = 24,
+    double minSize = 24,
+    double opticalSize = 24,
+    void Function()? onTap,
     bool enabled = true,
+    String? tooltip,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: enabled ? onTap : null,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Icon(icon, color: enabled ? null : Colors.grey),
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: MouseRegion(
+        cursor: enabled && onTap != null
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
+        child: Container(
+          constraints: BoxConstraints(minWidth: minSize, minHeight: minSize),
+          color: Colors.transparent,
+          child: Tooltip(
+            message: tooltip ?? '',
+            child: Icon(
+              icon,
+              size: size,
+              opticalSize: opticalSize,
+              color: enabled ? null : Colors.grey,
+            ),
+          ),
         ),
       ),
     );
   }
 
-  static Widget popupMenuIconButton({
+  static Widget popupMenuIconButton<T>({
     required IconData icon,
-    required List<PopupMenuEntry<String>> items,
-    required void Function(String) onItemSelected,
+    required List<PopupMenuEntry<T>> items,
+    required void Function(T) onItemSelected,
   }) {
     return Builder(
       builder: (context) => iconButton(
@@ -35,7 +51,7 @@ class SphiaWidget {
         onTap: () async {
           final renderBox = context.findRenderObject() as RenderBox;
           final position = renderBox.localToGlobal(Offset.zero);
-          final result = await showMenu(
+          final result = await showMenu<T>(
             context: context,
             position: RelativeRect.fromLTRB(
               position.dx,
@@ -46,31 +62,19 @@ class SphiaWidget {
             items: items,
           );
           if (result != null) {
-            onItemSelected(result.toString());
+            onItemSelected(result);
           }
         },
       ),
     );
   }
 
-  static SnackBar snackBar(String message) {
-    return SnackBar(
-      content: Text(
-        message,
-      ),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(8)),
-      ),
-      duration: const Duration(seconds: 5),
-    );
-  }
-
-  static Widget popupMenuButton({
+  static Widget popupMenuButton<T>({
     required BuildContext context,
-    required List<PopupMenuItem<String>> items,
-    required void Function(String) onItemSelected,
+    required List<PopupMenuItem<T>> items,
+    required void Function(T) onItemSelected,
   }) {
-    return PopupMenuButton<String>(
+    return PopupMenuButton<T>(
       itemBuilder: (context) => items,
       onSelected: onItemSelected,
     );
@@ -102,7 +106,7 @@ class SphiaWidget {
       decoration: InputDecoration(
         labelText: labelText,
         suffixIcon: iconButton(
-          icon: obscureText ? Icons.visibility : Icons.visibility_off,
+          icon: obscureText ? Symbols.visibility : Symbols.visibility_off,
           onTap: () => onToggle(!obscureText),
         ),
       ),
@@ -126,7 +130,7 @@ class SphiaWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             iconButton(
-              icon: Icons.folder,
+              icon: Symbols.folder,
               onTap: () async {
                 final result = await FilePicker.platform.pickFiles(
                   type: FileType.custom,
@@ -141,8 +145,8 @@ class SphiaWidget {
                 }
               },
             ),
-            popupMenuIconButton(
-              icon: Icons.edit,
+            popupMenuIconButton<String>(
+              icon: Symbols.edit,
               items: [
                 const PopupMenuItem(
                   value: '/usr/bin/kate',
@@ -181,19 +185,19 @@ class SphiaWidget {
     );
   }
 
-  static Widget dropdownButton({
-    required String value,
+  static Widget dropdownButton<T>({
+    required T value,
     required String labelText,
-    required List<String> items,
-    required void Function(String?) onChanged,
+    required List<T> items,
+    required void Function(T?) onChanged,
   }) {
-    return DropdownButtonFormField<String>(
+    return DropdownButtonFormField<T>(
       decoration: InputDecoration(labelText: labelText),
       value: value,
       items: items.map((item) {
-        return DropdownMenuItem<String>(
+        return DropdownMenuItem<T>(
           value: item,
-          child: Text(item),
+          child: Text(item.toString()),
         );
       }).toList(),
       onChanged: onChanged,
@@ -201,185 +205,161 @@ class SphiaWidget {
   }
 
   static Widget routingDropdownButton({
-    required int? value,
+    required RoutingProvider value,
     required String labelText,
-    required void Function(int?) onChanged,
+    required void Function(RoutingProvider) onChanged,
   }) {
-    final items = List<String>.from(routingProviderList);
-    items.insert(0, '');
-    return DropdownButtonFormField<String>(
+    const items = RoutingProvider.values;
+    return DropdownButtonFormField<RoutingProvider>(
       decoration: InputDecoration(labelText: labelText),
-      value: items[value != null ? value + 1 : 0],
+      value: value,
       items: items.map((item) {
-        return DropdownMenuItem<String>(
+        return DropdownMenuItem<RoutingProvider>(
           value: item,
-          child: Text(item),
+          child: Text(item.toString()),
         );
       }).toList(),
       onChanged: (value) {
-        if (value == null) {
-          onChanged(null);
-        } else {
-          final index = items.indexOf(value);
-          onChanged(index != 0 ? index - 1 : null);
+        if (value != null) {
+          onChanged(value);
         }
       },
     );
   }
 
   static Widget vmessDropdownButton({
-    required int? value,
+    required VMessProvider value,
     required String labelText,
-    required void Function(int?) onChanged,
+    required void Function(VMessProvider) onChanged,
   }) {
-    final items = List<String>.from(vmessProviderList);
-    items.insert(0, '');
-    return DropdownButtonFormField<String>(
+    const items = VMessProvider.values;
+    return DropdownButtonFormField<VMessProvider>(
       decoration: InputDecoration(labelText: labelText),
-      value: items[value != null ? value + 1 : 0],
+      value: value,
       items: items.map((item) {
-        return DropdownMenuItem<String>(
+        return DropdownMenuItem<VMessProvider>(
           value: item,
-          child: Text(item),
+          child: Text(item.toString()),
         );
       }).toList(),
       onChanged: (value) {
-        if (value == null) {
-          onChanged(null);
-        } else {
-          final index = items.indexOf(value);
-          onChanged(index != 0 ? index - 1 : null);
+        if (value != null) {
+          onChanged(value);
         }
       },
     );
   }
 
   static Widget vlessDropdownButton({
-    required int? value,
+    required VlessProvider value,
     required String labelText,
-    required void Function(int?) onChanged,
+    required void Function(VlessProvider) onChanged,
   }) {
-    final items = List<String>.from(vlessProviderList);
-    items.insert(0, '');
-    return DropdownButtonFormField<String>(
+    const items = VlessProvider.values;
+    return DropdownButtonFormField<VlessProvider>(
       decoration: InputDecoration(labelText: labelText),
-      value: items[value != null ? value + 1 : 0],
+      value: value,
       items: items.map((item) {
-        return DropdownMenuItem<String>(
+        return DropdownMenuItem<VlessProvider>(
           value: item,
-          child: Text(item),
+          child: Text(item.toString()),
         );
       }).toList(),
       onChanged: (value) {
-        if (value == null) {
-          onChanged(null);
-        } else {
-          final index = items.indexOf(value);
-          onChanged(index != 0 ? index - 1 : null);
+        if (value != null) {
+          onChanged(value);
         }
       },
     );
   }
 
   static Widget shadowsocksDropdownButton({
-    required int? value,
+    required ShadowsocksProvider value,
     required String labelText,
-    required void Function(int?) onChanged,
+    required void Function(ShadowsocksProvider) onChanged,
   }) {
-    final items = List<String>.from(shadowsocksProviderList);
-    items.insert(0, '');
-    return DropdownButtonFormField<String>(
+    const items = ShadowsocksProvider.values;
+    return DropdownButtonFormField<ShadowsocksProvider>(
       decoration: InputDecoration(labelText: labelText),
-      value: items[value != null ? value + 1 : 0],
+      value: value,
       items: items.map((item) {
-        return DropdownMenuItem<String>(
+        return DropdownMenuItem<ShadowsocksProvider>(
           value: item,
-          child: Text(item),
+          child: Text(item.toString()),
         );
       }).toList(),
       onChanged: (value) {
-        if (value == null) {
-          onChanged(null);
-        } else {
-          final index = items.indexOf(value);
-          onChanged(index != 0 ? index - 1 : null);
+        if (value != null) {
+          onChanged(value);
         }
       },
     );
   }
 
   static Widget trojanDropdownButton({
-    required int? value,
+    required TrojanProvider value,
     required String labelText,
-    required void Function(int?) onChanged,
+    required void Function(TrojanProvider) onChanged,
   }) {
-    final items = List<String>.from(trojanProviderList);
-    items.insert(0, '');
-    return DropdownButtonFormField<String>(
+    const items = TrojanProvider.values;
+    return DropdownButtonFormField<TrojanProvider>(
       decoration: InputDecoration(labelText: labelText),
-      value: items[value != null ? value + 1 : 0],
+      value: value,
       items: items.map((item) {
-        return DropdownMenuItem<String>(
+        return DropdownMenuItem<TrojanProvider>(
           value: item,
-          child: Text(item),
+          child: Text(item.toString()),
         );
       }).toList(),
       onChanged: (value) {
-        if (value == null) {
-          onChanged(null);
-        } else {
-          final index = items.indexOf(value);
-          onChanged(index != 0 ? index - 1 : null);
+        if (value != null) {
+          onChanged(value);
         }
       },
     );
   }
 
   static Widget hysteriaDropdownButton({
-    required int? value,
+    required HysteriaProvider value,
     required String labelText,
-    required void Function(int?) onChanged,
+    required void Function(HysteriaProvider) onChanged,
   }) {
-    final items = List<String>.from(hysteriaProviderList);
-    items.insert(0, '');
-    return DropdownButtonFormField<String>(
+    const items = HysteriaProvider.values;
+    return DropdownButtonFormField<HysteriaProvider>(
       decoration: InputDecoration(labelText: labelText),
-      value: items[value != null ? value + 1 : 0],
+      value: value,
       items: items.map((item) {
-        return DropdownMenuItem<String>(
+        return DropdownMenuItem<HysteriaProvider>(
           value: item,
-          child: Text(item),
+          child: Text(item.toString()),
         );
       }).toList(),
       onChanged: (value) {
-        if (value == null) {
-          onChanged(null);
-        } else {
-          final index = items.indexOf(value);
-          onChanged(index != 0 ? index - 1 : null);
+        if (value != null) {
+          onChanged(value);
         }
       },
     );
   }
 
   static Widget customConfigServerDropdownButton({
-    required int value,
+    required CustomServerProvider value,
     required String labelText,
-    required void Function(int) onChanged,
+    required void Function(CustomServerProvider) onChanged,
   }) {
-    return DropdownButtonFormField<String>(
+    const items = CustomServerProvider.values;
+    return DropdownButtonFormField<CustomServerProvider>(
       decoration: InputDecoration(labelText: labelText),
-      value: customServerProviderList[value],
-      items: customServerProviderList.map((item) {
-        return DropdownMenuItem<String>(
+      value: value,
+      items: items.map((item) {
+        return DropdownMenuItem<CustomServerProvider>(
           value: item,
-          child: Text(item),
+          child: Text(item.toString()),
         );
       }).toList(),
       onChanged: (value) {
         if (value != null) {
-          final index = customServerProviderList.indexOf(value);
-          onChanged(index);
+          onChanged(value);
         }
       },
     );
@@ -389,18 +369,17 @@ class SphiaWidget {
     required BuildContext context,
     required String message,
   }) async {
-    await showDialog(
+    await showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           content: Padding(
-            padding:
-                const EdgeInsets.only(top: 8, left: 8, right: 8, bottom: 4),
+            padding: const EdgeInsets.all(8),
             child: Text(message, style: const TextStyle(fontSize: 14)),
           ),
           actions: [
             TextButton(
-              child: Text(S.of(context).ok),
+              child: Text(L10n.of(context)!.ok),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -411,18 +390,3 @@ class SphiaWidget {
     );
   }
 }
-
-const navigationStyleList = ['rail', 'drawer'];
-const userAgentList = ['chrome', 'firefox', 'safari', 'edge', 'none'];
-const domainStrategyList = ['AsIs', 'IPIfNonMatch', 'IPOnDemand'];
-const domainMatcherList = ['hybrid', 'linear'];
-const logLevelList = ['none', 'warning', 'debug', 'error', 'info'];
-const routingProviderList = ['sing-box', 'xray-core'];
-const vmessProviderList = ['sing-box', 'xray-core'];
-const vlessProviderList = ['sing-box', 'xray-core'];
-const shadowsocksProviderList = ['sing-box', 'xray-core', 'shadowsocks-rust'];
-const trojanProviderList = ['sing-box', 'xray-core'];
-const hysteriaProviderList = ['sing-box', 'hysteria'];
-const customServerProviderList = ['sing-box', 'xray-core', 'hysteria'];
-const tunProviderList = ['sing-box'];
-const tunStackList = ['system', 'gvisor', 'mixed'];

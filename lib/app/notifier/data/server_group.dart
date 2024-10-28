@@ -1,5 +1,7 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/database/database.dart';
+import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/provider/data.dart';
 
 part 'server_group.g.dart';
@@ -36,4 +38,18 @@ class ServerGroupNotifier extends _$ServerGroupNotifier {
   void clearGroups() {
     state = [];
   }
+}
+
+@Riverpod(keepAlive: true)
+ServerGroup selectedServerGroup(Ref ref) {
+  final selectedGroupId = ref.watch(serverConfigNotifierProvider
+      .select((value) => value.selectedServerGroupId));
+  final serverGroup = ref.watch(
+    serverGroupNotifierProvider.select(
+      (value) => value.firstWhere(
+        (group) => group.id == selectedGroupId,
+      ),
+    ),
+  );
+  return serverGroup;
 }

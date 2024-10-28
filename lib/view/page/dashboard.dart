@@ -1,67 +1,89 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sphia/l10n/generated/l10n.dart';
+import 'package:sphia/view/card/dashboard_card/chart.dart';
+import 'package:sphia/view/card/dashboard_card/dark_mode.dart';
 import 'package:sphia/view/card/dashboard_card/dns.dart';
-import 'package:sphia/view/card/dashboard_card/net.dart';
+import 'package:sphia/view/card/dashboard_card/local_port.dart';
+import 'package:sphia/view/card/dashboard_card/proxy.dart';
 import 'package:sphia/view/card/dashboard_card/rule_group.dart';
 import 'package:sphia/view/card/dashboard_card/running_cores.dart';
+import 'package:sphia/view/card/dashboard_card/running_server.dart';
 import 'package:sphia/view/card/dashboard_card/traffic.dart';
-import 'package:sphia/view/wrapper/page.dart';
 
-class Dashboard extends ConsumerWidget {
-  final _cardRunningCores = const RunningCoresCard();
-  final _cardRuleGroup = const RuleGroupCard();
-  final _cardDns = const DnsCard();
-  final _cardTraffic = const TrafficCard();
-  final _cardNet = const NetCard();
+const cardHorizontalSpacing = 40.0;
+const cardVerticalSpacing = 20.0;
+const cardChartHeight = 120.0;
 
+class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(S.of(context).dashboard),
-        elevation: 0,
-      ),
-      body: PageWrapper(
-        padding: dashboardPadding,
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(48.0, 50.0, 48.0, 50.0),
         child: Column(
           children: [
-            Flexible(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+            Expanded(
+              child: Row(
                 children: [
                   Flexible(
-                    flex: 3,
-                    child: Row(
+                    child: Column(
                       children: [
-                        const SizedBox(width: edgehorizontalSpacing),
-                        Flexible(child: _cardRunningCores),
-                        const SizedBox(width: cardhorizontalSpacing),
-                        Flexible(child: _cardRuleGroup),
-                        const SizedBox(width: cardhorizontalSpacing),
-                        Flexible(child: _cardDns),
-                        const SizedBox(width: edgehorizontalSpacing),
+                        DarkModeCard(),
+                        SizedBox(height: cardVerticalSpacing),
+                        Flexible(
+                          flex: 1,
+                          child: LocalPortCard(),
+                        ),
+                        SizedBox(height: cardVerticalSpacing),
+                        Flexible(
+                          flex: 1,
+                          child: RunningServerCard(),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: cardVerticalSpacing),
+                  SizedBox(width: cardHorizontalSpacing),
                   Flexible(
-                    flex: 4,
-                    child: Row(
+                    child: Column(
                       children: [
-                        const SizedBox(width: edgehorizontalSpacing),
-                        Flexible(flex: 2, child: _cardTraffic),
-                        const SizedBox(width: cardhorizontalSpacing),
-                        Flexible(flex: 7, child: _cardNet),
-                        const SizedBox(width: edgehorizontalSpacing),
+                        Flexible(
+                          flex: 2,
+                          child: RunningCoresCard(),
+                        ),
+                        SizedBox(height: cardVerticalSpacing),
+                        RuleGroupCard(),
+                        SizedBox(height: cardVerticalSpacing),
+                        Flexible(
+                          flex: 3,
+                          child: ProxyCard(),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: edgeVerticalSpacing),
+                  SizedBox(width: cardHorizontalSpacing),
+                  Flexible(
+                    child: Column(
+                      children: [
+                        Flexible(
+                          flex: 1,
+                          child: TrafficCard(),
+                        ),
+                        SizedBox(height: cardVerticalSpacing),
+                        Flexible(
+                          flex: 1,
+                          child: DnsCard(),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
+            ),
+            SizedBox(height: cardVerticalSpacing * 2),
+            SizedBox(
+              height: cardChartHeight,
+              child: NetworkChart(),
             ),
           ],
         ),

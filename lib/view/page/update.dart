@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import 'package:sphia/app/helper/io.dart';
+import 'package:sphia/app/helper/update.dart';
 import 'package:sphia/core/updater.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
-import 'package:sphia/util/system.dart';
 import 'package:sphia/view/card/core_card.dart';
-import 'package:sphia/view/page/agent/update.dart';
 import 'package:sphia/view/widget/widget.dart';
-import 'package:sphia/view/wrapper/page.dart';
 
-class UpdatePage extends ConsumerWidget with UpdateAgent {
+enum MenuAction { scanCore, importCore }
+
+enum ImportCoreAction { singleCore, multipleCores }
+
+class UpdatePage extends ConsumerWidget with UpdateHelper {
   const UpdatePage({
     super.key,
   });
@@ -17,44 +21,44 @@ class UpdatePage extends ConsumerWidget with UpdateAgent {
   Widget build(BuildContext context, WidgetRef ref) {
     final appBar = AppBar(
       title: Text(
-        S.of(context).update,
+        L10n.of(context)!.update,
       ),
       elevation: 0,
       actions: [
         Builder(
-          builder: (context) => SphiaWidget.popupMenuButton(
+          builder: (context) => SphiaWidget.popupMenuButton<MenuAction>(
             context: context,
             items: [
               PopupMenuItem(
-                value: 'ScanCores',
-                child: Text(S.of(context).scanCores),
+                value: MenuAction.scanCore,
+                child: Text(L10n.of(context)!.scanCores),
               ),
               PopupMenuItem(
-                value: 'ImportCore',
+                value: MenuAction.importCore,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(S.of(context).import),
-                    const Icon(Icons.arrow_left),
+                    Text(L10n.of(context)!.import),
+                    const Icon(Symbols.arrow_left),
                   ],
                 ),
               ),
             ],
             onItemSelected: (value) async {
               switch (value) {
-                case 'ScanCores':
+                case MenuAction.scanCore:
                   await ref.read(coreUpdaterProvider.notifier).scanCores();
                   if (context.mounted) {
                     await SphiaWidget.showDialogWithMsg(
                       context: context,
-                      message: S.of(context).scanCoresCompleted,
+                      message: L10n.of(context)!.scanCoresCompleted,
                     );
                   }
                   break;
-                case 'ImportCore':
+                case MenuAction.importCore:
                   final renderBox = context.findRenderObject() as RenderBox;
                   final position = renderBox.localToGlobal(Offset.zero);
-                  showMenu(
+                  showMenu<ImportCoreAction>(
                     context: context,
                     position: RelativeRect.fromLTRB(
                       position.dx,
@@ -64,12 +68,12 @@ class UpdatePage extends ConsumerWidget with UpdateAgent {
                     ),
                     items: [
                       PopupMenuItem(
-                        value: 'SingleCore',
-                        child: Text(S.of(context).singleCore),
+                        value: ImportCoreAction.singleCore,
+                        child: Text(L10n.of(context)!.singleCore),
                       ),
                       PopupMenuItem(
-                        value: 'MutilpleCores',
-                        child: Text(S.of(context).multipleCores),
+                        value: ImportCoreAction.multipleCores,
+                        child: Text(L10n.of(context)!.multipleCores),
                       ),
                     ],
                   ).then((value) async {
@@ -77,7 +81,7 @@ class UpdatePage extends ConsumerWidget with UpdateAgent {
                       return;
                     }
                     switch (value) {
-                      case 'SingleCore':
+                      case ImportCoreAction.singleCore:
                         final res = await ref
                             .read(coreUpdaterProvider.notifier)
                             .importCore(isMulti: false);
@@ -87,16 +91,16 @@ class UpdatePage extends ConsumerWidget with UpdateAgent {
                         if (res) {
                           await SphiaWidget.showDialogWithMsg(
                             context: context,
-                            message: S.of(context).importCoreSuccessfully,
+                            message: L10n.of(context)!.importCoreSuccessfully,
                           );
                         } else {
                           await SphiaWidget.showDialogWithMsg(
                             context: context,
-                            message: S.of(context).importCoreFailed,
+                            message: L10n.of(context)!.importCoreFailed,
                           );
                         }
                         break;
-                      case 'MutilpleCores':
+                      case ImportCoreAction.multipleCores:
                         final res = await ref
                             .read(coreUpdaterProvider.notifier)
                             .importCore(isMulti: true);
@@ -110,9 +114,11 @@ class UpdatePage extends ConsumerWidget with UpdateAgent {
                           if (!context.mounted) {
                             return;
                           }
+                          final binPath = IoHelper.binPath;
                           await SphiaWidget.showDialogWithMsg(
                             context: context,
-                            message: S.of(context).importMultiCoresMsg(binPath),
+                            message:
+                                L10n.of(context)!.importMultiCoresMsg(binPath),
                           );
                         }
                         break;
@@ -129,23 +135,25 @@ class UpdatePage extends ConsumerWidget with UpdateAgent {
         )
       ],
     );
-    final coreInfoList = ref.watch(coreInfoListProvider);
-    return ScaffoldMessenger(
-      child: Scaffold(
-        appBar: appBar,
-        body: PageWrapper(
-          child: ListView.builder(
-            itemCount: coreInfoList.length,
-            itemBuilder: (BuildContext context, int index) {
-              final info = coreInfoList[index];
-              return ProviderScope(
-                overrides: [
-                  currentCoreProvider.overrideWithValue(info),
-                ],
-                child: const CoreInfoCard(),
-              );
-            },
-          ),
+    final coreInfoStateList = ref.watch(coreInfoStateListProvider);
+    return Scaffold(
+      appBar: appBar,
+      body: Padding(
+        padding: const EdgeInsets.all(32),
+        child: ListView.builder(
+          itemCount: coreInfoStateList.length,
+          itemBuilder: (BuildContext context, int index) {
+            final info = coreInfoStateList[index];
+            return ProviderScope(
+              overrides: [
+                currentCoreProvider.overrideWithValue(info),
+              ],
+              child: const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: CoreInfoCard(),
+              ),
+            );
+          },
         ),
       ),
     );

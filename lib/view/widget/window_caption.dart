@@ -51,7 +51,7 @@ class _SphiaWindowCaptionState extends State<SphiaWindowCaption>
             child: SizedBox(
               height: double.infinity,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Container(
                     padding: const EdgeInsets.only(left: 16),

@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
+import 'package:sphia/server/server_model.dart';
 import 'package:sphia/server/xray/server.dart';
 import 'package:sphia/view/widget/widget.dart';
 
-const vmessEncryption = [
+const _vmessEncryptionList = [
   'auto',
   'aes-128-gcm',
   'chacha20-poly1305',
   'none',
   'zero',
 ];
-const vlessEncryption = ['none'];
-const vlessFlow = ['none', 'xtls-rprx-vision'];
-const vProtocolTransport = ['tcp', 'ws', 'grpc', 'httpupgrade'];
-const grpcMode = ['gun', 'multi'];
-const tls = ['none', 'tls', 'reality'];
-const fingerPrint = [
+const _vlessEncryptionList = ['none'];
+const _vlessFlowList = ['none', 'xtls-rprx-vision'];
+const _vProtocolTransportList = ['tcp', 'ws', 'grpc', 'httpupgrade'];
+const _grpcModeList = ['gun', 'multi'];
+const _tlsList = ['none', 'tls', 'reality'];
+const fingerPrintList = [
   'none',
   'random',
-  "randomized",
+  'randomized',
   'chrome',
   'firefox',
   'safari',
@@ -28,9 +31,9 @@ const fingerPrint = [
   '360',
   'qq',
 ];
-const realityFingerPrint = [
+const _realityFingerPrintList = [
   'random',
-  "randomized",
+  'randomized',
   'chrome',
   'firefox',
   'safari',
@@ -40,9 +43,9 @@ const realityFingerPrint = [
   '360',
   'qq',
 ];
-const allowInsecure = ['false', 'true'];
+const allowInsecureList = ['false', 'true'];
 
-class XrayServerDialog extends StatefulWidget {
+class XrayServerDialog extends HookWidget {
   final String title;
   final XrayServer server;
 
@@ -53,293 +56,279 @@ class XrayServerDialog extends StatefulWidget {
   });
 
   @override
-  State<XrayServerDialog> createState() => _XrayServerDialogState();
-}
-
-class _XrayServerDialogState extends State<XrayServerDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late final String _protocol;
-  final _remarkController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _portController = TextEditingController();
-  final _uuidController = TextEditingController();
-  final _alterIdController = TextEditingController();
-  late String _encryption;
-  late String _flow;
-  late String _transport;
-  final _hostController = TextEditingController();
-  final _pathController = TextEditingController();
-  late String _grpcMode;
-  final _serviceNameController = TextEditingController();
-  late String _tls;
-  final _sniController = TextEditingController();
-  late String _fingerprint;
-  final _publicKeyController = TextEditingController();
-  final _shortIdController = TextEditingController();
-  final _spiderXController = TextEditingController();
-  late String _allowInsecure;
-  int? _routingProvider;
-  int? _protocolProvider;
-  bool _obscureText = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _initControllers();
-  }
-
-  @override
-  void dispose() {
-    _disposeControllers();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final protocol = useState(server.protocol);
+    final remarkController = useTextEditingController(text: server.remark);
+    final addressController = useTextEditingController(text: server.address);
+    final portController =
+        useTextEditingController(text: server.port.toString());
+    final uuidController = useTextEditingController(text: server.authPayload);
+    final alterIdController = useTextEditingController(
+        text: server.alterId == null ? '0' : server.alterId.toString());
+    final encryption = useState(server.encryption);
+    final flow = useState(server.flow ?? 'none');
+    final transport = useState(server.transport);
+    final hostController = useTextEditingController(text: server.host ?? '');
+    final pathController = useTextEditingController(text: server.path ?? '');
+    final grpcMode = useState(server.grpcMode ?? 'gun');
+    final serviceNameController =
+        useTextEditingController(text: server.serviceName ?? '');
+    final tls = useState(server.tls);
+    final sniController =
+        useTextEditingController(text: server.serverName ?? '');
+    final fingerprint = useState(server.fingerprint ?? 'none');
+    final publicKeyController =
+        useTextEditingController(text: server.publicKey ?? '');
+    final shortIdController =
+        useTextEditingController(text: server.shortId ?? '');
+    final spiderXController =
+        useTextEditingController(text: server.spiderX ?? '');
+    final allowInsecure = useState(server.allowInsecure.toString());
+    final routingProvider = useState(
+      RoutingProvider
+          .values[server.routingProvider ?? RoutingProvider.none.index],
+    );
+    final vmessProvider = useState(
+      VMessProvider.values[server.protocolProvider ?? VMessProvider.none.index],
+    );
+    final vlessProvider = useState(
+      VlessProvider.values[server.protocolProvider ?? VlessProvider.none.index],
+    );
+    final obscureText = useState(true);
+
     final widgets = [
       SphiaWidget.textInput(
-        controller: _remarkController,
-        labelText: S.of(context).remark,
+        controller: remarkController,
+        labelText: L10n.of(context)!.remark,
       ),
       SphiaWidget.textInput(
-        controller: _addressController,
-        labelText: S.of(context).address,
+        controller: addressController,
+        labelText: L10n.of(context)!.address,
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return S.of(context).addressEnterMsg;
+            return L10n.of(context)!.addressEnterMsg;
           }
           return null;
         },
       ),
       SphiaWidget.textInput(
-        controller: _portController,
-        labelText: S.of(context).port,
+        controller: portController,
+        labelText: L10n.of(context)!.port,
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return S.of(context).portEnterMsg;
+            return L10n.of(context)!.portEnterMsg;
           }
           late final int? newValue;
           if ((newValue = int.tryParse(value)) == null ||
               newValue! < 0 ||
               newValue > 65535) {
-            return S.of(context).portInvalidMsg;
+            return L10n.of(context)!.portInvalidMsg;
           }
           return null;
         },
       ),
       SphiaWidget.passwordTextInput(
-        controller: _uuidController,
-        labelText: S.of(context).uuid,
+        controller: uuidController,
+        labelText: L10n.of(context)!.uuid,
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return S.of(context).uuidEnterMsg;
+            return L10n.of(context)!.uuidEnterMsg;
           }
           return null;
         },
-        obscureText: _obscureText,
+        obscureText: obscureText.value,
         onToggle: (value) {
-          setState(() {
-            _obscureText = value;
-          });
+          obscureText.value = value;
         },
       ),
-      if (_protocol == 'vmess') ...[
+      if (protocol.value == Protocol.vmess) ...[
         SphiaWidget.textInput(
-          controller: _alterIdController,
-          labelText: S.of(context).alterId,
+          controller: alterIdController,
+          labelText: L10n.of(context)!.alterId,
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return S.of(context).alterIdEnterMsg;
+              return L10n.of(context)!.alterIdEnterMsg;
             }
             if (int.tryParse(value) == null) {
-              return S.of(context).alterIdInvalidMsg;
+              return L10n.of(context)!.alterIdInvalidMsg;
             }
             return null;
           },
         ),
       ],
       SphiaWidget.dropdownButton(
-        value: _encryption,
-        labelText: S.of(context).encryption,
-        items: _protocol == 'vmess' ? vmessEncryption : vlessEncryption,
+        value: encryption.value,
+        labelText: L10n.of(context)!.encryption,
+        items: protocol.value == Protocol.vmess
+            ? _vmessEncryptionList
+            : _vlessEncryptionList,
         onChanged: (value) {
           if (value != null) {
-            setState(() {
-              _encryption = value;
-            });
+            encryption.value = value;
           }
         },
       ),
-      if (_protocol == 'vless') ...[
+      if (protocol.value == Protocol.vless) ...[
         SphiaWidget.dropdownButton(
-          value: _flow,
-          labelText: S.of(context).flow,
-          items: vlessFlow,
+          value: flow.value,
+          labelText: L10n.of(context)!.flow,
+          items: _vlessFlowList,
           onChanged: (value) {
             if (value != null) {
-              setState(() {
-                _flow = value;
-              });
+              flow.value = value;
             }
           },
         ),
       ],
       SphiaWidget.dropdownButton(
-        value: _transport,
-        labelText: S.of(context).transport,
-        items: vProtocolTransport,
+        value: transport.value,
+        labelText: L10n.of(context)!.transport,
+        items: _vProtocolTransportList,
         onChanged: (value) {
           if (value != null) {
-            setState(() {
-              _transport = value;
-            });
+            transport.value = value;
           }
         },
       ),
-      if (_transport == 'grpc') ...[
+      if (transport.value == 'grpc') ...[
         SphiaWidget.dropdownButton(
-          value: _grpcMode,
-          labelText: S.of(context).grpcMode,
-          items: grpcMode,
+          value: grpcMode.value,
+          labelText: L10n.of(context)!.grpcMode,
+          items: _grpcModeList,
           onChanged: (value) {
             if (value != null) {
-              setState(() {
-                _grpcMode = value;
-              });
+              grpcMode.value = value;
             }
           },
         ),
         SphiaWidget.textInput(
-          controller: _serviceNameController,
-          labelText: S.of(context).grpcServiceName,
+          controller: serviceNameController,
+          labelText: L10n.of(context)!.grpcServiceName,
         ),
       ],
-      if (_transport == 'ws' || _transport == 'httpupgrade') ...[
+      if (transport.value == 'ws' || transport.value == 'httpupgrade') ...[
         SphiaWidget.textInput(
-          controller: _hostController,
-          labelText: S.of(context).host,
+          controller: hostController,
+          labelText: L10n.of(context)!.host,
         ),
         SphiaWidget.textInput(
-          controller: _pathController,
-          labelText: S.of(context).path,
+          controller: pathController,
+          labelText: L10n.of(context)!.path,
         ),
       ],
       SphiaWidget.dropdownButton(
-        value: _tls,
-        labelText: S.of(context).tls,
-        items: tls,
+        value: tls.value,
+        labelText: L10n.of(context)!.tls,
+        items: _tlsList,
         onChanged: (value) {
           if (value != null) {
-            setState(() {
-              _tls = value;
-            });
+            if (value == 'reality') {
+              fingerprint.value =
+                  _realityFingerPrintList.contains(fingerprint.value)
+                      ? fingerprint.value
+                      : 'random';
+            } else {
+              fingerprint.value = fingerPrintList.contains(fingerprint.value)
+                  ? fingerprint.value
+                  : 'none';
+            }
+            tls.value = value;
           }
         },
       ),
-      if (_tls == 'tls') ...[
+      if (tls.value == 'tls') ...[
         SphiaWidget.textInput(
-          controller: _sniController,
-          labelText: S.of(context).sni,
+          controller: sniController,
+          labelText: L10n.of(context)!.sni,
         ),
         SphiaWidget.dropdownButton(
-          value: _fingerprint,
-          labelText: S.of(context).fingerPrint,
-          items: fingerPrint,
+          value: fingerprint.value,
+          labelText: L10n.of(context)!.fingerPrint,
+          items: fingerPrintList,
           onChanged: (value) {
             if (value != null) {
-              setState(() {
-                _fingerprint = value;
-              });
+              fingerprint.value = value;
             }
           },
         ),
         SphiaWidget.dropdownButton(
-          value: _allowInsecure,
-          labelText: S.of(context).allowInsecure,
-          items: allowInsecure,
+          value: allowInsecure.value,
+          labelText: L10n.of(context)!.allowInsecure,
+          items: allowInsecureList,
           onChanged: (value) {
             if (value != null) {
-              setState(() {
-                _allowInsecure = value;
-              });
+              allowInsecure.value = value;
             }
           },
         ),
       ],
-      if (_tls == 'reality') ...[
+      if (tls.value == 'reality') ...[
         SphiaWidget.textInput(
-          controller: _sniController,
-          labelText: S.of(context).sni,
+          controller: sniController,
+          labelText: L10n.of(context)!.sni,
         ),
         SphiaWidget.dropdownButton(
-          value: _fingerprint,
-          labelText: S.of(context).fingerPrint,
-          items: realityFingerPrint,
+          value: fingerprint.value,
+          labelText: L10n.of(context)!.fingerPrint,
+          items: _realityFingerPrintList,
           onChanged: (value) {
             if (value != null) {
-              setState(() {
-                _fingerprint = value;
-              });
+              fingerprint.value = value;
             }
           },
         ),
         SphiaWidget.textInput(
-          controller: _publicKeyController,
-          labelText: S.of(context).publicKey,
+          controller: publicKeyController,
+          labelText: L10n.of(context)!.publicKey,
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return S.of(context).publicKeyEnterMsg;
+              return L10n.of(context)!.publicKeyEnterMsg;
             }
             return null;
           },
         ),
         SphiaWidget.textInput(
-          controller: _shortIdController,
-          labelText: S.of(context).shortId,
+          controller: shortIdController,
+          labelText: L10n.of(context)!.shortId,
         ),
         SphiaWidget.textInput(
-          controller: _spiderXController,
-          labelText: S.of(context).spiderX,
+          controller: spiderXController,
+          labelText: L10n.of(context)!.spiderX,
         ),
       ],
       SphiaWidget.routingDropdownButton(
-        value: _routingProvider,
-        labelText: S.of(context).routingProvider,
+        value: routingProvider.value,
+        labelText: L10n.of(context)!.routingProvider,
         onChanged: (value) {
-          setState(() {
-            _routingProvider = value;
-          });
+          routingProvider.value = value;
         },
       ),
-      if (_protocol == 'vmess') ...[
+      if (protocol.value == Protocol.vmess) ...[
         SphiaWidget.vmessDropdownButton(
-          value: _protocolProvider,
-          labelText: S.of(context).vmessProvider,
+          value: vmessProvider.value,
+          labelText: L10n.of(context)!.vmessProvider,
           onChanged: (value) {
-            setState(() {
-              _protocolProvider = value;
-            });
+            vmessProvider.value = value;
           },
         ),
       ],
-      if (_protocol == 'vless') ...[
+      if (protocol.value == Protocol.vless) ...[
         SphiaWidget.vlessDropdownButton(
-          value: _protocolProvider,
-          labelText: S.of(context).vlessProvider,
+          value: vlessProvider.value,
+          labelText: L10n.of(context)!.vlessProvider,
           onChanged: (value) {
-            setState(() {
-              _protocolProvider = value;
-            });
+            vlessProvider.value = value;
           },
         ),
       ],
     ];
 
     return AlertDialog(
-      title: Text(widget.title),
+      title: Text(title),
       scrollable: true,
       content: Form(
-        key: _formKey,
+        key: formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: widgets,
@@ -347,123 +336,94 @@ class _XrayServerDialogState extends State<XrayServerDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            Navigator.pop(context, null);
-          },
-          child: Text(S.of(context).cancel),
+          onPressed: () => Navigator.pop(context, null),
+          child: Text(L10n.of(context)!.cancel),
         ),
         ElevatedButton(
           onPressed: () {
-            if (_formKey.currentState?.validate() == true) {
+            if (formKey.currentState?.validate() == true) {
               final server = XrayServer(
-                id: widget.server.id,
-                groupId: widget.server.groupId,
-                protocol: _protocol,
-                address: _addressController.text,
-                port: int.parse(_portController.text),
-                uplink: widget.server.uplink,
-                downlink: widget.server.downlink,
-                remark: _remarkController.text,
-                authPayload: _uuidController.text,
-                alterId: _protocol == 'vmess'
-                    ? int.parse(_alterIdController.text)
+                id: this.server.id,
+                groupId: this.server.groupId,
+                protocol: protocol.value,
+                address: addressController.text,
+                port: int.parse(portController.text),
+                uplink: this.server.uplink,
+                downlink: this.server.downlink,
+                remark: remarkController.text,
+                authPayload: uuidController.text,
+                alterId: protocol.value == Protocol.vmess
+                    ? int.parse(alterIdController.text)
                     : null,
-                encryption: _protocol == 'vmess' ? _encryption : 'none',
-                flow: _protocol == 'vless'
-                    ? _flow != 'none'
-                        ? _flow
+                encryption: protocol.value == Protocol.vmess
+                    ? encryption.value
+                    : 'none',
+                flow: protocol.value == Protocol.vless
+                    ? flow.value != 'none'
+                        ? flow.value
                         : null
                     : null,
-                transport: _transport,
-                host: _transport == 'ws' || _transport == 'httpupgrade'
-                    ? (_hostController.text.trim().isNotEmpty
-                        ? _hostController.text
+                transport: transport.value,
+                host:
+                    transport.value == 'ws' || transport.value == 'httpupgrade'
+                        ? (hostController.text.trim().isNotEmpty
+                            ? hostController.text
+                            : null)
+                        : null,
+                path:
+                    transport.value == 'ws' || transport.value == 'httpupgrade'
+                        ? (pathController.text.trim().isNotEmpty
+                            ? pathController.text
+                            : null)
+                        : null,
+                grpcMode: transport.value == 'grpc' ? grpcMode.value : null,
+                serviceName: transport.value == 'grpc'
+                    ? (serviceNameController.text.trim().isNotEmpty
+                        ? serviceNameController.text
                         : null)
                     : null,
-                path: _transport == 'ws' || _transport == 'httpupgrade'
-                    ? (_pathController.text.trim().isNotEmpty
-                        ? _pathController.text
-                        : null)
+                tls: tls.value,
+                serverName: sniController.text.trim().isNotEmpty
+                    ? sniController.text
                     : null,
-                grpcMode: _transport == 'grpc' ? _grpcMode : null,
-                serviceName: _transport == 'grpc'
-                    ? (_serviceNameController.text.trim().isNotEmpty
-                        ? _serviceNameController.text
-                        : null)
-                    : null,
-                tls: _tls,
-                serverName: _sniController.text.trim().isNotEmpty
-                    ? _sniController.text
-                    : null,
-                fingerprint: _tls == 'tls' || _tls == 'reality'
-                    ? _fingerprint != 'none'
-                        ? _fingerprint
+                fingerprint: tls.value == 'tls' || tls.value == 'reality'
+                    ? fingerprint.value != 'none'
+                        ? fingerprint.value
                         : null
                     : null,
-                publicKey:
-                    _tls == 'reality' ? _publicKeyController.text.trim() : null,
-                shortId: _tls == 'reality'
-                    ? (_shortIdController.text.trim().isNotEmpty
-                        ? _shortIdController.text
+                publicKey: tls.value == 'reality'
+                    ? publicKeyController.text.trim()
+                    : null,
+                shortId: tls.value == 'reality'
+                    ? (shortIdController.text.trim().isNotEmpty
+                        ? shortIdController.text
                         : null)
                     : null,
-                spiderX: _tls == 'reality'
-                    ? (_spiderXController.text.trim().isNotEmpty
-                        ? _spiderXController.text
+                spiderX: tls.value == 'reality'
+                    ? (spiderXController.text.trim().isNotEmpty
+                        ? spiderXController.text
                         : null)
                     : null,
-                allowInsecure: _allowInsecure == 'true',
-                routingProvider: _routingProvider,
-                protocolProvider: _protocolProvider,
+                allowInsecure: allowInsecure.value == 'true',
+                routingProvider: routingProvider.value == RoutingProvider.none
+                    ? null
+                    : routingProvider.value.index,
+                protocolProvider: protocol.value == Protocol.vmess
+                    ? vmessProvider.value == VMessProvider.none
+                        ? null
+                        : vmessProvider.value.index
+                    : protocol.value == Protocol.vless
+                        ? vlessProvider.value == VlessProvider.none
+                            ? null
+                            : vlessProvider.value.index
+                        : null,
               );
               Navigator.pop(context, server);
             }
           },
-          child: Text(S.of(context).save),
+          child: Text(L10n.of(context)!.save),
         ),
       ],
     );
-  }
-
-  void _initControllers() {
-    final server = widget.server;
-    _protocol = widget.server.protocol;
-    _remarkController.text = server.remark;
-    _addressController.text = server.address;
-    _portController.text = server.port.toString();
-    _uuidController.text = server.authPayload;
-    _alterIdController.text =
-        server.alterId == null ? '0' : server.alterId.toString();
-    _encryption = server.encryption;
-    _flow = server.flow ?? 'none';
-    _transport = server.transport;
-    _hostController.text = server.host ?? '';
-    _pathController.text = server.path ?? '';
-    _grpcMode = server.grpcMode ?? 'gun';
-    _serviceNameController.text = server.serviceName ?? '';
-    _tls = server.tls;
-    _sniController.text = server.serverName ?? '';
-    _fingerprint = server.fingerprint ?? 'none';
-    _publicKeyController.text = server.publicKey ?? '';
-    _shortIdController.text = server.shortId ?? '';
-    _spiderXController.text = server.spiderX ?? '';
-    _allowInsecure = server.allowInsecure.toString();
-    _routingProvider = server.routingProvider;
-    _protocolProvider = server.protocolProvider;
-  }
-
-  void _disposeControllers() {
-    _remarkController.dispose();
-    _addressController.dispose();
-    _portController.dispose();
-    _uuidController.dispose();
-    _alterIdController.dispose();
-    _hostController.dispose();
-    _pathController.dispose();
-    _serviceNameController.dispose();
-    _sniController.dispose();
-    _publicKeyController.dispose();
-    _shortIdController.dispose();
-    _spiderXController.dispose();
   }
 }

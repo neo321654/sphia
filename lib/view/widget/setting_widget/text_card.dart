@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
-import 'package:sphia/app/theme.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 
 class TextCard extends ConsumerWidget {
@@ -23,18 +22,14 @@ class TextCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final useMaterial3 = ref.watch(
-        sphiaConfigNotifierProvider.select((value) => value.useMaterial3));
     final value = ref.watch(sphiaConfigNotifierProvider.select(selector));
     final listTile = ListTile(
       enabled: enabled,
-      shape: SphiaTheme.listTileShape(useMaterial3),
       title: Text(title),
       trailing: Text(value),
       onTap: () async {
-        TextEditingController controller = TextEditingController();
-        controller.text = value;
-        String? newValue = await showDialog<String>(
+        final controller = TextEditingController(text: value);
+        final newValue = await showDialog<String>(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
@@ -44,13 +39,13 @@ class TextCard extends ConsumerWidget {
               ),
               actions: [
                 TextButton(
-                  child: Text(S.of(context).cancel),
+                  child: Text(L10n.of(context)!.cancel),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 TextButton(
-                  child: Text(S.of(context).save),
+                  child: Text(L10n.of(context)!.save),
                   onPressed: () {
                     Navigator.of(context).pop(controller.text);
                   },
@@ -64,12 +59,10 @@ class TextCard extends ConsumerWidget {
         }
       },
     );
-    if (tooltip != null) {
-      return Tooltip(
-        message: tooltip!,
-        child: listTile,
-      );
-    }
-    return listTile;
+    return Tooltip(
+      message: tooltip ?? '',
+      waitDuration: const Duration(milliseconds: 500),
+      child: listTile,
+    );
   }
 }

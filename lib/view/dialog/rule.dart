@@ -1,23 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sphia/app/database/dao/rule.dart';
 import 'package:sphia/app/notifier/data/outbound_tag.dart';
 import 'package:sphia/core/rule/rule_model.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 import 'package:sphia/view/widget/widget.dart';
 
-const network = [
+const _networkList = [
   '',
   'tcp',
   'udp',
 ];
-const protocol = [
-  '',
-  'http',
-  'tls',
-];
 
-class RuleDialog extends ConsumerStatefulWidget {
+class RuleDialog extends HookConsumerWidget {
   final String title;
   final RuleModel rule;
 
@@ -28,56 +24,42 @@ class RuleDialog extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<RuleDialog> createState() => _RuleDialogState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final nameController = useTextEditingController(text: rule.name);
+    final outboundTag = useState(rule.outboundTag);
+    final domainController = useTextEditingController(text: rule.domain ?? '');
+    final ipController = useTextEditingController(text: rule.ip ?? '');
+    final portController = useTextEditingController(text: rule.port ?? '');
+    final sourceController = useTextEditingController(text: rule.source ?? '');
+    final sourcePortController =
+        useTextEditingController(text: rule.sourcePort ?? '');
+    final network = useState(rule.network ?? '');
+    final protocolController =
+        useTextEditingController(text: rule.protocol ?? '');
+    final processNameController =
+        useTextEditingController(text: rule.processName ?? '');
 
-class _RuleDialogState extends ConsumerState<RuleDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  late int _outboundTag = widget.rule.outboundTag;
-  final _domainController = TextEditingController();
-  final _ipController = TextEditingController();
-  final _portController = TextEditingController();
-  final _sourceController = TextEditingController();
-  final _sourcePortController = TextEditingController();
-  String _network = '';
-  final _protocolController = TextEditingController();
-  final _processNameController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _initControllers();
-  }
-
-  @override
-  void dispose() {
-    _disposeControllers();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     final outboundTags = ref.watch(outboundTagNotifierProvider);
-    if (!outboundTags.containsKey(widget.rule.outboundTag)) {
+    if (!outboundTags.containsKey(rule.outboundTag)) {
       // maybe the outbound tag is deleted
-      _outboundTag = outboundProxyId;
+      outboundTag.value = outboundProxyId;
     }
 
     final widgets = [
       SphiaWidget.textInput(
-        controller: _nameController,
-        labelText: S.of(context).name,
+        controller: nameController,
+        labelText: L10n.of(context)!.name,
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return S.of(context).nameEnterMsg;
+            return L10n.of(context)!.nameEnterMsg;
           }
           return null;
         },
       ),
       DropdownButtonFormField<int>(
         decoration: const InputDecoration(labelText: 'Outbound Tag'),
-        value: _outboundTag,
+        value: outboundTag.value,
         items: outboundTags.entries
             .map(
               (entry) => DropdownMenuItem<int>(
@@ -88,58 +70,54 @@ class _RuleDialogState extends ConsumerState<RuleDialog> {
             .toList(),
         onChanged: (value) {
           if (value != null) {
-            setState(() {
-              _outboundTag = value;
-            });
+            outboundTag.value = value;
           }
         },
       ),
       SphiaWidget.textInput(
-        controller: _domainController,
+        controller: domainController,
         labelText: 'Domain',
       ),
       SphiaWidget.textInput(
-        controller: _ipController,
+        controller: ipController,
         labelText: 'IP',
       ),
       SphiaWidget.textInput(
-        controller: _portController,
+        controller: portController,
         labelText: 'Port',
       ),
       SphiaWidget.textInput(
-        controller: _sourceController,
+        controller: sourceController,
         labelText: 'Source',
       ),
       SphiaWidget.textInput(
-        controller: _sourcePortController,
+        controller: sourcePortController,
         labelText: 'Source Port',
       ),
       SphiaWidget.dropdownButton(
-        value: _network,
+        value: network.value,
         labelText: 'Network',
-        items: network,
+        items: _networkList,
         onChanged: (value) {
           if (value != null) {
-            setState(() {
-              _network = value;
-            });
+            network.value = value;
           }
         },
       ),
       SphiaWidget.textInput(
-        controller: _protocolController,
+        controller: protocolController,
         labelText: 'Protocol',
       ),
       SphiaWidget.textInput(
-        controller: _processNameController,
+        controller: processNameController,
         labelText: 'Process Name',
       ),
     ];
     return AlertDialog(
-      title: Text(widget.title),
+      title: Text(title),
       scrollable: true,
       content: Form(
-        key: _formKey,
+        key: formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: widgets,
@@ -147,69 +125,43 @@ class _RuleDialogState extends ConsumerState<RuleDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            Navigator.pop(context, null);
-          },
-          child: Text(S.of(context).cancel),
+          onPressed: () => Navigator.pop(context, null),
+          child: Text(L10n.of(context)!.cancel),
         ),
         ElevatedButton(
           onPressed: () {
-            if (_formKey.currentState?.validate() == true) {
+            if (formKey.currentState?.validate() == true) {
               final rule = RuleModel(
-                id: widget.rule.id,
-                groupId: widget.rule.groupId,
-                enabled: widget.rule.enabled,
-                name: _nameController.text,
-                outboundTag: _outboundTag,
-                domain: _domainController.text.isEmpty
+                id: this.rule.id,
+                groupId: this.rule.groupId,
+                enabled: this.rule.enabled,
+                name: nameController.text,
+                outboundTag: outboundTag.value,
+                domain: domainController.text.isEmpty
                     ? null
-                    : _domainController.text,
-                ip: _ipController.text.isEmpty ? null : _ipController.text,
-                port:
-                    _portController.text.isEmpty ? null : _portController.text,
-                source: _sourceController.text.isEmpty
+                    : domainController.text,
+                ip: ipController.text.isEmpty ? null : ipController.text,
+                port: portController.text.isEmpty ? null : portController.text,
+                source: sourceController.text.isEmpty
                     ? null
-                    : _sourceController.text,
-                sourcePort: _sourcePortController.text.isEmpty
+                    : sourceController.text,
+                sourcePort: sourcePortController.text.isEmpty
                     ? null
-                    : _sourcePortController.text,
-                network: _network.isEmpty ? null : _network,
-                protocol: _protocolController.text.isEmpty
+                    : sourcePortController.text,
+                network: network.value.isEmpty ? null : network.value,
+                protocol: protocolController.text.isEmpty
                     ? null
-                    : _protocolController.text,
-                processName: _processNameController.text.isEmpty
+                    : protocolController.text,
+                processName: processNameController.text.isEmpty
                     ? null
-                    : _processNameController.text,
+                    : processNameController.text,
               );
               Navigator.pop(context, rule);
             }
           },
-          child: Text(S.of(context).save),
+          child: Text(L10n.of(context)!.save),
         ),
       ],
     );
-  }
-
-  void _initControllers() {
-    _nameController.text = widget.rule.name;
-    _domainController.text = widget.rule.domain ?? '';
-    _ipController.text = widget.rule.ip ?? '';
-    _portController.text = widget.rule.port ?? '';
-    _sourceController.text = widget.rule.source ?? '';
-    _sourcePortController.text = widget.rule.sourcePort ?? '';
-    _network = widget.rule.network ?? '';
-    _protocolController.text = widget.rule.protocol ?? '';
-    _processNameController.text = widget.rule.processName ?? '';
-  }
-
-  void _disposeControllers() {
-    _nameController.dispose();
-    _domainController.dispose();
-    _ipController.dispose();
-    _portController.dispose();
-    _sourceController.dispose();
-    _sourcePortController.dispose();
-    _protocolController.dispose();
-    _processNameController.dispose();
   }
 }

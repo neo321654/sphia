@@ -53,7 +53,7 @@ class XrayServer extends ServerModel {
   factory XrayServer.socksDefaults() => XrayServer(
         id: defaultServerId,
         groupId: defaultServerGroupId,
-        protocol: 'socks',
+        protocol: Protocol.socks,
         remark: '',
         address: '',
         port: 0,
@@ -67,7 +67,7 @@ class XrayServer extends ServerModel {
   factory XrayServer.vmessDefaults() => XrayServer(
         id: defaultServerId,
         groupId: defaultServerGroupId,
-        protocol: 'vmess',
+        protocol: Protocol.vmess,
         remark: '',
         address: '',
         port: 0,
@@ -82,7 +82,7 @@ class XrayServer extends ServerModel {
   factory XrayServer.vlessDefaults() => XrayServer(
         id: defaultServerId,
         groupId: defaultServerGroupId,
-        protocol: 'vless',
+        protocol: Protocol.vless,
         remark: '',
         address: '',
         port: 0,

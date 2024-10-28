@@ -8,7 +8,7 @@ part 'outbound_tag.g.dart';
 class OutboundTagNotifier extends _$OutboundTagNotifier {
   @override
   Map<int, String> build() {
-    final servers = ref.read(serverNotifierProvider);
+    final servers = ref.read(serverNotifierProvider).valueOrNull ?? [];
     final map = <int, String>{
       outboundProxyId: 'proxy',
       outboundDirectId: 'direct',

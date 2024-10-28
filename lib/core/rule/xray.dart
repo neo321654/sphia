@@ -2,20 +2,20 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'xray.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class XrayRule {
-  String type = 'field';
-  String? inboundTag;
-  String? outboundTag;
-  List<String>? domain;
-  List<String>? ip;
-  String? port;
-  List<String>? source;
-  String? sourcePort;
-  String? network;
-  List<String>? protocol;
+  final String type = 'field';
+  final String? inboundTag;
+  final String? outboundTag;
+  final List<String>? domain;
+  final List<String>? ip;
+  final String? port;
+  final List<String>? source;
+  final String? sourcePort;
+  final String? network;
+  final List<String>? protocol;
 
-  XrayRule({
+  const XrayRule({
     this.inboundTag,
     this.outboundTag,
     this.domain,
@@ -26,9 +26,6 @@ class XrayRule {
     this.protocol,
     this.source,
   });
-
-  factory XrayRule.fromJson(Map<String, dynamic> json) =>
-      _$XrayRuleFromJson(json);
 
   Map<String, dynamic> toJson() => _$XrayRuleToJson(this);
 }

@@ -8,14 +8,16 @@ import 'package:sphia/core/xray/core.dart';
 part 'core.g.dart';
 
 @riverpod
-SingBoxCore singBoxCore(Ref ref) => SingBoxCore()..ref = ref;
+SingBoxCore singBoxCore(Ref ref) => SingBoxCore(ref);
 
 @riverpod
-XrayCore xrayCore(Ref ref) => XrayCore()..ref = ref;
+SingBoxCore latencyTestCore(Ref ref) => SingBoxCore.latencyTest(ref);
 
 @riverpod
-ShadowsocksRustCore shadowsocksRustCore(Ref ref) =>
-    ShadowsocksRustCore()..ref = ref;
+XrayCore xrayCore(Ref ref) => XrayCore(ref);
 
 @riverpod
-HysteriaCore hysteriaCore(Ref ref) => HysteriaCore()..ref = ref;
+ShadowsocksRustCore shadowsocksRustCore(Ref ref) => ShadowsocksRustCore(ref);
+
+@riverpod
+HysteriaCore hysteriaCore(Ref ref) => HysteriaCore(ref);

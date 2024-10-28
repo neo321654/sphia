@@ -1,0 +1,207 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sphia/app/config/sphia.dart';
+import 'package:sphia/app/log.dart';
+import 'package:sphia/app/notifier/config/sphia_config.dart';
+import 'package:sphia/app/notifier/core_state.dart';
+import 'package:sphia/app/notifier/proxy.dart';
+import 'package:sphia/app/state/core_state.dart';
+import 'package:sphia/core/core_info.dart';
+import 'package:validator_regex/validator_regex.dart';
+
+part 'network.g.dart';
+
+@riverpod
+class NetworkHelper extends _$NetworkHelper {
+  @override
+  void build() {}
+
+  static Future<bool> isLocalPortInUse(int port) async {
+    const timeout = Duration(milliseconds: 10);
+    // send a request to the port
+    try {
+      logger.i('Checking if port $port is in use');
+      final socket = await Socket.connect('127.0.0.1', port).timeout(timeout);
+      socket.destroy();
+      return true;
+    } on SocketException catch (_) {
+      logger.i('Port $port is not in use');
+      return false;
+    } on TimeoutException catch (_) {
+      logger.i('Port $port is not in use');
+      return false;
+    }
+  }
+
+  static Future<bool> isServerAvailable(int port, {int maxRetry = 3}) async {
+    for (var i = 0; i < maxRetry; i++) {
+      try {
+        final socket = await Socket.connect('localhost', port);
+        await socket.close();
+        return true;
+      } catch (_) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+    }
+    return false;
+  }
+
+  Future<HttpClientResponse> getHttpResponse(String url) async {
+    final client = _getHttpClient(url);
+    final uri = Uri.parse(url);
+    try {
+      final request =
+          await client.getUrl(uri).timeout(const Duration(seconds: 3));
+      final response = await request.close();
+      client.close();
+      return response;
+    } on Exception catch (e) {
+      throw Exception('Failed to get response from $url\n$e');
+    }
+  }
+
+  Future<Uint8List> downloadFile(String url) async {
+    try {
+      logger.i('Downloading from $url');
+      final response = await getHttpResponse(url);
+      final bytes = await consolidateHttpClientResponseBytes(response);
+      logger.i('Downloaded ${bytes.length} bytes from $url');
+      return bytes;
+    } on Exception catch (_) {
+      rethrow;
+    }
+  }
+
+  Future<String> getIp() async {
+    try {
+      logger.i('Getting ip');
+      final response = await getHttpResponse('https://api.ip.sb/ip');
+      final responseBody =
+          (await response.transform(utf8.decoder).join()).trim();
+      final isValidIp = Validator.ipAddress(responseBody);
+      if (!isValidIp) {
+        throw Exception('Invalid ip: $responseBody');
+      }
+      return responseBody;
+    } on Exception catch (e) {
+      logger.e('Failed to get ip: $e');
+      throw Exception('Failed to get ip: $e');
+    }
+  }
+
+  Future<int> getLatency() async {
+    try {
+      logger.i('Getting latency');
+      final url = ref.read(
+          sphiaConfigNotifierProvider.select((value) => value.latencyTestUrl));
+      final uri = Uri.parse(url);
+      final client = _getHttpClient(url);
+
+      try {
+        final stopwatch = Stopwatch()..start();
+        final request =
+            await client.getUrl(uri).timeout(const Duration(seconds: 3));
+        await request.close();
+        stopwatch.stop();
+        final latency = stopwatch.elapsedMilliseconds;
+        logger.i('Latency: $latency ms');
+        return latency;
+      } on TimeoutException catch (e) {
+        logger.e('Latency test timed out: $e');
+        throw Exception('Latency test timed out: $e');
+      } on SocketException catch (e) {
+        logger.e('Network error while testing latency: $e');
+        throw Exception('Network error while testing latency: $e');
+      } finally {
+        client.close();
+      }
+    } catch (e) {
+      logger.e('Failed to get latency: $e');
+      throw Exception('Failed to get latency: $e');
+    }
+  }
+
+  HttpClient _getHttpClient(String url) {
+    final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
+    final proxyState = ref.read(proxyNotifierProvider);
+    final client = HttpClient();
+    // init userAgent
+    final userAgent = sphiaConfig.getUserAgent();
+    client.userAgent = userAgent;
+    if (proxyState.coreRunning &&
+        (sphiaConfig.updateThroughProxy ||
+            url == 'https://api.ip.sb/ip' ||
+            url.contains('sphia'))) {
+      final coreState = ref.read(coreStateNotifierProvider).valueOrNull;
+      if (coreState == null) {
+        logger.e('Core state is null');
+        throw Exception('Core state is null');
+      }
+
+      late final int port;
+      if (proxyState.customConfig) {
+        port = coreState.customHttpPort;
+        if (port == -1) {
+          logger.w('HTTP port is not set');
+        } else {
+          final proxyUrl = '${sphiaConfig.listen}:${port.toString()}';
+          client.findProxy = (uri) => 'PROXY $proxyUrl';
+        }
+      } else {
+        port = coreState.routingProvider == RoutingProvider.sing
+            ? sphiaConfig.mixedPort
+            : sphiaConfig.httpPort;
+        final proxyUrl = '${sphiaConfig.listen}:${port.toString()}';
+
+        if (sphiaConfig.authentication) {
+          final user = sphiaConfig.user;
+          final password = sphiaConfig.password;
+          client.findProxy = (uri) => 'PROXY $user:$password@$proxyUrl';
+        } else {
+          client.findProxy = (uri) => 'PROXY $proxyUrl';
+        }
+      }
+    }
+    return client;
+  }
+
+  Future<String> getLatestVersion(ProxyResInfo info) async {
+    final apiUrl = info.repoApiUrl;
+    final response = await getHttpResponse(apiUrl);
+    if (response.statusCode == 200) {
+      final responseBody = await response.transform(utf8.decoder).join();
+      final version = jsonDecode(responseBody)['tag_name'];
+      if (version != null) {
+        if (info.name == ProxyRes.sphia) {
+          return version.split('v').last;
+        }
+        return version;
+      } else {
+        throw Exception('Failed to parse version');
+      }
+    } else {
+      throw Exception('Failed to connect to Github');
+    }
+  }
+
+  Future<String> getSphiaChangeLog() async {
+    const url =
+        'https://api.github.com/repos/YukidouSatoru/sphia/releases/latest';
+    final response = await getHttpResponse(url);
+    if (response.statusCode == 200) {
+      final responseBody = await response.transform(utf8.decoder).join();
+      final changeLog = jsonDecode(responseBody)['body'];
+      if (changeLog != null) {
+        return changeLog;
+      } else {
+        throw Exception('Failed to parse change log');
+      }
+    } else {
+      throw Exception('Failed to connect to Github');
+    }
+  }
+}

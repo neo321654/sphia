@@ -1,18 +1,15 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/database/database.dart';
+import 'package:sphia/app/helper/proxy.dart';
 import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/rule_config.dart';
 import 'package:sphia/app/notifier/config/server_config.dart';
-import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/core_state.dart';
 import 'package:sphia/app/notifier/data/rule_group.dart';
 import 'package:sphia/app/notifier/data/server.dart';
 import 'package:sphia/app/notifier/proxy.dart';
-import 'package:sphia/app/state/core_state.dart';
-import 'package:sphia/l10n/generated/l10n.dart';
+import 'package:sphia/app/provider/l10n.dart';
 import 'package:sphia/server/server_model.dart';
-import 'package:sphia/util/system.dart';
-import 'package:sphia/view/dialog/custom_config.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -22,6 +19,7 @@ part 'tray_menu.g.dart';
 class TrayMenuNotifier extends _$TrayMenuNotifier {
   @override
   List<MenuItem> build() {
+    final l10n = ref.read(l10nProvider).value!;
     final coreRunning =
         ref.watch(proxyNotifierProvider.select((value) => value.coreRunning));
     final systemProxy =
@@ -34,7 +32,7 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
     final ruleGroups = ref.watch(ruleGroupNotifierProvider);
     return [
       MenuItem.checkbox(
-        label: S.current.coreStart,
+        label: l10n.coreStart,
         checked: coreRunning,
         onClick: (menuItem) async {
           final serverConfig = ref.read(serverConfigNotifierProvider);
@@ -48,12 +46,12 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
             return;
           }
           if (!proxyState.coreRunning) {
-            await coreStateNotifier.toggleCores(server);
+            await coreStateNotifier.startCores(server);
           }
         },
       ),
       MenuItem.checkbox(
-        label: S.current.coreStop,
+        label: l10n.coreStop,
         checked: !coreRunning,
         onClick: (menuItem) async {
           final coreStateNotifier =
@@ -62,7 +60,7 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
         },
       ),
       MenuItem.checkbox(
-        label: S.current.systemProxy,
+        label: l10n.systemProxy,
         checked: systemProxy,
         disabled: !coreRunning || tunMode, // why doesn't work on linux
         onClick: (menuItem) async {
@@ -70,74 +68,42 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
           if (!proxyState.coreRunning) {
             return;
           }
-          final proxyStateNotifier = ref.read(proxyNotifierProvider.notifier);
           if (menuItem.checked != null && menuItem.checked!) {
-            SystemUtil.disableSystemProxy();
-            proxyStateNotifier.setSystemProxy(false);
+            await ref.read(proxyHelperProvider.notifier).disableSystemProxy();
           } else {
-            final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
-            final coreState = ref.read(coreStateNotifierProvider).valueOrNull;
-            final routingName = coreState?.routing.name;
-            if (coreState == null || routingName == null) {
-              logger.e('Core state is null');
-              throw Exception('Core state is null');
-            }
-
-            if (isCustom && coreState.customHttpPort != portUnset) {
-              SystemUtil.enableSystemProxy(
-                sphiaConfig.listen,
-                coreState.customHttpPort,
-                // ugly
-              );
-              proxyStateNotifier.setSystemProxy(true);
-              return;
-            }
-
-            int httpPort = sphiaConfig.httpPort;
-            if (httpPort == -1) {
-              logger.w('HTTP port is not set');
-            }
-
-            if (routingName == 'sing-box') {
-              httpPort = sphiaConfig.mixedPort;
-            }
-            SystemUtil.enableSystemProxy(
-              sphiaConfig.listen,
-              httpPort,
-            );
-            proxyStateNotifier.setSystemProxy(true);
+            await ref.read(proxyHelperProvider.notifier).enableSystemProxy();
           }
         },
       ),
       MenuItem.separator(),
       MenuItem.submenu(
-        label: S.current.server,
+        label: l10n.server,
         submenu: Menu(
-          items: _generateServerItems(servers),
+          items: _generateServerItems(servers.valueOrNull ?? []),
         ),
       ),
       MenuItem.submenu(
         disabled: coreRunning && isCustom,
-        label: S.current.rules,
+        label: l10n.rules,
         submenu: Menu(
           items: _generateRuleItems(ruleGroups),
         ),
       ),
       MenuItem.separator(),
       MenuItem(
-        label: S.current.show,
+        label: l10n.show,
         onClick: (menuItem) async {
           await windowManager.show();
         },
       ),
       MenuItem(
-        label: S.current.hide,
+        label: l10n.hide,
         onClick: (menuItem) async {
           await windowManager.close();
         },
       ),
       MenuItem(
-        label: S.current.exit,
+        label: l10n.exit,
         onClick: (menuItem) async {
           logger.i('Exiting Sphia');
           // Stop cores

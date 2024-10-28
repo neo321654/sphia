@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sphia/app/config/sphia.dart';
+import 'package:sphia/app/helper/io.dart';
+import 'package:sphia/app/helper/system.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/proxy.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
-import 'package:sphia/util/system.dart';
 import 'package:sphia/view/widget/setting_widget/checkbox_card.dart';
 import 'package:sphia/view/widget/setting_widget/colors_card.dart';
 import 'package:sphia/view/widget/setting_widget/items_card.dart';
 import 'package:sphia/view/widget/setting_widget/text_card.dart';
 import 'package:sphia/view/widget/widget.dart';
-import 'package:sphia/view/wrapper/page.dart';
 
-class SettingPage extends ConsumerWidget {
+class SettingPage extends ConsumerWidget with SystemHelper {
   const SettingPage({
     super.key,
   });
@@ -24,41 +24,26 @@ class SettingPage extends ConsumerWidget {
         ref.watch(proxyNotifierProvider.select((value) => value.coreRunning));
     final sphiaWidgets = [
       CheckboxCard(
-        title: S.of(context).startOnBoot,
+        title: L10n.of(context)!.startOnBoot,
         selector: (value) => value.startOnBoot,
         updater: (value) {
           notifier.updateValue('startOnBoot', value);
-          SystemUtil.configureStartup(value);
+          final execPath = IoHelper.execPath;
+          configureStartup(execPath, value);
         },
-        tooltip: S.of(context).startOnBootMsg,
+        tooltip: L10n.of(context)!.startOnBootMsg,
       ),
       CheckboxCard(
-        title: S.of(context).autoRunServer,
+        title: L10n.of(context)!.autoRunServer,
         selector: (value) => value.autoRunServer,
         updater: (value) {
           notifier.updateValue('autoRunServer', value);
         },
-        tooltip: S.of(context).autoRunServerMsg,
+        tooltip: L10n.of(context)!.autoRunServerMsg,
       ),
       const Divider(),
       CheckboxCard(
-        title: S.of(context).useMaterial3,
-        selector: (value) => value.useMaterial3,
-        updater: (value) {
-          notifier.updateValue('useMaterial3', value);
-        },
-      ),
-      ItemsCard(
-        title: S.of(context).navigationStyle,
-        items: navigationStyleList,
-        selector: (value) => value.navigationStyle.index,
-        updater: (value) {
-          notifier.updateValue(
-              'navigationStyle', NavigationStyle.values[value].name);
-        },
-      ),
-      CheckboxCard(
-        title: S.of(context).darkMode,
+        title: L10n.of(context)!.darkMode,
         selector: (value) => value.darkMode,
         updater: (value) {
           notifier.updateValue('darkMode', value);
@@ -78,12 +63,12 @@ class SettingPage extends ConsumerWidget {
         updater: (value) {
           notifier.updateValue('themeColor', value);
         },
-        tooltip: S.of(context).themeColorMsg,
+        tooltip: L10n.of(context)!.themeColorMsg,
       ),
       TextCard(
-        title: S.of(context).themeColorArgb,
+        title: L10n.of(context)!.themeColorArgb,
         selector: (value) {
-          return "${value.themeColor >> 24},${(value.themeColor >> 16) & 0xFF},${(value.themeColor >> 8) & 0xFF},${value.themeColor & 0xFF}";
+          return '${value.themeColor >> 24},${(value.themeColor >> 16) & 0xFF},${(value.themeColor >> 8) & 0xFF},${value.themeColor & 0xFF}';
         },
         updater: (value) {
           late int a, r, g, b;
@@ -95,7 +80,7 @@ class SettingPage extends ConsumerWidget {
           } on Exception catch (_) {
             SphiaWidget.showDialogWithMsg(
               context: context,
-              message: S.of(context).themeColorWarn,
+              message: L10n.of(context)!.themeColorWarn,
             );
             return;
           }
@@ -109,31 +94,31 @@ class SettingPage extends ConsumerWidget {
           } else {
             SphiaWidget.showDialogWithMsg(
               context: context,
-              message: S.of(context).themeColorWarn,
+              message: L10n.of(context)!.themeColorWarn,
             );
           }
         },
       ),
       const Divider(),
       CheckboxCard(
-        title: S.of(context).showTransport,
+        title: L10n.of(context)!.showTransport,
         selector: (value) => value.showTransport,
         updater: (value) {
           notifier.updateValue('showTransport', value);
         },
-        tooltip: S.of(context).showTransportMsg,
+        tooltip: L10n.of(context)!.showTransportMsg,
       ),
       CheckboxCard(
-        title: S.of(context).showAddress,
+        title: L10n.of(context)!.showAddress,
         selector: (value) => value.showAddress,
         updater: (value) {
           notifier.updateValue('showAddress', value);
         },
-        tooltip: S.of(context).showAddressMsg,
+        tooltip: L10n.of(context)!.showAddressMsg,
       ),
       const Divider(),
       CheckboxCard(
-        title: S.of(context).enableStatistics,
+        title: L10n.of(context)!.enableStatistics,
         selector: (value) => value.enableStatistics,
         updater: (value) {
           notifier.updateValue('enableStatistics', value);
@@ -142,10 +127,10 @@ class SettingPage extends ConsumerWidget {
           }
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).enableStatisticsMsg,
+        tooltip: L10n.of(context)!.enableStatisticsMsg,
       ),
       CheckboxCard(
-        title: S.of(context).enableSpeedChart,
+        title: L10n.of(context)!.enableSpeedChart,
         selector: (value) => value.enableSpeedChart,
         updater: (value) {
           notifier.updateValue('enableSpeedChart', value);
@@ -156,56 +141,56 @@ class SettingPage extends ConsumerWidget {
         enabled: !coreRunning ||
             (coreRunning &&
                 ref.read(sphiaConfigNotifierProvider).enableStatistics),
-        tooltip: S.of(context).enableSpeedChartMsg,
+        tooltip: L10n.of(context)!.enableSpeedChartMsg,
       ),
       const Divider(),
       TextCard(
-        title: S.of(context).latencyTestUrl,
+        title: L10n.of(context)!.latencyTestUrl,
         selector: (value) => value.latencyTestUrl,
         updater: (value) {
           notifier.updateValue('latencyTestUrl', value);
         },
-        tooltip: S.of(context).latencyTestUrlMsg,
+        tooltip: L10n.of(context)!.latencyTestUrlMsg,
       ),
       const Divider(),
       CheckboxCard(
-        title: S.of(context).updateThroughProxy,
+        title: L10n.of(context)!.updateThroughProxy,
         selector: (value) => value.updateThroughProxy,
         updater: (value) {
           notifier.updateValue('updateThroughProxy', value);
         },
-        tooltip: S.of(context).updateThroughProxyMsg,
+        tooltip: L10n.of(context)!.updateThroughProxyMsg,
       ),
-      ItemsCard(
-        title: S.of(context).userAgent,
-        items: userAgentList,
-        selector: (value) => value.userAgent.index,
+      ItemsCard<UserAgent>(
+        title: L10n.of(context)!.userAgent,
+        items: UserAgent.values,
+        idxSelector: (value) => value.userAgent.index,
         updater: (value) {
-          notifier.updateValue('userAgent', UserAgent.values[value].name);
+          notifier.updateValue('userAgent', value.name);
         },
-        tooltip: S.of(context).userAgentMsg,
+        tooltip: L10n.of(context)!.userAgentMsg,
       ),
     ];
     final proxyWidgets = [
       CheckboxCard(
-        title: S.of(context).autoGetIp,
+        title: L10n.of(context)!.autoGetIp,
         selector: (value) => value.autoGetIp,
         updater: (value) {
           notifier.updateValue('autoGetIp', value);
         },
-        tooltip: S.of(context).autoGetIpMsg,
+        tooltip: L10n.of(context)!.autoGetIpMsg,
       ),
       CheckboxCard(
-        title: S.of(context).multiOutboundSupport,
+        title: L10n.of(context)!.multiOutboundSupport,
         selector: (value) => value.multiOutboundSupport,
         updater: (value) {
           notifier.updateValue('multiOutboundSupport', value);
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).multiOutboundSupportMsg,
+        tooltip: L10n.of(context)!.multiOutboundSupportMsg,
       ),
       CheckboxCard(
-        title: S.of(context).autoConfigureSystemProxy,
+        title: L10n.of(context)!.autoConfigureSystemProxy,
         selector: (value) => value.autoConfigureSystemProxy,
         updater: (value) {
           notifier.updateValue('autoConfigureSystemProxy', value);
@@ -214,10 +199,10 @@ class SettingPage extends ConsumerWidget {
           }
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).autoConfigureSystemProxyMsg,
+        tooltip: L10n.of(context)!.autoConfigureSystemProxyMsg,
       ),
       CheckboxCard(
-        title: S.of(context).enableTun,
+        title: L10n.of(context)!.enableTun,
         selector: (value) => value.enableTun,
         updater: (value) {
           notifier.updateValue('enableTun', value);
@@ -226,11 +211,11 @@ class SettingPage extends ConsumerWidget {
           }
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).enableTunMsg,
+        tooltip: L10n.of(context)!.enableTunMsg,
       ),
       const Divider(),
       TextCard(
-        title: S.of(context).socksPort,
+        title: L10n.of(context)!.socksPort,
         selector: (value) => value.socksPort.toString(),
         updater: (value) {
           late final int? newValue;
@@ -239,17 +224,17 @@ class SettingPage extends ConsumerWidget {
               newValue > 65535) {
             SphiaWidget.showDialogWithMsg(
               context: context,
-              message: S.of(context).portInvalidMsg,
+              message: L10n.of(context)!.portInvalidMsg,
             );
             return;
           }
           notifier.updateValue('socksPort', newValue);
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).socksPortMsg,
+        tooltip: L10n.of(context)!.socksPortMsg,
       ),
       TextCard(
-        title: S.of(context).httpPort,
+        title: L10n.of(context)!.httpPort,
         selector: (value) => value.httpPort.toString(),
         updater: (value) {
           late final int? newValue;
@@ -258,17 +243,17 @@ class SettingPage extends ConsumerWidget {
               newValue > 65535) {
             SphiaWidget.showDialogWithMsg(
               context: context,
-              message: S.of(context).portInvalidMsg,
+              message: L10n.of(context)!.portInvalidMsg,
             );
             return;
           }
           notifier.updateValue('httpPort', newValue);
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).httpPortMsg,
+        tooltip: L10n.of(context)!.httpPortMsg,
       ),
       TextCard(
-        title: S.of(context).mixedPort,
+        title: L10n.of(context)!.mixedPort,
         selector: (value) => value.mixedPort.toString(),
         updater: (value) {
           late final int? newValue;
@@ -277,65 +262,65 @@ class SettingPage extends ConsumerWidget {
               newValue > 65535) {
             SphiaWidget.showDialogWithMsg(
               context: context,
-              message: S.of(context).portInvalidMsg,
+              message: L10n.of(context)!.portInvalidMsg,
             );
             return;
           }
           notifier.updateValue('mixedPort', newValue);
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).mixedPortMsg,
+        tooltip: L10n.of(context)!.mixedPortMsg,
       ),
       TextCard(
-        title: S.of(context).listen,
+        title: L10n.of(context)!.listen,
         selector: (value) => value.listen,
         updater: (value) {
           notifier.updateValue('listen', value);
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).listenMsg,
+        tooltip: L10n.of(context)!.listenMsg,
       ),
       CheckboxCard(
-        title: S.of(context).enableUdp,
+        title: L10n.of(context)!.enableUdp,
         selector: (value) => value.enableUdp,
         updater: (value) {
           notifier.updateValue('enableUdp', value);
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).enableUdpMsg,
+        tooltip: L10n.of(context)!.enableUdpMsg,
       ),
       const Divider(),
       CheckboxCard(
-        title: S.of(context).authentication,
+        title: L10n.of(context)!.authentication,
         selector: (value) => value.authentication,
         updater: (value) {
           notifier.updateValue('authentication', value);
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).authenticationMsg,
+        tooltip: L10n.of(context)!.authenticationMsg,
       ),
       TextCard(
-        title: S.of(context).user,
+        title: L10n.of(context)!.user,
         selector: (value) => value.user,
         updater: (value) {
           notifier.updateValue('user', value);
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).userMsg,
+        tooltip: L10n.of(context)!.userMsg,
       ),
       TextCard(
-        title: S.of(context).password,
+        title: L10n.of(context)!.password,
         selector: (value) => value.password,
         updater: (value) {
           notifier.updateValue('password', value);
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).passwordMsg,
+        tooltip: L10n.of(context)!.passwordMsg,
       ),
     ];
     final coreWidgets = [
       TextCard(
-        title: S.of(context).coreApiPort,
+        title: L10n.of(context)!.coreApiPort,
         selector: (value) => value.coreApiPort.toString(),
         updater: (value) {
           late final int? newValue;
@@ -347,172 +332,164 @@ class SettingPage extends ConsumerWidget {
           notifier.updateValue('coreApiPort', newValue);
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).coreApiPortMsg,
+        tooltip: L10n.of(context)!.coreApiPortMsg,
       ),
       const Divider(),
       CheckboxCard(
-        title: S.of(context).enableSniffing,
+        title: L10n.of(context)!.enableSniffing,
         selector: (value) => value.enableSniffing,
         updater: (value) {
           notifier.updateValue('enableSniffing', value);
         },
-        tooltip: S.of(context).enableSniffingMsg,
+        tooltip: L10n.of(context)!.enableSniffingMsg,
       ),
       CheckboxCard(
-        title: S.of(context).configureDns,
+        title: L10n.of(context)!.configureDns,
         selector: (value) => value.configureDns,
         updater: (value) {
           notifier.updateValue('configureDns', value);
         },
-        tooltip: S.of(context).configureDnsMsg,
+        tooltip: L10n.of(context)!.configureDnsMsg,
       ),
       TextCard(
-        title: S.of(context).remoteDns,
+        title: L10n.of(context)!.remoteDns,
         selector: (value) => value.remoteDns,
         updater: (value) {
           notifier.updateValue('remoteDns', value);
         },
-        tooltip: S.of(context).remoteDnsMsg,
+        tooltip: L10n.of(context)!.remoteDnsMsg,
       ),
       TextCard(
-        title: S.of(context).directDns,
+        title: L10n.of(context)!.directDns,
         selector: (value) => value.directDns,
         updater: (value) {
           notifier.updateValue('directDns', value);
         },
-        tooltip: S.of(context).directDnsMsg,
+        tooltip: L10n.of(context)!.directDnsMsg,
       ),
       TextCard(
-        title: S.of(context).dnsResolver,
+        title: L10n.of(context)!.dnsResolver,
         selector: (value) => value.dnsResolver,
         updater: (value) {
           notifier.updateValue('dnsResolver', value);
         },
-        tooltip: S.of(context).dnsResolverMsg,
+        tooltip: L10n.of(context)!.dnsResolverMsg,
       ),
       const Divider(),
-      ItemsCard(
-        title: S.of(context).domainStrategy,
-        items: domainStrategyList,
-        selector: (value) => value.domainStrategy.index,
+      ItemsCard<DomainStrategy>(
+        title: L10n.of(context)!.domainStrategy,
+        items: DomainStrategy.values,
+        idxSelector: (value) => value.domainStrategy.index,
         updater: (value) {
-          notifier.updateValue(
-              'domainStrategy', DomainStrategy.values[value].name);
+          notifier.updateValue('domainStrategy', value.name);
         },
-        tooltip: S.of(context).domainStrategyMsg,
+        tooltip: L10n.of(context)!.domainStrategyMsg,
       ),
-      ItemsCard(
-        title: S.of(context).domainMatcher,
-        items: domainMatcherList,
-        selector: (value) => value.domainMatcher.index,
+      ItemsCard<DomainMatcher>(
+        title: L10n.of(context)!.domainMatcher,
+        items: DomainMatcher.values,
+        idxSelector: (value) => value.domainMatcher.index,
         updater: (value) {
-          notifier.updateValue(
-              'domainMatcher', DomainMatcher.values[value].name);
+          notifier.updateValue('domainMatcher', value.name);
         },
-        tooltip: S.of(context).domainMatcherMsg,
+        tooltip: L10n.of(context)!.domainMatcherMsg,
       ),
       const Divider(),
       CheckboxCard(
-        title: S.of(context).enableCoreLog,
+        title: L10n.of(context)!.enableCoreLog,
         selector: (value) => value.enableCoreLog,
         updater: (value) {
           notifier.updateValue('enableCoreLog', value);
         },
-        tooltip: S.of(context).enableCoreLogMsg,
+        tooltip: L10n.of(context)!.enableCoreLogMsg,
       ),
-      ItemsCard(
-        title: S.of(context).logLevel,
-        items: logLevelList,
-        selector: (value) => value.logLevel.index,
+      ItemsCard<LogLevel>(
+        title: L10n.of(context)!.logLevel,
+        items: LogLevel.values,
+        idxSelector: (value) => value.logLevel.index,
         updater: (value) {
-          notifier.updateValue('logLevel', LogLevel.values[value].name);
+          notifier.updateValue('logLevel', value.name);
         },
-        tooltip: S.of(context).logLevelMsg,
+        tooltip: L10n.of(context)!.logLevelMsg,
       ),
       TextCard(
-        title: S.of(context).maxLogCount,
+        title: L10n.of(context)!.maxLogCount,
         selector: (value) => value.maxLogCount.toString(),
         updater: (value) {
           late final int? newValue;
           if ((newValue = int.tryParse(value)) == null || newValue! < 0) {
             SphiaWidget.showDialogWithMsg(
               context: context,
-              message: S.of(context).enterValidNumberMsg,
+              message: L10n.of(context)!.enterValidNumberMsg,
             );
             return;
           }
           notifier.updateValue('maxLogCount', newValue);
         },
-        tooltip: S.of(context).maxLogCountMsg,
+        tooltip: L10n.of(context)!.maxLogCountMsg,
       ),
       CheckboxCard(
-        title: S.of(context).saveCoreLog,
+        title: L10n.of(context)!.saveCoreLog,
         selector: (value) => value.saveCoreLog,
         updater: (value) {
           notifier.updateValue('saveCoreLog', value);
         },
-        tooltip: S.of(context).saveCoreLogMsg,
+        tooltip: L10n.of(context)!.saveCoreLogMsg,
       ),
     ];
 
     final providerWidgets = [
-      ItemsCard(
-        title: S.of(context).routingProvider,
-        items: routingProviderList,
-        selector: (value) => value.routingProvider.index,
+      ItemsCard<RoutingProvider>(
+        title: L10n.of(context)!.routingProvider,
+        items: RoutingProvider.values.withoutLast,
+        idxSelector: (value) => value.routingProvider.index,
         updater: (value) {
-          notifier.updateValue(
-              'routingProvider', RoutingProvider.values[value].name);
+          notifier.updateValue('routingProvider', value.name);
         },
       ),
-      ItemsCard(
-        title: S.of(context).vmessProvider,
-        items: vmessProviderList,
-        selector: (value) => value.vmessProvider.index,
+      ItemsCard<VMessProvider>(
+        title: L10n.of(context)!.vmessProvider,
+        items: VMessProvider.values.withoutLast,
+        idxSelector: (value) => value.vmessProvider.index,
         updater: (value) {
-          notifier.updateValue(
-              'vmessProvider', VmessProvider.values[value].name);
+          notifier.updateValue('vmessProvider', value.name);
         },
       ),
-      ItemsCard(
-        title: S.of(context).vlessProvider,
-        items: vlessProviderList,
-        selector: (value) => value.vlessProvider.index,
+      ItemsCard<VlessProvider>(
+        title: L10n.of(context)!.vlessProvider,
+        items: VlessProvider.values.withoutLast,
+        idxSelector: (value) => value.vlessProvider.index,
         updater: (value) {
-          notifier.updateValue(
-              'vlessProvider', VlessProvider.values[value].name);
+          notifier.updateValue('vlessProvider', value.name);
         },
       ),
-      ItemsCard(
-        title: S.of(context).shadowsocksProvider,
-        items: shadowsocksProviderList,
-        selector: (value) => value.shadowsocksProvider.index,
+      ItemsCard<ShadowsocksProvider>(
+        title: L10n.of(context)!.shadowsocksProvider,
+        items: ShadowsocksProvider.values.withoutLast,
+        idxSelector: (value) => value.shadowsocksProvider.index,
         updater: (value) {
-          notifier.updateValue(
-              'shadowsocksProvider', ShadowsocksProvider.values[value].name);
+          notifier.updateValue('shadowsocksProvider', value.name);
         },
       ),
-      ItemsCard(
-        title: S.of(context).trojanProvider,
-        items: trojanProviderList,
-        selector: (value) => value.trojanProvider.index,
+      ItemsCard<TrojanProvider>(
+        title: L10n.of(context)!.trojanProvider,
+        items: TrojanProvider.values.withoutLast,
+        idxSelector: (value) => value.trojanProvider.index,
         updater: (value) {
-          notifier.updateValue(
-              'trojanProvider', TrojanProvider.values[value].name);
+          notifier.updateValue('trojanProvider', value.name);
         },
       ),
-      ItemsCard(
-        title: S.of(context).hysteriaProvider,
-        items: hysteriaProviderList,
-        selector: (value) => value.hysteriaProvider.index,
+      ItemsCard<HysteriaProvider>(
+        title: L10n.of(context)!.hysteriaProvider,
+        items: HysteriaProvider.values.withoutLast,
+        idxSelector: (value) => value.hysteriaProvider.index,
         updater: (value) {
-          notifier.updateValue(
-              'hysteriaProvider', HysteriaProvider.values[value].name);
+          notifier.updateValue('hysteriaProvider', value.name);
         },
       ),
       const Divider(),
       TextCard(
-        title: S.of(context).editorPath,
+        title: L10n.of(context)!.editorPath,
         selector: (value) => value.editorPath,
         updater: (value) {
           notifier.updateValue('editorPath', value);
@@ -520,7 +497,7 @@ class SettingPage extends ConsumerWidget {
       ),
       const Divider(),
       TextCard(
-        title: S.of(context).additionalSocksPort,
+        title: L10n.of(context)!.additionalSocksPort,
         selector: (value) => value.additionalSocksPort.toString(),
         updater: (value) {
           late final int? newValue;
@@ -529,67 +506,67 @@ class SettingPage extends ConsumerWidget {
               newValue > 65535) {
             SphiaWidget.showDialogWithMsg(
               context: context,
-              message: S.of(context).portInvalidMsg,
+              message: L10n.of(context)!.portInvalidMsg,
             );
             return;
           }
           notifier.updateValue('additionalSocksPort', newValue);
         },
         enabled: !coreRunning,
-        tooltip: S.of(context).additionalSocksPortMsg,
+        tooltip: L10n.of(context)!.additionalSocksPortMsg,
       ),
     ];
     final tunWidgets = [
-      ItemsCard(
-        title: S.of(context).tunProvider,
-        items: tunProviderList,
-        selector: (value) => value.tunProvider.index,
+      ItemsCard<TunProvider>(
+        title: L10n.of(context)!.tunProvider,
+        items: TunProvider.values,
+        idxSelector: (value) => value.tunProvider.index,
         updater: (value) {
-          notifier.updateValue('tunProvider', TunProvider.values[value].name);
+          notifier.updateValue('tunProvider', value.name);
         },
       ),
       const Divider(),
       CheckboxCard(
-        title: S.of(context).enableIpv4,
+        title: L10n.of(context)!.enableIpv4,
         selector: (value) => value.enableIpv4,
         updater: (value) {},
         enabled: false,
-        tooltip: S.of(context).enableIpv4Msg,
+        tooltip: L10n.of(context)!.enableIpv4Msg,
       ),
       TextCard(
-        title: S.of(context).ipv4Address,
+        title: L10n.of(context)!.ipv4Address,
         selector: (value) => value.ipv4Address,
         updater: (value) {
           notifier.updateValue('ipv4Address', value);
         },
-        tooltip: S.of(context).ipv4AddressMsg,
+        tooltip: L10n.of(context)!.ipv4AddressMsg,
       ),
       CheckboxCard(
-        title: S.of(context).enableIpv6,
+        title: L10n.of(context)!.enableIpv6,
         selector: (value) => value.enableIpv6,
         updater: (value) {
           notifier.updateValue('enableIpv6', value);
         },
-        tooltip: S.of(context).enableIpv6Msg,
+        tooltip: L10n.of(context)!.enableIpv6Msg,
       ),
       TextCard(
-        title: S.of(context).ipv6Address,
+        title: L10n.of(context)!.ipv6Address,
         selector: (value) => value.ipv6Address,
         updater: (value) {
           notifier.updateValue('ipv6Address', value);
         },
-        tooltip: S.of(context).ipv6AddressMsg,
+        tooltip: L10n.of(context)!.ipv6AddressMsg,
       ),
       const Divider(),
       TextCard(
-        title: S.of(context).mtu,
+        title: L10n.of(context)!.mtu,
         selector: (value) => value.mtu.toString(),
         updater: (value) {
           late final int? newValue;
           if ((newValue = int.tryParse(value)) == null) {
             SphiaWidget.showDialogWithMsg(
               context: context,
-              message: S.of(context).enterValidNumberMsg,
+              message: L10n.of(context)!.enterValidNumberMsg,
             );
             return;
           }
@@ -597,29 +574,29 @@ class SettingPage extends ConsumerWidget {
         },
       ),
       CheckboxCard(
-        title: S.of(context).endpointIndependentNat,
+        title: L10n.of(context)!.endpointIndependentNat,
         selector: (value) => value.endpointIndependentNat,
         updater: (value) {
           notifier.updateValue('endpointIndependentNat', value);
         },
       ),
-      ItemsCard(
-        title: S.of(context).stack,
-        items: tunStackList,
-        selector: (value) => value.stack.index,
+      ItemsCard<TunStack>(
+        title: L10n.of(context)!.stack,
+        items: TunStack.values,
+        idxSelector: (value) => value.stack.index,
         updater: (value) {
-          notifier.updateValue('stack', TunStack.values[value].name);
+          notifier.updateValue('stack', value.name);
         },
       ),
       CheckboxCard(
-        title: S.of(context).autoRoute,
+        title: L10n.of(context)!.autoRoute,
         selector: (value) => value.autoRoute,
         updater: (value) {
           notifier.updateValue('autoRoute', value);
         },
       ),
       CheckboxCard(
-        title: S.of(context).strictRoute,
+        title: L10n.of(context)!.strictRoute,
         selector: (value) => value.strictRoute,
         updater: (value) {
           notifier.updateValue('strictRoute', value);
@@ -632,7 +609,7 @@ class SettingPage extends ConsumerWidget {
       initialIndex: 0,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(S.of(context).settings),
+          title: Text(L10n.of(context)!.settings),
           elevation: 0,
           bottom: const TabBar(
             tabs: [
@@ -644,26 +621,24 @@ class SettingPage extends ConsumerWidget {
             ],
           ),
         ),
-        body: PageWrapper(
-          child: TabBarView(
-            children: [
-              ListView(
-                children: sphiaWidgets,
-              ),
-              ListView(
-                children: proxyWidgets,
-              ),
-              ListView(
-                children: coreWidgets,
-              ),
-              ListView(
-                children: providerWidgets,
-              ),
-              ListView(
-                children: tunWidgets,
-              ),
-            ],
-          ),
+        body: TabBarView(
+          children: [
+            ListView(
+              children: sphiaWidgets,
+            ),
+            ListView(
+              children: proxyWidgets,
+            ),
+            ListView(
+              children: coreWidgets,
+            ),
+            ListView(
+              children: providerWidgets,
+            ),
+            ListView(
+              children: tunWidgets,
+            ),
+          ],
         ),
       ),
     );

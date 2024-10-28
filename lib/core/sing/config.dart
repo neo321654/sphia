@@ -3,16 +3,16 @@ import 'package:sphia/core/rule/sing.dart';
 
 part 'config.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class SingBoxConfig {
-  Log? log;
-  Dns? dns;
-  Route? route;
-  List<Inbound>? inbounds;
-  List<Outbound>? outbounds;
-  Experimental? experimental;
+  final Log? log;
+  final Dns? dns;
+  final Route? route;
+  final List<Inbound>? inbounds;
+  final List<Outbound>? outbounds;
+  final Experimental? experimental;
 
-  SingBoxConfig({
+  const SingBoxConfig({
     this.log,
     this.dns,
     this.route,
@@ -21,59 +21,52 @@ class SingBoxConfig {
     this.experimental,
   });
 
-  factory SingBoxConfig.fromJson(Map<String, dynamic> json) =>
-      _$SingBoxConfigFromJson(json);
-
   Map<String, dynamic> toJson() => _$SingBoxConfigToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Log {
-  bool disabled;
-  String? level;
-  String? output;
-  bool timestamp;
+  final bool disabled;
+  final String? level;
+  final String? output;
+  final bool timestamp;
 
-  Log({
+  const Log({
     required this.disabled,
     this.level,
     this.output,
     required this.timestamp,
   });
 
-  factory Log.fromJson(Map<String, dynamic> json) => _$LogFromJson(json);
-
   Map<String, dynamic> toJson() => _$LogToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Dns {
-  List<DnsServer> servers;
-  List<SingBoxDnsRule> rules;
+  final List<DnsServer> servers;
+  final List<SingBoxDnsRule> rules;
   @JsonKey(name: 'final')
-  String? finalTag;
+  final String? finalTag;
 
-  Dns({
+  const Dns({
     required this.servers,
     required this.rules,
     this.finalTag,
   });
 
-  factory Dns.fromJson(Map<String, dynamic> json) => _$DnsFromJson(json);
-
   Map<String, dynamic> toJson() => _$DnsToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class DnsServer {
-  String tag;
-  String address;
+  final String tag;
+  final String address;
   @JsonKey(name: 'address_resolver')
-  String? addressResolver;
-  String? strategy;
-  String? detour;
+  final String? addressResolver;
+  final String? strategy;
+  final String? detour;
 
-  DnsServer({
+  const DnsServer({
     required this.tag,
     required this.address,
     this.addressResolver,
@@ -81,23 +74,20 @@ class DnsServer {
     this.detour,
   });
 
-  factory DnsServer.fromJson(Map<String, dynamic> json) =>
-      _$DnsServerFromJson(json);
-
   Map<String, dynamic> toJson() => _$DnsServerToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Route {
-  Geoip? geoip;
-  Geosite? geosite;
-  List<SingBoxRule> rules;
+  final Geoip? geoip;
+  final Geosite? geosite;
+  final List<SingBoxRule> rules;
   @JsonKey(name: 'auto_detect_interface')
-  bool autoDetectInterface;
+  final bool autoDetectInterface;
   @JsonKey(name: 'final')
-  String? finalTag;
+  final String? finalTag;
 
-  Route({
+  const Route({
     this.geoip,
     this.geosite,
     required this.rules,
@@ -105,65 +95,58 @@ class Route {
     this.finalTag,
   });
 
-  factory Route.fromJson(Map<String, dynamic> json) => _$RouteFromJson(json);
-
   Map<String, dynamic> toJson() => _$RouteToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Geoip {
-  String path;
+  final String path;
 
-  Geoip({
+  const Geoip({
     required this.path,
   });
-
-  factory Geoip.fromJson(Map<String, dynamic> json) => _$GeoipFromJson(json);
 
   Map<String, dynamic> toJson() => _$GeoipToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Geosite {
-  String path;
+  final String path;
 
-  Geosite({
+  const Geosite({
     required this.path,
   });
-
-  factory Geosite.fromJson(Map<String, dynamic> json) =>
-      _$GeositeFromJson(json);
 
   Map<String, dynamic> toJson() => _$GeositeToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Inbound {
-  String type;
-  String? tag;
-  String? listen;
+  final String type;
+  final String? tag;
+  final String? listen;
   @JsonKey(name: 'listen_port')
-  int? listenPort;
-  List<User>? users;
+  final int? listenPort;
+  final List<User>? users;
   @JsonKey(name: 'interface_name')
-  String? interfaceName;
+  final String? interfaceName;
   @JsonKey(name: 'inet4_address')
-  String? inet4Address;
+  final String? inet4Address;
   @JsonKey(name: 'inet6_address')
-  String? inet6Address;
-  int? mtu;
+  final String? inet6Address;
+  final int? mtu;
   @JsonKey(name: 'auto_route')
-  bool? autoRoute;
+  final bool? autoRoute;
   @JsonKey(name: 'strict_route')
-  bool? strictRoute;
-  String? stack;
-  bool? sniff;
+  final bool? strictRoute;
+  final String? stack;
+  final bool? sniff;
   @JsonKey(name: 'endpoint_independent_nat')
-  bool? endpointIndependentNat;
+  final bool? endpointIndependentNat;
   @JsonKey(name: 'domain_strategy')
-  String? domainStrategy;
+  final String? domainStrategy;
 
-  Inbound({
+  const Inbound({
     required this.type,
     this.tag,
     this.listen,
@@ -181,50 +164,47 @@ class Inbound {
     this.domainStrategy,
   });
 
-  factory Inbound.fromJson(Map<String, dynamic> json) =>
-      _$InboundFromJson(json);
-
   Map<String, dynamic> toJson() => _$InboundToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Outbound {
-  String type;
-  String? tag;
-  String? server;
+  final String type;
+  final String? tag;
+  final String? server;
   @JsonKey(name: 'server_port')
-  int? serverPort;
-  String? version;
-  String? username;
-  String? method;
-  String? password;
-  String? plugin;
+  final int? serverPort;
+  final String? version;
+  final String? username;
+  final String? method;
+  final String? password;
+  final String? plugin;
   @JsonKey(name: 'plugin_opts')
-  String? pluginOpts;
-  String? uuid;
-  String? flow;
-  String? security;
+  final String? pluginOpts;
+  final String? uuid;
+  final String? flow;
+  final String? security;
   @JsonKey(name: 'alter_id')
-  int? alterId;
-  String? network;
-  Tls? tls;
-  Transport? transport;
+  final int? alterId;
+  final String? network;
+  final Tls? tls;
+  final Transport? transport;
   @JsonKey(name: 'up_mbps')
-  int? upMbps;
+  final int? upMbps;
   @JsonKey(name: 'down_mbps')
-  int? downMbps;
-  String? obfs;
-  String? auth;
+  final int? downMbps;
+  final String? obfs;
+  final String? auth;
   @JsonKey(name: 'auth_str')
-  String? authStr;
+  final String? authStr;
   @JsonKey(name: 'recv_window_conn')
-  int? recvWindowConn;
+  final int? recvWindowConn;
   @JsonKey(name: 'recv_window')
-  int? recvWindow;
+  final int? recvWindow;
   @JsonKey(name: 'disable_mtu_discovery')
-  int? disableMtuDiscovery;
+  final int? disableMtuDiscovery;
 
-  Outbound({
+  const Outbound({
     required this.type,
     this.tag,
     this.server,
@@ -252,23 +232,20 @@ class Outbound {
     this.disableMtuDiscovery,
   });
 
-  factory Outbound.fromJson(Map<String, dynamic> json) =>
-      _$OutboundFromJson(json);
-
   Map<String, dynamic> toJson() => _$OutboundToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Tls {
-  bool enabled;
+  final bool enabled;
   @JsonKey(name: 'server_name')
-  String serverName;
-  bool insecure;
-  List<String>? alpn;
-  UTls? utls;
-  Reality? reality;
+  final String serverName;
+  final bool insecure;
+  final List<String>? alpn;
+  final UTls? utls;
+  final Reality? reality;
 
-  Tls({
+  const Tls({
     required this.enabled,
     required this.serverName,
     required this.insecure,
@@ -277,60 +254,53 @@ class Tls {
     this.reality,
   });
 
-  factory Tls.fromJson(Map<String, dynamic> json) => _$TlsFromJson(json);
-
   Map<String, dynamic> toJson() => _$TlsToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class UTls {
-  bool enabled;
-  String? fingerprint;
+  final bool enabled;
+  final String? fingerprint;
 
-  UTls({
+  const UTls({
     required this.enabled,
     this.fingerprint,
   });
 
-  factory UTls.fromJson(Map<String, dynamic> json) => _$UTlsFromJson(json);
-
   Map<String, dynamic> toJson() => _$UTlsToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Reality {
-  bool enabled;
+  final bool enabled;
   @JsonKey(name: 'public_key')
-  String publicKey;
-  @JsonKey(name: "short_id")
-  String? shortId;
+  final String publicKey;
+  @JsonKey(name: 'short_id')
+  final String? shortId;
 
-  Reality({
+  const Reality({
     required this.enabled,
     required this.publicKey,
     this.shortId,
   });
 
-  factory Reality.fromJson(Map<String, dynamic> json) =>
-      _$RealityFromJson(json);
-
   Map<String, dynamic> toJson() => _$RealityToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Transport {
-  String type;
-  String? host;
-  String? path;
+  final String type;
+  final String? host;
+  final String? path;
   @JsonKey(name: 'service_name')
-  String? serviceName;
+  final String? serviceName;
   @JsonKey(name: 'max_early_data')
-  int? maxEarlyData;
+  final int? maxEarlyData;
   @JsonKey(name: 'early_data_header_name')
-  String? earlyDataHeaderName;
-  Headers? headers;
+  final String? earlyDataHeaderName;
+  final Headers? headers;
 
-  Transport({
+  const Transport({
     required this.type,
     this.host,
     this.path,
@@ -340,93 +310,76 @@ class Transport {
     this.headers,
   });
 
-  factory Transport.fromJson(Map<String, dynamic> json) =>
-      _$TransportFromJson(json);
-
   Map<String, dynamic> toJson() => _$TransportToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Headers {
   @JsonKey(name: 'Host')
-  String host;
+  final String host;
 
-  Headers({
+  const Headers({
     required this.host,
   });
-
-  factory Headers.fromJson(Map<String, dynamic> json) =>
-      _$HeadersFromJson(json);
 
   Map<String, dynamic> toJson() => _$HeadersToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class User {
-  String? username;
-  String? password;
+  final String? username;
+  final String? password;
 
-  User({
+  const User({
     this.username,
     this.password,
   });
 
-  factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
-
   Map<String, dynamic> toJson() => _$UserToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Experimental {
   @JsonKey(name: 'clash_api')
-  ClashApi? clashApi;
+  final ClashApi? clashApi;
   @JsonKey(name: 'cache_file')
-  CacheFile? cacheFile;
+  final CacheFile? cacheFile;
 
-  Experimental({
+  const Experimental({
     this.clashApi,
     this.cacheFile,
   });
 
-  factory Experimental.fromJson(Map<String, dynamic> json) =>
-      _$ExperimentalFromJson(json);
-
   Map<String, dynamic> toJson() => _$ExperimentalToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class ClashApi {
   @JsonKey(name: 'external_controller')
-  String externalController;
+  final String externalController;
   @JsonKey(name: 'store_selected')
-  bool? storeSelected; // deprecated since v1.8.0
+  final bool? storeSelected; // deprecated since v1.8.0
   @JsonKey(name: 'cache_file')
-  String? cacheFile; // deprecated since v1.8.0
+  final String? cacheFile; // deprecated since v1.8.0
 
-  ClashApi({
+  const ClashApi({
     required this.externalController,
     this.storeSelected,
     this.cacheFile,
   });
 
-  factory ClashApi.fromJson(Map<String, dynamic> json) =>
-      _$ClashApiFromJson(json);
-
   Map<String, dynamic> toJson() => _$ClashApiToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class CacheFile {
-  bool enabled;
-  String path;
+  final bool enabled;
+  final String path;
 
-  CacheFile({
+  const CacheFile({
     required this.enabled,
     required this.path,
   });
-
-  factory CacheFile.fromJson(Map<String, dynamic> json) =>
-      _$CacheFileFromJson(json);
 
   Map<String, dynamic> toJson() => _$CacheFileToJson(this);
 }

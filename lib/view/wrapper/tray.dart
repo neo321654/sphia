@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sphia/app/helper/system.dart';
+import 'package:sphia/app/helper/tray.dart';
 import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/tray.dart';
-import 'package:sphia/util/system.dart';
-import 'package:sphia/util/tray.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -16,15 +16,16 @@ class TrayWrapper extends ConsumerStatefulWidget {
   ConsumerState<TrayWrapper> createState() => _TrayWrapperState();
 }
 
-class _TrayWrapperState extends ConsumerState<TrayWrapper> with TrayListener {
+class _TrayWrapperState extends ConsumerState<TrayWrapper>
+    with TrayListener, SystemHelper {
   @override
   void initState() {
     super.initState();
     trayManager.addListener(this);
-    if (SystemUtil.os == OS.linux) {
+    if (isLinux) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         logger.i('Building tray');
-        await TrayUtil.setIcon(coreRunning: false);
+        await TrayHelper.setIcon(coreRunning: false);
       });
     }
   }
@@ -37,7 +38,7 @@ class _TrayWrapperState extends ConsumerState<TrayWrapper> with TrayListener {
 
   @override
   Future<void> onTrayIconMouseDown() async {
-    if (SystemUtil.os == OS.macos) {
+    if (isMacOS) {
       await trayManager.popUpContextMenu();
     } else {
       await windowManager.show();
@@ -46,7 +47,7 @@ class _TrayWrapperState extends ConsumerState<TrayWrapper> with TrayListener {
 
   @override
   Future<void> onTrayIconRightMouseDown() async {
-    if (SystemUtil.os != OS.macos) {
+    if (!isMacOS) {
       await trayManager.popUpContextMenu();
     }
   }

@@ -3,18 +3,18 @@ import 'package:sphia/core/rule/xray.dart';
 
 part 'config.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class XrayConfig {
-  Log? log;
-  Dns? dns;
-  List<Inbound>? inbounds;
-  List<Outbound>? outbounds;
-  Routing? routing;
-  Api? api;
-  Policy? policy;
-  Stats? stats;
+  final Log? log;
+  final Dns? dns;
+  final List<Inbound>? inbounds;
+  final List<Outbound>? outbounds;
+  final Routing? routing;
+  final Api? api;
+  final Policy? policy;
+  final Stats? stats;
 
-  XrayConfig({
+  const XrayConfig({
     this.log,
     this.dns,
     this.inbounds,
@@ -25,83 +25,73 @@ class XrayConfig {
     this.stats,
   });
 
-  factory XrayConfig.fromJson(Map<String, dynamic> json) =>
-      _$XrayConfigFromJson(json);
-
   Map<String, dynamic> toJson() => _$XrayConfigToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Sniffing {
-  bool enabled = true;
-  List<String> destOverride = ['http', 'tls'];
+  final bool enabled;
+  final List<String> destOverride;
 
-  Sniffing();
-
-  factory Sniffing.fromJson(Map<String, dynamic> json) =>
-      _$SniffingFromJson(json);
+  const Sniffing({
+    this.enabled = true,
+    this.destOverride = const ['http', 'tls'],
+  });
 
   Map<String, dynamic> toJson() => _$SniffingToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Dns {
-  List<DnsServer> servers;
+  final List<DnsServer> servers;
 
-  Dns({
+  const Dns({
     required this.servers,
   });
-
-  factory Dns.fromJson(Map<String, dynamic> json) => _$DnsFromJson(json);
 
   Map<String, dynamic> toJson() => _$DnsToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class DnsServer {
-  String address;
-  List<String>? domains;
-  bool? skipFallback;
+  final String address;
+  final List<String>? domains;
+  final bool? skipFallback;
 
-  DnsServer({
+  const DnsServer({
     required this.address,
     this.domains,
     this.skipFallback,
   });
 
-  factory DnsServer.fromJson(Map<String, dynamic> json) =>
-      _$DnsServerFromJson(json);
-
   Map<String, dynamic> toJson() => _$DnsServerToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Log {
-  String? access;
-  String? error;
-  String loglevel;
+  final String? access;
+  final String? error;
+  final String loglevel;
 
-  Log({
+  const Log({
     this.access,
     this.error,
     required this.loglevel,
   });
 
-  factory Log.fromJson(Map<String, dynamic> json) => _$LogFromJson(json);
-
   Map<String, dynamic> toJson() => _$LogToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Inbound {
-  String? tag;
-  int port;
-  String listen;
-  String protocol;
-  Sniffing? sniffing;
-  InboundSetting settings;
+  final String? tag;
+  final int port;
+  final String listen;
+  final String protocol;
+  final Sniffing? sniffing;
+  final InboundSetting settings;
 
-  Inbound({
+  const Inbound({
     this.tag,
     required this.port,
     required this.listen,
@@ -110,57 +100,48 @@ class Inbound {
     required this.settings,
   });
 
-  factory Inbound.fromJson(Map<String, dynamic> json) =>
-      _$InboundFromJson(json);
-
   Map<String, dynamic> toJson() => _$InboundToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class InboundSetting {
-  String? auth;
-  List<Accounts>? accounts;
-  bool? udp;
-  String? address;
+  final String? auth;
+  final List<Accounts>? accounts;
+  final bool? udp;
+  final String? address;
 
-  InboundSetting({
+  const InboundSetting({
     this.auth,
     this.accounts,
     this.udp,
     this.address,
   });
 
-  factory InboundSetting.fromJson(Map<String, dynamic> json) =>
-      _$InboundSettingFromJson(json);
-
   Map<String, dynamic> toJson() => _$InboundSettingToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Accounts {
-  String user;
-  String pass;
+  final String user;
+  final String pass;
 
-  Accounts({
+  const Accounts({
     required this.user,
     required this.pass,
   });
 
-  factory Accounts.fromJson(Map<String, dynamic> json) =>
-      _$AccountsFromJson(json);
-
   Map<String, dynamic> toJson() => _$AccountsToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Outbound {
-  String? tag;
-  String protocol;
-  OutboundSetting? settings;
-  StreamSettings? streamSettings;
-  Mux? mux;
+  final String? tag;
+  final String protocol;
+  final OutboundSetting? settings;
+  final StreamSettings? streamSettings;
+  final Mux? mux;
 
-  Outbound({
+  const Outbound({
     this.tag,
     required this.protocol,
     this.settings,
@@ -168,110 +149,95 @@ class Outbound {
     this.mux,
   });
 
-  factory Outbound.fromJson(Map<String, dynamic> json) =>
-      _$OutboundFromJson(json);
-
   Map<String, dynamic> toJson() => _$OutboundToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class OutboundSetting {
-  List<Vnext>? vnext;
-  List<dynamic>? servers;
+  final List<Vnext>? vnext;
+  final List<dynamic>? servers;
 
-  OutboundSetting({
+  const OutboundSetting({
     this.vnext,
     this.servers,
   });
 
-  factory OutboundSetting.fromJson(Map<String, dynamic> json) =>
-      _$OutboundSettingFromJson(json);
-
   Map<String, dynamic> toJson() => _$OutboundSettingToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Socks {
-  String address;
-  int port;
-  List<User>? users;
+  final String address;
+  final int port;
+  final List<User>? users;
 
-  Socks({
+  const Socks({
     required this.address,
     required this.port,
     this.users,
   });
 
-  factory Socks.fromJson(Map<String, dynamic> json) => _$SocksFromJson(json);
-
   Map<String, dynamic> toJson() => _$SocksToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Vnext {
-  String address;
-  int port;
-  List<User> users;
+  final String address;
+  final int port;
+  final List<User> users;
 
-  Vnext({
+  const Vnext({
     required this.address,
     required this.port,
     required this.users,
   });
 
-  factory Vnext.fromJson(Map<String, dynamic> json) => _$VnextFromJson(json);
-
   Map<String, dynamic> toJson() => _$VnextToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Shadowsocks {
-  String address;
-  int port;
-  String method;
-  String password;
+  final String address;
+  final int port;
+  final String method;
+  final String password;
 
-  Shadowsocks({
+  const Shadowsocks({
     required this.address,
     required this.port,
     required this.method,
     required this.password,
   });
 
-  factory Shadowsocks.fromJson(Map<String, dynamic> json) =>
-      _$ShadowsocksFromJson(json);
-
   Map<String, dynamic> toJson() => _$ShadowsocksToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Trojan {
-  String address;
-  int port;
-  String password;
+  final String address;
+  final int port;
+  final String password;
 
-  Trojan({
+  const Trojan({
     required this.address,
     required this.port,
     required this.password,
   });
 
-  factory Trojan.fromJson(Map<String, dynamic> json) => _$TrojanFromJson(json);
-
   Map<String, dynamic> toJson() => _$TrojanToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class User {
-  String? user;
-  String? pass;
-  String? id;
-  int? alterId;
-  String? security;
-  String? encryption;
-  String? flow;
+  final String? user;
+  final String? pass;
+  final String? id;
+  final int? alterId;
+  final String? security;
+  final String? encryption;
+  final String? flow;
 
-  User({
+  const User({
     this.user,
     this.pass,
     this.id,
@@ -281,23 +247,21 @@ class User {
     this.flow,
   });
 
-  factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
-
   Map<String, dynamic> toJson() => _$UserToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class StreamSettings {
-  String network;
-  String security;
-  TlsSettings? tlsSettings;
-  RealitySettings? realitySettings;
-  TcpSettings? tcpSettings;
-  WsSettings? wsSettings;
-  GrpcSettings? grpcSettings;
-  HttpUpgradeSettings? httpUpgradeSettings;
+  final String network;
+  final String security;
+  final TlsSettings? tlsSettings;
+  final RealitySettings? realitySettings;
+  final TcpSettings? tcpSettings;
+  final WsSettings? wsSettings;
+  final GrpcSettings? grpcSettings;
+  final HttpUpgradeSettings? httpUpgradeSettings;
 
-  StreamSettings({
+  const StreamSettings({
     required this.network,
     required this.security,
     this.tlsSettings,
@@ -308,82 +272,71 @@ class StreamSettings {
     this.httpUpgradeSettings,
   });
 
-  factory StreamSettings.fromJson(Map<String, dynamic> json) =>
-      _$StreamSettingsFromJson(json);
-
   Map<String, dynamic> toJson() => _$StreamSettingsToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class TcpSettings {
-  Header? header;
+  final Header? header;
 
-  TcpSettings({
+  const TcpSettings({
     this.header,
   });
-
-  factory TcpSettings.fromJson(Map<String, dynamic> json) =>
-      _$TcpSettingsFromJson(json);
 
   Map<String, dynamic> toJson() => _$TcpSettingsToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Header {
-  String? type;
-  Request? request;
+  final String? type;
+  final Request? request;
 
-  Header({
+  const Header({
     this.type,
     this.request,
   });
 
-  factory Header.fromJson(Map<String, dynamic> json) => _$HeaderFromJson(json);
-
   Map<String, dynamic> toJson() => _$HeaderToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Request {
-  String? version;
-  String? method;
-  List<String>? path;
-  TcpHeaders? headers;
+  final String? version;
+  final String? method;
+  final List<String>? path;
+  final TcpHeaders? headers;
 
-  Request({
+  const Request({
     this.version,
     this.method,
     this.path,
     this.headers,
   });
 
-  factory Request.defaults() => Request(
+  factory Request.httpGet(TcpHeaders? headers) => Request(
         version: '1.1',
         method: 'GET',
         path: ['/'],
-        headers: TcpHeaders.defaults(),
+        headers: headers ?? TcpHeaders.http(),
       );
-
-  factory Request.fromJson(Map<String, dynamic> json) =>
-      _$RequestFromJson(json);
 
   Map<String, dynamic> toJson() => _$RequestToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class TcpHeaders {
   @JsonKey(name: 'Host')
-  List<String>? host;
+  final List<String>? host;
   @JsonKey(name: 'User-Agent')
-  List<String>? userAgent;
+  final List<String>? userAgent;
   @JsonKey(name: 'Accept-Encoding')
-  List<String>? acceptEncoding;
+  final List<String>? acceptEncoding;
   @JsonKey(name: 'Connection')
-  List<String>? connection;
+  final List<String>? connection;
   @JsonKey(name: 'Pragma')
-  String? pragma;
+  final String? pragma;
 
-  TcpHeaders({
+  const TcpHeaders({
     this.host,
     this.userAgent,
     this.acceptEncoding,
@@ -391,93 +344,79 @@ class TcpHeaders {
     this.pragma,
   });
 
-  factory TcpHeaders.defaults() => TcpHeaders(
-        host: [''],
-        userAgent: [''],
+  factory TcpHeaders.http([List<String>? host, List<String>? userAgent]) =>
+      TcpHeaders(
+        host: host,
+        userAgent: userAgent,
         acceptEncoding: ['gzip, deflate'],
         connection: ['keep-alive'],
         pragma: 'no-cache',
       );
 
-  factory TcpHeaders.fromJson(Map<String, dynamic> json) =>
-      _$TcpHeadersFromJson(json);
-
   Map<String, dynamic> toJson() => _$TcpHeadersToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class GrpcSettings {
-  String? serviceName;
-  bool? multiMode;
+  final String? serviceName;
+  final bool? multiMode;
 
-  GrpcSettings({
+  const GrpcSettings({
     this.serviceName,
     this.multiMode,
   });
 
-  factory GrpcSettings.fromJson(Map<String, dynamic> json) =>
-      _$GrpcSettingsFromJson(json);
-
   Map<String, dynamic> toJson() => _$GrpcSettingsToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class WsSettings {
-  String path;
-  Headers? headers;
+  final String path;
+  final Headers? headers;
 
-  WsSettings({
+  const WsSettings({
     required this.path,
     this.headers,
   });
 
-  factory WsSettings.fromJson(Map<String, dynamic> json) =>
-      _$WsSettingsFromJson(json);
-
   Map<String, dynamic> toJson() => _$WsSettingsToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Headers {
-  String? host;
+  final String? host;
 
-  Headers({
+  const Headers({
     this.host,
   });
-
-  factory Headers.fromJson(Map<String, dynamic> json) =>
-      _$HeadersFromJson(json);
 
   Map<String, dynamic> toJson() => _$HeadersToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class TlsSettings {
-  bool allowInsecure;
-  String? serverName;
-  String? fingerprint;
+  final bool allowInsecure;
+  final String? serverName;
+  final String? fingerprint;
 
-  TlsSettings({
+  const TlsSettings({
     required this.allowInsecure,
     this.serverName,
     this.fingerprint,
   });
 
-  factory TlsSettings.fromJson(Map<String, dynamic> json) =>
-      _$TlsSettingsFromJson(json);
-
   Map<String, dynamic> toJson() => _$TlsSettingsToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class RealitySettings {
-  String? serverName;
-  String fingerprint;
-  String? shortId;
-  String publicKey;
-  String? spiderX;
+  final String? serverName;
+  final String fingerprint;
+  final String? shortId;
+  final String publicKey;
+  final String? spiderX;
 
-  RealitySettings({
+  const RealitySettings({
     this.serverName,
     required this.fingerprint,
     this.shortId,
@@ -485,115 +424,94 @@ class RealitySettings {
     this.spiderX,
   });
 
-  factory RealitySettings.fromJson(Map<String, dynamic> json) =>
-      _$RealitySettingsFromJson(json);
-
   Map<String, dynamic> toJson() => _$RealitySettingsToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class HttpUpgradeSettings {
-  String path;
-  Headers? headers;
+  final String path;
+  final Headers? headers;
 
-  HttpUpgradeSettings({
+  const HttpUpgradeSettings({
     required this.path,
     this.headers,
   });
 
-  factory HttpUpgradeSettings.fromJson(Map<String, dynamic> json) =>
-      _$HttpUpgradeSettingsFromJson(json);
-
   Map<String, dynamic> toJson() => _$HttpUpgradeSettingsToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Mux {
-  bool enabled;
-  int concurrency;
+  final bool enabled;
+  final int concurrency;
 
-  Mux({
+  const Mux({
     required this.enabled,
     required this.concurrency,
   });
 
-  factory Mux.fromJson(Map<String, dynamic> json) => _$MuxFromJson(json);
-
   Map<String, dynamic> toJson() => _$MuxToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Routing {
-  String domainStrategy;
+  final String domainStrategy;
+  final String domainMatcher;
+  final List<XrayRule> rules;
 
-  String domainMatcher;
-
-  List<XrayRule> rules;
-
-  Routing({
+  const Routing({
     required this.domainStrategy,
     required this.domainMatcher,
     required this.rules,
   });
 
-  factory Routing.fromJson(Map<String, dynamic> json) =>
-      _$RoutingFromJson(json);
-
   Map<String, dynamic> toJson() => _$RoutingToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Api {
-  String tag;
-  List<String>? services;
+  final String tag;
+  final List<String>? services;
 
-  Api({
+  const Api({
     required this.tag,
     this.services,
   });
 
-  factory Api.fromJson(Map<String, dynamic> json) => _$ApiFromJson(json);
-
   Map<String, dynamic> toJson() => _$ApiToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Policy {
-  System system;
+  final System system;
 
-  Policy({
+  const Policy({
     required this.system,
   });
-
-  factory Policy.fromJson(Map<String, dynamic> json) => _$PolicyFromJson(json);
 
   Map<String, dynamic> toJson() => _$PolicyToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class System {
-  bool? statsInboundUplink;
-  bool? statsInboundDownlink;
-  bool? statsOutboundUplink;
-  bool? statsOutboundDownlink;
+  final bool? statsInboundUplink;
+  final bool? statsInboundDownlink;
+  final bool? statsOutboundUplink;
+  final bool? statsOutboundDownlink;
 
-  System({
+  const System({
     this.statsInboundUplink,
     this.statsInboundDownlink,
     this.statsOutboundUplink,
     this.statsOutboundDownlink,
   });
 
-  factory System.fromJson(Map<String, dynamic> json) => _$SystemFromJson(json);
-
   Map<String, dynamic> toJson() => _$SystemToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Stats {
-  Stats();
-
-  factory Stats.fromJson(Map<String, dynamic> json) => _$StatsFromJson(json);
+  const Stats();
 
   Map<String, dynamic> toJson() => _$StatsToJson(this);
 }

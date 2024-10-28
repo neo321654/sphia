@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
-import 'package:sphia/app/theme.dart';
 
 class CheckboxCard extends ConsumerWidget {
   final String title;
@@ -22,12 +21,9 @@ class CheckboxCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final useMaterial3 = ref.watch(
-        sphiaConfigNotifierProvider.select((value) => value.useMaterial3));
     final value = ref.watch(sphiaConfigNotifierProvider.select(selector));
     final listTile = ListTile(
       enabled: enabled,
-      shape: SphiaTheme.listTileShape(useMaterial3),
       title: Text(title),
       trailing: Container(
         alignment: Alignment.centerRight,
@@ -39,12 +35,10 @@ class CheckboxCard extends ConsumerWidget {
       ),
       onTap: enabled ? () => updater(!value) : null,
     );
-    if (tooltip != null) {
-      return Tooltip(
-        message: tooltip!,
-        child: listTile,
-      );
-    }
-    return listTile;
+    return Tooltip(
+      message: tooltip ?? '',
+      waitDuration: const Duration(milliseconds: 500),
+      child: listTile,
+    );
   }
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 import 'package:sphia/server/shadowsocks/server.dart';
 import 'package:sphia/view/widget/widget.dart';
 
-const shadowsocksEncryption = [
+const shadowsocksEncryptionList = [
   'none',
   'plain',
   'aes-128-gcm',
@@ -25,7 +27,7 @@ const shadowsocksEncryption = [
   'xchacha20',
 ];
 
-class ShadowsocksServerDialog extends StatefulWidget {
+class ShadowsocksServerDialog extends HookWidget {
   final String title;
   final ShadowsocksServer server;
 
@@ -36,129 +38,113 @@ class ShadowsocksServerDialog extends StatefulWidget {
   });
 
   @override
-  State<ShadowsocksServerDialog> createState() =>
-      _ShadowsocksServerDialogState();
-}
-
-class _ShadowsocksServerDialogState extends State<ShadowsocksServerDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _remarkController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _portController = TextEditingController();
-  final _passwordController = TextEditingController();
-  late String _encryption;
-  final _pluginController = TextEditingController();
-  final _pluginOptsController = TextEditingController();
-  int? _routingProvider;
-  int? _protocolProvider;
-  bool _obscureText = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _initControllers();
-  }
-
-  @override
-  void dispose() {
-    _disposeControllers();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final remarkController = useTextEditingController(text: server.remark);
+    final addressController = useTextEditingController(text: server.address);
+    final portController =
+        useTextEditingController(text: server.port.toString());
+    final passwordController =
+        useTextEditingController(text: server.authPayload);
+    final encryption = useState(server.encryption);
+    final pluginController =
+        useTextEditingController(text: server.plugin ?? '');
+    final pluginOptsController =
+        useTextEditingController(text: server.pluginOpts ?? '');
+    final routingProvider = useState(
+      RoutingProvider
+          .values[server.routingProvider ?? RoutingProvider.none.index],
+    );
+    final protocolProvider = useState(
+      ShadowsocksProvider
+          .values[server.protocolProvider ?? ShadowsocksProvider.none.index],
+    );
+    final obscureText = useState(true);
+
     final widgets = [
       SphiaWidget.textInput(
-        controller: _remarkController,
-        labelText: S.of(context).remark,
+        controller: remarkController,
+        labelText: L10n.of(context)!.remark,
       ),
       SphiaWidget.textInput(
-        controller: _addressController,
-        labelText: S.of(context).address,
+        controller: addressController,
+        labelText: L10n.of(context)!.address,
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return S.of(context).addressEnterMsg;
+            return L10n.of(context)!.addressEnterMsg;
           }
           return null;
         },
       ),
       SphiaWidget.textInput(
-        controller: _portController,
-        labelText: S.of(context).port,
+        controller: portController,
+        labelText: L10n.of(context)!.port,
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return S.of(context).portEnterMsg;
+            return L10n.of(context)!.portEnterMsg;
           }
           late final int? newValue;
           if ((newValue = int.tryParse(value)) == null ||
               newValue! < 0 ||
               newValue > 65535) {
-            return S.of(context).portInvalidMsg;
+            return L10n.of(context)!.portInvalidMsg;
           }
           return null;
         },
       ),
       SphiaWidget.passwordTextInput(
-        controller: _passwordController,
-        labelText: S.of(context).password,
+        controller: passwordController,
+        labelText: L10n.of(context)!.password,
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return S.of(context).passwordEnterMsg;
+            return L10n.of(context)!.passwordEnterMsg;
           }
           return null;
         },
-        obscureText: _obscureText,
+        obscureText: obscureText.value,
         onToggle: (value) {
-          setState(() {
-            _obscureText = value;
-          });
+          obscureText.value = value;
         },
       ),
       SphiaWidget.dropdownButton(
-        value: _encryption,
-        labelText: S.of(context).encryption,
-        items: shadowsocksEncryption,
+        value: encryption.value,
+        labelText: L10n.of(context)!.encryption,
+        items: shadowsocksEncryptionList,
         onChanged: (value) {
           if (value != null) {
-            setState(() {
-              _encryption = value;
-            });
+            encryption.value = value;
           }
         },
       ),
       SphiaWidget.textInput(
-        controller: _pluginController,
-        labelText: S.of(context).plugin,
+        controller: pluginController,
+        labelText: L10n.of(context)!.plugin,
       ),
       SphiaWidget.textInput(
-        controller: _pluginOptsController,
-        labelText: S.of(context).pluginOpts,
+        controller: pluginOptsController,
+        labelText: L10n.of(context)!.pluginOpts,
       ),
       SphiaWidget.routingDropdownButton(
-        value: _routingProvider,
-        labelText: S.of(context).routingProvider,
+        value: routingProvider.value,
+        labelText: L10n.of(context)!.routingProvider,
         onChanged: (value) {
-          setState(() {
-            _routingProvider = value;
-          });
+          routingProvider.value = value;
         },
       ),
       SphiaWidget.shadowsocksDropdownButton(
-        value: _protocolProvider,
-        labelText: S.of(context).shadowsocksProvider,
+        value: protocolProvider.value,
+        labelText: L10n.of(context)!.shadowsocksProvider,
         onChanged: (value) {
-          setState(() {
-            _protocolProvider = value;
-          });
+          protocolProvider.value = value;
         },
       ),
     ];
 
     return AlertDialog(
-      title: Text(widget.title),
+      title: Text(title),
       scrollable: true,
       content: Form(
-        key: _formKey,
+        key: formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: widgets,
@@ -166,62 +152,43 @@ class _ShadowsocksServerDialogState extends State<ShadowsocksServerDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            Navigator.pop(context, null);
-          },
-          child: Text(S.of(context).cancel),
+          onPressed: () => Navigator.pop(context, null),
+          child: Text(L10n.of(context)!.cancel),
         ),
         ElevatedButton(
           onPressed: () {
-            if (_formKey.currentState?.validate() == true) {
+            if (formKey.currentState?.validate() == true) {
               final server = ShadowsocksServer(
-                id: widget.server.id,
-                groupId: widget.server.groupId,
-                protocol: widget.server.protocol,
-                address: _addressController.text,
-                port: int.parse(_portController.text),
-                uplink: widget.server.uplink,
-                downlink: widget.server.downlink,
-                remark: _remarkController.text,
-                authPayload: _passwordController.text,
-                encryption: _encryption,
-                plugin: _pluginController.text.trim().isNotEmpty
-                    ? _pluginController.text
+                id: this.server.id,
+                groupId: this.server.groupId,
+                protocol: this.server.protocol,
+                address: addressController.text,
+                port: int.parse(portController.text),
+                uplink: this.server.uplink,
+                downlink: this.server.downlink,
+                remark: remarkController.text,
+                authPayload: passwordController.text,
+                encryption: encryption.value,
+                plugin: pluginController.text.trim().isNotEmpty
+                    ? pluginController.text
                     : null,
-                pluginOpts: _pluginOptsController.text.trim().isNotEmpty
-                    ? _pluginOptsController.text
+                pluginOpts: pluginOptsController.text.trim().isNotEmpty
+                    ? pluginOptsController.text
                     : null,
-                routingProvider: _routingProvider,
-                protocolProvider: _protocolProvider,
+                routingProvider: routingProvider.value == RoutingProvider.none
+                    ? null
+                    : routingProvider.value.index,
+                protocolProvider:
+                    protocolProvider.value == ShadowsocksProvider.none
+                        ? null
+                        : protocolProvider.value.index,
               );
               Navigator.pop(context, server);
             }
           },
-          child: Text(S.of(context).save),
+          child: Text(L10n.of(context)!.save),
         ),
       ],
     );
-  }
-
-  void _initControllers() {
-    final server = widget.server;
-    _remarkController.text = server.remark;
-    _addressController.text = server.address;
-    _portController.text = server.port.toString();
-    _passwordController.text = server.authPayload;
-    _encryption = server.encryption;
-    _pluginController.text = server.plugin ?? '';
-    _pluginOptsController.text = server.pluginOpts ?? '';
-    _routingProvider = server.routingProvider;
-    _protocolProvider = server.protocolProvider;
-  }
-
-  void _disposeControllers() {
-    _remarkController.dispose();
-    _addressController.dispose();
-    _portController.dispose();
-    _passwordController.dispose();
-    _pluginController.dispose();
-    _pluginOptsController.dispose();
   }
 }

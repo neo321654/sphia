@@ -30,7 +30,7 @@ class TrojanServer extends ServerModel {
   factory TrojanServer.defaults() => TrojanServer(
         id: defaultServerId,
         groupId: defaultServerGroupId,
-        protocol: 'trojan',
+        protocol: Protocol.trojan,
         remark: '',
         address: '',
         port: 0,

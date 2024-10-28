@@ -2,17 +2,21 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:path/path.dart' as p;
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/database/database.dart';
+import 'package:sphia/app/helper/io.dart';
+import 'package:sphia/app/helper/latency.dart';
+import 'package:sphia/app/helper/server.dart';
+import 'package:sphia/app/helper/uri/uri.dart';
 import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/data/server.dart';
 import 'package:sphia/app/provider/core.dart';
-import 'package:sphia/app/theme.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 import 'package:sphia/server/custom_config/server.dart';
 import 'package:sphia/server/hysteria/server.dart';
@@ -20,236 +24,244 @@ import 'package:sphia/server/server_model.dart';
 import 'package:sphia/server/shadowsocks/server.dart';
 import 'package:sphia/server/trojan/server.dart';
 import 'package:sphia/server/xray/server.dart';
-import 'package:sphia/util/latency.dart';
-import 'package:sphia/util/system.dart';
-import 'package:sphia/util/uri/uri.dart';
 import 'package:sphia/view/card/dashboard_card/chart.dart';
-import 'package:sphia/view/page/agent/server.dart';
+import 'package:sphia/view/card/shadow_card.dart';
 import 'package:sphia/view/widget/widget.dart';
 
 part 'server_card.g.dart';
 
+enum ShareOption {
+  qrCode,
+  clipboard,
+  configuration,
+}
+
 @riverpod
 ServerModel currentServer(Ref ref) => throw UnimplementedError();
 
-class ServerCard extends ConsumerWidget with ServerAgent {
+class ServerCard extends ConsumerWidget with ServerHelper {
   const ServerCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final darkMode = ref
-        .watch(sphiaConfigNotifierProvider.select((value) => value.darkMode));
-    final useMaterial3 = ref.watch(
-        sphiaConfigNotifierProvider.select((value) => value.useMaterial3));
     final themeColor = Color(ref.watch(
         sphiaConfigNotifierProvider.select((value) => value.themeColor)));
-    final showTransport = ref.watch(
-        sphiaConfigNotifierProvider.select((value) => value.showTransport));
-    final showAddress = ref.watch(
-        sphiaConfigNotifierProvider.select((value) => value.showAddress));
     final server = ref.watch(currentServerProvider);
     final isSelected = ref.watch(serverConfigNotifierProvider
         .select((value) => value.selectedServerId == server.id));
-    String serverInfo = server.protocol;
-    if (showTransport) {
-      if (server is XrayServer) {
-        serverInfo += ' - ${server.transport}';
-        if (server.tls != 'none') {
-          serverInfo += ' + ${server.tls}';
-        }
-      } else if (server is ShadowsocksServer && server.plugin != null) {
-        if (server.plugin == 'obfs-local' || server.plugin == 'simple-obfs') {
-          serverInfo += ' - http';
-        } else if (server.plugin == 'simple-obfs-tls') {
-          serverInfo += ' - tls';
-        }
-      } else if (server is TrojanServer) {
-        serverInfo += ' - tcp';
-      } else if (server is HysteriaServer) {
-        serverInfo += ' - ${server.hysteriaProtocol}';
-      }
-    }
-    return Column(
-      children: [
-        Card(
-          elevation: 2,
-          margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-          color: isSelected ? themeColor : null,
-          child: ListTile(
-            shape: SphiaTheme.listTileShape(useMaterial3),
-            title: Text(server.remark),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+
+    return ShadowCard(
+      color: isSelected ? themeColor : null,
+      child: ListTile(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6.0),
+        ),
+        title: Text(server.remark),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Consumer(
+              builder: (context, ref, child) {
+                final showTransport = ref.watch(sphiaConfigNotifierProvider
+                    .select((value) => value.showTransport));
+                String serverInfo = server.protocol.name;
+                if (showTransport) {
+                  if (server is XrayServer) {
+                    serverInfo += ' - ${server.transport}';
+                    if (server.tls != 'none') {
+                      serverInfo += ' + ${server.tls}';
+                    }
+                  } else if (server is ShadowsocksServer &&
+                      server.plugin != null) {
+                    if (server.plugin == 'obfs-local' ||
+                        server.plugin == 'simple-obfs') {
+                      serverInfo += ' - http';
+                    } else if (server.plugin == 'simple-obfs-tls') {
+                      serverInfo += ' - tls';
+                    }
+                  } else if (server is TrojanServer) {
+                    serverInfo += ' - tcp';
+                  } else if (server is HysteriaServer) {
+                    serverInfo += ' - ${server.hysteriaProtocol}';
+                  }
+                }
+                return Text(serverInfo);
+              },
+            ),
+            Consumer(
+              builder: (context, ref, child) {
+                final showAddress = ref.watch(sphiaConfigNotifierProvider
+                    .select((value) => value.showAddress));
+                if (showAddress && server.protocol != Protocol.custom) {
+                  return Text('${server.address}:${server.port}');
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
+            ),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(serverInfo),
-                if (showAddress && server.protocol != 'custom') ...[
-                  Text('${server.address}:${server.port}')
-                ]
+                if (server.latency != null) ...[
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final darkMode = ref.watch(sphiaConfigNotifierProvider
+                          .select((value) => value.darkMode));
+                      return RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                                text: server.latency == latencyFailure
+                                    ? 'timeout'
+                                    : '${server.latency} ms',
+                                style: TextStyle(
+                                    color: darkMode
+                                        ? Colors.white
+                                        : Colors.black)),
+                            TextSpan(
+                              text: '  ◉',
+                              style: TextStyle(
+                                color: _getLatencyColor(server.latency!),
+                              ),
+                            )
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+                if (server.uplink != null && server.downlink != null)
+                  _getServerTrafficWidget(
+                    server.uplink!.toDouble(),
+                    server.downlink!.toDouble(),
+                  ),
               ],
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (server.latency != null)
-                      RichText(
-                          text: TextSpan(children: [
-                        TextSpan(
-                            text: server.latency == latencyFailure
-                                ? 'timeout'
-                                : '${server.latency} ms',
-                            style: TextStyle(
-                                color: darkMode ? Colors.white : Colors.black)),
-                        TextSpan(
-                          text: '  ◉',
-                          style: TextStyle(
-                            color: _getLatencyColor(server.latency!),
-                          ),
-                        )
-                      ])),
-                    if (server.uplink != null && server.downlink != null)
-                      Text(
-                        _getServerTraffic(
-                          server.uplink!.toDouble(),
-                          server.downlink!.toDouble(),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                SphiaWidget.iconButton(
-                  icon: Icons.edit,
-                  onTap: () async {
-                    late final ServerModel? newServer;
-                    if ((newServer = await editServer(
-                          server: server,
-                          ref: ref,
-                        )) !=
-                        null) {
-                      final notifier =
-                          ref.read(serverNotifierProvider.notifier);
-                      notifier.updateServer(newServer!);
-                    }
-                  },
-                ),
-                SphiaWidget.popupMenuIconButton(
-                  icon: Icons.share,
-                  items: [
-                    if (server.protocol != 'custom') ...[
-                      PopupMenuItem(
-                        value: 'QRCode',
-                        child: Text(S.of(context).qrCode),
-                      ),
-                      PopupMenuItem(
-                        value: 'ExportToClipboard',
-                        child: Text(S.of(context).exportToClipboard),
-                      ),
-                    ],
-                    PopupMenuItem(
-                      value: 'Configuration',
-                      child: Text(S.of(context).configuration),
-                    )
-                  ],
-                  onItemSelected: (value) async {
-                    if (await shareServer(
-                      option: value,
+            const SizedBox(width: 16),
+            SphiaWidget.iconButton(
+              icon: Symbols.edit,
+              onTap: () async {
+                late final ServerModel? newServer;
+                if ((newServer = await _editServer(
                       server: server,
                       ref: ref,
-                    )) {
-                      if (value == 'Configuration') {
-                        if (!context.mounted) {
-                          return;
-                        }
-                        await SphiaWidget.showDialogWithMsg(
-                          context: context,
-                          message:
-                              '${S.of(context).exportToFile}: ${p.join(tempPath, 'export.json')}',
-                        );
-                      } else if (value == 'ExportToClipboard') {
-                        if (!context.mounted) {
-                          return;
-                        }
-                        await SphiaWidget.showDialogWithMsg(
-                          context: context,
-                          message: S.of(context).exportToClipboard,
-                        );
-                      }
-                    } else {
-                      if (value == 'Configuration') {
-                        if (!context.mounted) {
-                          return;
-                        }
-                        await SphiaWidget.showDialogWithMsg(
-                          context: context,
-                          message: S.of(context).noConfigurationFileGenerated,
-                        );
-                      }
-                    }
-                  },
-                ),
-                SphiaWidget.iconButton(
-                  icon: Icons.delete,
-                  onTap: () async {
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text(S.of(context).deleteServer),
-                        content: Text(
-                            S.of(context).deleteServerConfirm(server.remark)),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: Text(S.of(context).cancel),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: Text(S.of(context).delete),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (confirm == null || !confirm) {
-                      return;
-                    }
-                    logger.i('Deleting Server: ${server.id}');
-                    await serverDao.deleteServer(server.id);
-                    await serverDao.refreshServersOrder(server.groupId);
-                    final serverNotifier =
-                        ref.read(serverNotifierProvider.notifier);
-                    serverNotifier.removeServer(server);
-                  },
+                    )) !=
+                    null) {
+                  final notifier = ref.read(serverNotifierProvider.notifier);
+                  notifier.updateServerData(newServer!);
+                }
+              },
+            ),
+            const SizedBox(width: 16),
+            SphiaWidget.popupMenuIconButton<ShareOption>(
+              icon: Symbols.share,
+              items: [
+                if (server.protocol != Protocol.custom) ...[
+                  PopupMenuItem(
+                    value: ShareOption.qrCode,
+                    child: Text(L10n.of(context)!.qrCode),
+                  ),
+                  PopupMenuItem(
+                    value: ShareOption.clipboard,
+                    child: Text(L10n.of(context)!.exportToClipboard),
+                  ),
+                ],
+                PopupMenuItem(
+                  value: ShareOption.configuration,
+                  child: Text(L10n.of(context)!.configuration),
                 )
               ],
+              onItemSelected: (value) async {
+                if (await _shareServer(
+                  option: value,
+                  server: server,
+                  ref: ref,
+                )) {
+                  if (value == ShareOption.configuration) {
+                    if (!context.mounted) {
+                      return;
+                    }
+                    final tempPath = IoHelper.tempPath;
+                    await SphiaWidget.showDialogWithMsg(
+                      context: context,
+                      message:
+                          '${L10n.of(context)!.exportToFile}: ${p.join(tempPath, 'export.json')}',
+                    );
+                  }
+                } else {
+                  if (value == ShareOption.configuration) {
+                    if (!context.mounted) {
+                      return;
+                    }
+                    await SphiaWidget.showDialogWithMsg(
+                      context: context,
+                      message: L10n.of(context)!.noConfigurationFileGenerated,
+                    );
+                  }
+                }
+              },
             ),
-            onTap: () {
-              final serverConfig = ref.read(serverConfigNotifierProvider);
-              final notifier = ref.read(serverConfigNotifierProvider.notifier);
-              if (server.id == serverConfig.selectedServerId) {
-                notifier.updateValue('selectedServerId', 0);
-              } else {
-                notifier.updateValue('selectedServerId', server.id);
-              }
-            },
-          ),
+            const SizedBox(width: 16),
+            SphiaWidget.iconButton(
+              icon: Symbols.delete,
+              onTap: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(L10n.of(context)!.deleteServer),
+                    content: Text(
+                        L10n.of(context)!.deleteServerConfirm(server.remark)),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: Text(L10n.of(context)!.cancel),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text(L10n.of(context)!.delete),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == null || !confirm) {
+                  return;
+                }
+                logger.i('Deleting Server: ${server.id}');
+                await serverDao.deleteServer(server.id);
+                await serverDao.refreshServersOrder(server.groupId);
+                final serverNotifier =
+                    ref.read(serverNotifierProvider.notifier);
+                serverNotifier.removeServer(server);
+              },
+            )
+          ],
         ),
-      ],
+        onTap: () {
+          final serverConfig = ref.read(serverConfigNotifierProvider);
+          final notifier = ref.read(serverConfigNotifierProvider.notifier);
+          if (server.id == serverConfig.selectedServerId) {
+            notifier.updateValue('selectedServerId', 0);
+          } else {
+            notifier.updateValue('selectedServerId', server.id);
+          }
+        },
+      ),
     );
   }
 
-  String _getServerTraffic(double uplink, double downlink) {
+  Widget _getServerTrafficWidget(double uplink, double downlink) {
     if (uplink == 0 && downlink == 0) {
-      return '';
+      return const SizedBox.shrink();
     }
-    int uplinkUnitIndex = uplink > 0 ? getUnit(uplink.toInt()) : 0;
-    int downlinkUnitIndex = downlink > 0 ? getUnit(downlink.toInt()) : 0;
 
-    uplink = uplink / unitRates[uplinkUnitIndex];
-    downlink = downlink / unitRates[downlinkUnitIndex];
-
-    return '${uplink.toStringAsFixed(2)}${units[uplinkUnitIndex]}↑ ${downlink.toStringAsFixed(2)}${units[downlinkUnitIndex]}↓';
+    final str = '${formatBytes(uplink)}↑ ${formatBytes(downlink)}↓';
+    return Text(str);
   }
 
   Color _getLatencyColor(int latency) {
@@ -269,7 +281,7 @@ class ServerCard extends ConsumerWidget with ServerAgent {
     }
   }
 
-  Future<ServerModel?> editServer({
+  Future<ServerModel?> _editServer({
     required ServerModel server,
     required WidgetRef ref,
   }) async {
@@ -286,26 +298,26 @@ class ServerCard extends ConsumerWidget with ServerAgent {
     return editedServer;
   }
 
-  Future<bool> shareServer({
-    required String option,
+  Future<bool> _shareServer({
+    required ShareOption option,
     required ServerModel server,
     required WidgetRef ref,
   }) async {
     switch (option) {
-      case 'QRCode':
-        String? uri = UriUtil.getUri(server);
+      case ShareOption.qrCode:
+        String? uri = UriHelper.getUri(server);
         final context = ref.context;
         if (uri != null && context.mounted) {
           _shareQRCode(uri: uri, context: context);
         }
         return true;
-      case 'ExportToClipboard':
-        String? uri = UriUtil.getUri(server);
+      case ShareOption.clipboard:
+        String? uri = UriHelper.getUri(server);
         if (uri != null) {
-          UriUtil.exportUriToClipboard(uri);
+          UriHelper.exportUriToClipboard(uri);
         }
         return true;
-      case 'Configuration':
+      case ShareOption.configuration:
         return _shareConfiguration(
           server: server,
           ref: ref,
@@ -320,7 +332,7 @@ class ServerCard extends ConsumerWidget with ServerAgent {
     required BuildContext context,
   }) async {
     logger.i('Sharing QRCode: $uri');
-    return showDialog(
+    return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -344,8 +356,9 @@ class ServerCard extends ConsumerWidget with ServerAgent {
   }) async {
     final protocol = server.protocol;
 
-    if (protocol == 'custom') {
+    if (protocol == Protocol.custom) {
       server = server as CustomConfigServer;
+      final tempPath = IoHelper.tempPath;
       final file = File(p.join(tempPath, 'export.${server.configFormat}'));
       if (file.existsSync()) {
         file.deleteSync();
@@ -354,48 +367,44 @@ class ServerCard extends ConsumerWidget with ServerAgent {
       return true;
     }
 
-    final protocolToCore = {
-      'vmess': (ServerModel selectedServer, SphiaConfig sphiaConfig) =>
-          (selectedServer.protocolProvider ?? sphiaConfig.vmessProvider) ==
-                  VmessProvider.xray.index
-              ? ref.read(xrayCoreProvider)
-              : ref.read(singBoxCoreProvider),
-      'vless': (ServerModel selectedServer, SphiaConfig sphiaConfig) =>
-          (selectedServer.protocolProvider ?? sphiaConfig.vlessProvider) ==
-                  VlessProvider.xray.index
-              ? ref.read(xrayCoreProvider)
-              : ref.read(singBoxCoreProvider),
-      'shadowsocks': (ServerModel selectedServer, SphiaConfig sphiaConfig) {
-        final protocolProvider =
-            selectedServer.protocolProvider ?? sphiaConfig.shadowsocksProvider;
-        if (protocolProvider == ShadowsocksProvider.xray.index) {
-          return ref.read(xrayCoreProvider);
-        } else if (protocolProvider == ShadowsocksProvider.sing.index) {
-          return ref.read(singBoxCoreProvider);
-        } else {
-          return null;
-        }
-      },
-      'trojan': (ServerModel selectedServer, SphiaConfig sphiaConfig) =>
-          (selectedServer.protocolProvider ?? sphiaConfig.trojanProvider) ==
-                  TrojanProvider.xray.index
-              ? ref.read(xrayCoreProvider)
-              : ref.read(singBoxCoreProvider),
-      'hysteria': (ServerModel selectedServer, SphiaConfig sphiaConfig) =>
-          (selectedServer.protocolProvider ?? sphiaConfig.hysteriaProvider) ==
-                  HysteriaProvider.sing.index
-              ? ref.read(singBoxCoreProvider)
-              : ref.read(hysteriaCoreProvider),
-    };
     final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
-    final core = protocolToCore[protocol]?.call(server, sphiaConfig);
+    final protocolProviderIdx = server.protocolProvider;
+    final core = switch (protocol) {
+      Protocol.vmess => VMessProvider.values[
+                  protocolProviderIdx ?? sphiaConfig.vmessProvider.index] ==
+              VMessProvider.xray
+          ? ref.read(xrayCoreProvider)
+          : ref.read(singBoxCoreProvider),
+      Protocol.vless => VlessProvider.values[
+                  protocolProviderIdx ?? sphiaConfig.vlessProvider.index] ==
+              VlessProvider.xray
+          ? ref.read(xrayCoreProvider)
+          : ref.read(singBoxCoreProvider),
+      Protocol.shadowsocks => switch (ShadowsocksProvider.values[
+            protocolProviderIdx ?? sphiaConfig.shadowsocksProvider.index]) {
+          ShadowsocksProvider.xray => ref.read(xrayCoreProvider),
+          ShadowsocksProvider.sing => ref.read(singBoxCoreProvider),
+          _ => null,
+        },
+      Protocol.trojan => TrojanProvider.values[
+                  protocolProviderIdx ?? sphiaConfig.trojanProvider.index] ==
+              TrojanProvider.xray
+          ? ref.read(xrayCoreProvider)
+          : ref.read(singBoxCoreProvider),
+      Protocol.hysteria => HysteriaProvider.values[
+                  protocolProviderIdx ?? sphiaConfig.hysteriaProvider.index] ==
+              HysteriaProvider.sing
+          ? ref.read(singBoxCoreProvider)
+          : ref.read(hysteriaCoreProvider),
+      _ => null
+    };
     if (core == null) {
       logger.e('No supported core for protocol: $protocol');
       return false;
     }
     core.configFileName = 'export.json';
     core.isRouting = true;
-    core.servers = [server];
+    core.servers.add(server);
     logger.i('Sharing Configuration: ${server.id}');
     await core.configure();
     return true;

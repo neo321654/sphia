@@ -1,16 +1,16 @@
 import 'package:sphia/app/database/database.dart';
-import 'package:sphia/core/helper.dart';
+import 'package:sphia/app/helper/uri/uri.dart';
 import 'package:sphia/core/rule/extension.dart';
 import 'package:sphia/core/rule/xray.dart';
 import 'package:sphia/core/xray/config.dart';
+import 'package:sphia/core/xray/core.dart';
 import 'package:sphia/server/server_model.dart';
 import 'package:sphia/server/shadowsocks/server.dart';
 import 'package:sphia/server/trojan/server.dart';
 import 'package:sphia/server/xray/server.dart';
-import 'package:sphia/util/uri/uri.dart';
 
-class XrayGenerate {
-  static Dns dns(String remoteDns, String directDns) {
+extension XrayGenerate on XrayCore {
+  Dns genDns(String remoteDns, String directDns) {
     return Dns(
       servers: [
         DnsServer(
@@ -28,7 +28,7 @@ class XrayGenerate {
     );
   }
 
-  static Inbound inbound({
+  Inbound genInbound({
     required String protocol,
     required int port,
     required String listen,
@@ -42,7 +42,7 @@ class XrayGenerate {
       port: port,
       listen: listen,
       protocol: protocol,
-      sniffing: enableSniffing ? Sniffing() : null,
+      sniffing: enableSniffing ? const Sniffing() : null,
       settings: InboundSetting(
         auth: isAuth ? 'password' : 'noauth',
         accounts: isAuth
@@ -58,52 +58,54 @@ class XrayGenerate {
     );
   }
 
-  static Inbound dokodemoInbound(int apiPort) {
+  Inbound genDokodemoInbound(int apiPort) {
     return Inbound(
       tag: 'api',
       port: apiPort,
       listen: '127.0.0.1',
       protocol: 'dokodemo-door',
-      settings: InboundSetting(address: '127.0.0.1'),
+      settings: const InboundSetting(address: '127.0.0.1'),
     );
   }
 
-  static Outbound generateOutbound(ServerModel server, String userAgent) {
-    late Outbound outbound;
+  Outbound genOutbound({
+    required ServerModel server,
+    String? userAgent,
+    String? outboundTag,
+  }) {
+    final tag = outboundTag ?? 'proxy';
     switch (server.protocol) {
-      case 'socks':
-      case 'vmess':
-      case 'vless':
-        outbound = xrayOutbound(server as XrayServer);
-        break;
-      case 'shadowsocks':
-        outbound = shadowsocksOutbound(server as ShadowsocksServer, userAgent);
-        break;
-      case 'trojan':
-        outbound = trojanOutbound(server as TrojanServer);
-        break;
+      case Protocol.socks:
+      case Protocol.vmess:
+      case Protocol.vless:
+        return _genXrayOutbound(server as XrayServer, tag);
+      case Protocol.shadowsocks:
+        return _genShadowsocksOutbound(
+            server as ShadowsocksServer, userAgent, tag);
+      case Protocol.trojan:
+        return _genTrojanOutbound(server as TrojanServer, tag);
       default:
         throw Exception(
             'Xray-Core does not support this server type: ${server.protocol}');
     }
-    return outbound;
   }
 
-  static Outbound xrayOutbound(XrayServer server) {
-    if (server.protocol == 'socks') {
-      return socksOutbound(server);
-    } else if (server.protocol == 'vmess' || server.protocol == 'vless') {
-      return vProtocolOutbound(server);
+  Outbound _genXrayOutbound(XrayServer server, String outboundTag) {
+    if (server.protocol == Protocol.socks) {
+      return _genSocksOutbound(server, outboundTag);
+    } else if (server.protocol == Protocol.vmess ||
+        server.protocol == Protocol.vless) {
+      return _genVProtocolOutbound(server, outboundTag);
     } else {
       throw Exception(
           'Xray-Core does not support this server type: ${server.protocol}');
     }
   }
 
-  static Outbound socksOutbound(XrayServer server) {
+  Outbound _genSocksOutbound(XrayServer server, String outboundTag) {
     return Outbound(
       protocol: 'socks',
-      tag: 'proxy',
+      tag: outboundTag,
       settings: OutboundSetting(
         servers: [
           Socks(
@@ -115,8 +117,8 @@ class XrayGenerate {
     );
   }
 
-  static Outbound vProtocolOutbound(XrayServer server) {
-    String security = server.tls;
+  Outbound _genVProtocolOutbound(XrayServer server, String outboundTag) {
+    final security = server.tls;
     final tlsSettings = security == 'tls'
         ? TlsSettings(
             allowInsecure: server.allowInsecure,
@@ -158,8 +160,8 @@ class XrayGenerate {
           : null,
     );
     return Outbound(
-      protocol: server.protocol,
-      tag: 'proxy',
+      protocol: server.protocol.name,
+      tag: outboundTag,
       settings: OutboundSetting(
         vnext: [
           Vnext(
@@ -168,11 +170,15 @@ class XrayGenerate {
             users: [
               User(
                 id: server.authPayload,
-                encryption:
-                    server.protocol == 'vless' ? server.encryption : null,
+                encryption: server.protocol == Protocol.vless
+                    ? server.encryption
+                    : null,
                 flow: server.flow,
-                security: server.protocol == 'vmess' ? server.encryption : null,
-                alterId: server.protocol == 'vmess' ? server.alterId : null,
+                security: server.protocol == Protocol.vmess
+                    ? server.encryption
+                    : null,
+                alterId:
+                    server.protocol == Protocol.vmess ? server.alterId : null,
               ),
             ],
           ),
@@ -182,8 +188,11 @@ class XrayGenerate {
     );
   }
 
-  static Outbound shadowsocksOutbound(
-      ShadowsocksServer server, String userAgent) {
+  Outbound _genShadowsocksOutbound(
+    ShadowsocksServer server,
+    String? userAgent,
+    String outboundTag,
+  ) {
     StreamSettings? streamSettings;
     String? network;
     String security = 'none';
@@ -191,7 +200,8 @@ class XrayGenerate {
     String? host;
     if (server.plugin != null) {
       if (server.pluginOpts != null) {
-        final pluginParameters = UriUtil.extractPluginOpts(server.pluginOpts!);
+        final pluginParameters =
+            UriHelper.extractPluginOpts(server.pluginOpts!);
 
         if (pluginParameters['obfs'] == 'ws') {
           network = 'ws';
@@ -224,10 +234,12 @@ class XrayGenerate {
               ? TcpSettings(
                   header: Header(
                     type: 'http',
-                    request: Request.defaults()
-                      ..headers = (TcpHeaders.defaults()
-                        ..host = host != null ? [host] : [server.address]
-                        ..userAgent = [userAgent]),
+                    request: Request.httpGet(
+                      TcpHeaders.http(
+                        host != null ? [host] : [server.address],
+                        userAgent == null ? [userAgent!] : null,
+                      ),
+                    ),
                   ),
                 )
               : null,
@@ -249,7 +261,7 @@ class XrayGenerate {
     }
     return Outbound(
       protocol: 'shadowsocks',
-      tag: 'proxy',
+      tag: outboundTag,
       settings: OutboundSetting(
         servers: [
           Shadowsocks(
@@ -264,7 +276,7 @@ class XrayGenerate {
     );
   }
 
-  static Outbound trojanOutbound(TrojanServer server) {
+  Outbound _genTrojanOutbound(TrojanServer server, String outboundTag) {
     final streamSettings = StreamSettings(
       network: 'tcp',
       security: 'tls',
@@ -275,7 +287,7 @@ class XrayGenerate {
     );
     return Outbound(
       protocol: 'trojan',
-      tag: 'proxy',
+      tag: outboundTag,
       settings: OutboundSetting(
         servers: [
           Trojan(
@@ -289,7 +301,7 @@ class XrayGenerate {
     );
   }
 
-  static Routing routing({
+  Routing genRouting({
     required String domainStrategy,
     required String domainMatcher,
     required List<Rule> rules,
@@ -298,15 +310,14 @@ class XrayGenerate {
     List<XrayRule> xrayRules = [];
     if (enableApi) {
       xrayRules.add(
-        XrayRule(
+        const XrayRule(
           inboundTag: 'api',
           outboundTag: 'api',
         ),
       );
     }
     for (var rule in rules) {
-      xrayRules.add(rule.toXrayRule()
-        ..outboundTag = CoreHelper.determineOutboundTag(rule.outboundTag));
+      xrayRules.add(rule.toXrayRule(determineOutboundTag(rule.outboundTag)));
     }
     return Routing(
       domainStrategy: domainStrategy,

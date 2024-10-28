@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:sphia/core/core_info.dart';
 
 part 'version.freezed.dart';
-
 part 'version.g.dart';
 
 @freezed
@@ -20,19 +20,19 @@ class VersionConfig with _$VersionConfig {
 }
 
 extension VersionConfigExtension on VersionConfig {
-  String? getVersion(String coreName) {
+  String? getVersion(ProxyRes coreName) {
     switch (coreName) {
-      case 'sing-box':
+      case ProxyRes.sing:
         return singBoxVersion;
-      case 'xray-core':
+      case ProxyRes.xray:
         return xrayCoreVersion;
-      case 'shadowsocks-rust':
+      case ProxyRes.ssrust:
         return shadowsocksRustVersion;
-      case 'hysteria':
+      case ProxyRes.hysteria:
         return hysteriaVersion;
-      case 'sing-box-rules':
+      case ProxyRes.singRules:
         return singBoxRulesVersion;
-      case 'v2ray-rules-dat':
+      case ProxyRes.v2rayRules:
         return v2rayRulesVersion;
       default:
         return null;
@@ -40,12 +40,9 @@ extension VersionConfigExtension on VersionConfig {
   }
 
   String generateLog() {
-    var json = toJson();
-    final List<String> logList = [];
-    // json.removeWhere((key, value) => value == null);
-    json.forEach((key, value) {
-      logList.add('$key: $value');
-    });
-    return logList.join('\n');
+    final json = toJson();
+    return json.entries
+        .map((entry) => '${entry.key}: ${entry.value}')
+        .join('\n');
   }
 }

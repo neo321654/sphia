@@ -8,10 +8,15 @@ import 'package:sphia/app/config/version.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/log.dart';
 
+const sphiaConfigId = 1;
+const serverConfigId = 2;
+const ruleConfigId = 3;
+const versionConfigId = 4;
+
 class SphiaConfigDao {
   final Database _db;
 
-  SphiaConfigDao(this._db);
+  const SphiaConfigDao(this._db);
 
   Future<String> getConfigJson() async {
     final sphiaConfig = await (_db.select(_db.config)
@@ -76,7 +81,7 @@ class SphiaConfigDao {
 class ServerConfigDao {
   final Database _db;
 
-  ServerConfigDao(this._db);
+  const ServerConfigDao(this._db);
 
   Future<String> getConfigJson() async {
     final serverConfig = await (_db.select(_db.config)
@@ -130,7 +135,7 @@ class ServerConfigDao {
 class RuleConfigDao {
   final Database _db;
 
-  RuleConfigDao(this._db);
+  const RuleConfigDao(this._db);
 
   Future<String> getConfigJson() async {
     final ruleConfig = await (_db.select(_db.config)
@@ -184,7 +189,7 @@ class RuleConfigDao {
 class VersionConfigDao {
   final Database _db;
 
-  VersionConfigDao(this._db);
+  const VersionConfigDao(this._db);
 
   Future<String> getConfigJson() async {
     final versionConfig = await (_db.select(_db.config)
@@ -224,4 +229,17 @@ class VersionConfigDao {
       rethrow;
     }
   }
+}
+
+Future<List<T>> getOrderedList<T>(Future<List<int>> Function() getOrder,
+    Future<List<T>> Function() getGroups, int Function(T) getId) async {
+  final order = await getOrder();
+  final groups = await getGroups();
+  final groupMap = {for (var group in groups) getId(group): group};
+
+  return order
+      .map((id) => groupMap[id])
+      .where((item) => item != null)
+      .cast<T>()
+      .toList();
 }

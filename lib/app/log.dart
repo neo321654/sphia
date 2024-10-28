@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
-import 'package:sphia/util/system.dart';
+import 'package:sphia/core/core_info.dart';
 
 class MyFilter extends LogFilter {
   @override
@@ -16,10 +16,15 @@ late final Logger logger;
 
 class SphiaLog {
   static final DateFormat formatter = DateFormat('yyyy-MM-dd-HH-mm-ss');
+  static late final String logPath;
 
-  static String getLogPath(String coreName) {
+  set setLogPath(String path) {
+    logPath = path;
+  }
+
+  static String getLogPath(ProxyRes coreName) {
     final now = formatter.format(DateTime.now());
-    return p.join(logPath, '$coreName-$now.log');
+    return p.join(logPath, '${coreName.toString()}-$now.log');
   }
 
   static void initLogger(bool saveLog, int methodCount, int errorMethodCount) {
@@ -28,12 +33,12 @@ class SphiaLog {
       filter: MyFilter(),
       printer: PrettyPrinter(
         colors: false,
-        printTime: true,
         errorMethodCount: errorMethodCount,
         methodCount: methodCount,
         noBoxingByDefault: true,
       ),
-      output: saveLog ? FileOutput(file: File(getLogPath('sphia'))) : null,
+      output:
+          saveLog ? FileOutput(file: File(getLogPath(ProxyRes.sphia))) : null,
     );
   }
 }

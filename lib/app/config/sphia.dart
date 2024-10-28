@@ -1,45 +1,187 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'sphia.freezed.dart';
-
 part 'sphia.g.dart';
 
-enum NavigationStyle { rail, drawer }
+enum UserAgent {
+  chrome('chrome'),
+  firefox('firefox'),
+  safari('safari'),
+  edge('edge'),
+  none('none');
 
-enum UserAgent { chrome, firefox, safari, edge, none }
+  @override
+  String toString() => _value;
 
-// ignore: constant_identifier_names
-enum DomainStrategy { AsIs, IPIfNonMatch, IPOnDemand }
+  final String _value;
 
-enum DomainMatcher { hybrid, linear }
+  const UserAgent(this._value);
+}
 
-enum LogLevel { none, warning, debug, error, info }
+enum DomainStrategy {
+  // ignore: constant_identifier_names
+  AsIs('AsIs'),
+  // ignore: constant_identifier_names
+  IPIfNonMatch('IPIfNonMatch'),
+  // ignore: constant_identifier_names
+  IPOnDemand('IPOnDemand');
 
-enum RoutingProvider { sing, xray }
+  @override
+  String toString() => _value;
 
-enum VmessProvider { sing, xray }
+  final String _value;
 
-enum VlessProvider { sing, xray }
+  const DomainStrategy(this._value);
+}
 
-enum ShadowsocksProvider { sing, xray, ssrust }
+enum DomainMatcher {
+  hybrid('hybrid'),
+  linear('linear');
 
-enum TrojanProvider { sing, xray }
+  @override
+  String toString() => _value;
 
-enum HysteriaProvider { sing, hysteria }
+  final String _value;
 
-enum CustomServerProvider { sing, xray, hysteria }
+  const DomainMatcher(this._value);
+}
 
-enum TunProvider { sing }
+enum LogLevel {
+  none('none'),
+  warning('warning'),
+  debug('debug'),
+  error('error'),
+  info('info');
 
-enum TunStack { system, gvisor, mixed }
+  @override
+  String toString() => _value;
+
+  final String _value;
+
+  const LogLevel(this._value);
+}
+
+enum RoutingProvider {
+  sing('sing-box'),
+  xray('xray-core'),
+  none('');
+
+  @override
+  String toString() => _value;
+
+  final String _value;
+
+  const RoutingProvider(this._value);
+}
+
+enum VMessProvider {
+  sing('sing-box'),
+  xray('xray-core'),
+  none('');
+
+  @override
+  String toString() => _value;
+
+  final String _value;
+
+  const VMessProvider(this._value);
+}
+
+enum VlessProvider {
+  sing('sing-box'),
+  xray('xray-core'),
+  none('');
+
+  @override
+  String toString() => _value;
+
+  final String _value;
+
+  const VlessProvider(this._value);
+}
+
+enum ShadowsocksProvider {
+  sing('sing-box'),
+  xray('xray-core'),
+  ssrust('shadowsocks-rust'),
+  none('');
+
+  @override
+  String toString() => _value;
+
+  final String _value;
+
+  const ShadowsocksProvider(this._value);
+}
+
+enum TrojanProvider {
+  sing('sing-box'),
+  xray('xray-core'),
+  none('');
+
+  @override
+  String toString() => _value;
+
+  final String _value;
+
+  const TrojanProvider(this._value);
+}
+
+enum HysteriaProvider {
+  sing('sing-box'),
+  hysteria('hysteria'),
+  none('');
+
+  @override
+  String toString() => _value;
+
+  final String _value;
+
+  const HysteriaProvider(this._value);
+}
+
+enum CustomServerProvider {
+  sing('sing-box'),
+  xray('xray-core'),
+  hysteria('hysteria');
+
+  @override
+  String toString() => _value;
+
+  final String _value;
+
+  const CustomServerProvider(this._value);
+}
+
+enum TunProvider {
+  sing('sing-box');
+
+  @override
+  String toString() => _value;
+
+  final String _value;
+
+  const TunProvider(this._value);
+}
+
+enum TunStack {
+  system('system'),
+  gvisor('gvisor'),
+  mixed('mixed');
+
+  @override
+  String toString() => _value;
+
+  final String _value;
+
+  const TunStack(this._value);
+}
 
 @freezed
 class SphiaConfig with _$SphiaConfig {
   const factory SphiaConfig({
     @Default(false) bool startOnBoot,
     @Default(false) bool autoRunServer,
-    @Default(false) bool useMaterial3,
-    @Default(NavigationStyle.rail) NavigationStyle navigationStyle,
     @Default(false) bool darkMode,
     @Default(4278430196) int themeColor,
     @Default(false) bool showTransport,
@@ -75,7 +217,7 @@ class SphiaConfig with _$SphiaConfig {
     @Default(64) int maxLogCount,
     @Default(false) bool saveCoreLog,
     @Default(RoutingProvider.sing) RoutingProvider routingProvider,
-    @Default(VmessProvider.sing) VmessProvider vmessProvider,
+    @Default(VMessProvider.sing) VMessProvider vmessProvider,
     @Default(VlessProvider.sing) VlessProvider vlessProvider,
     @Default(ShadowsocksProvider.sing) ShadowsocksProvider shadowsocksProvider,
     @Default(TrojanProvider.sing) TrojanProvider trojanProvider,
@@ -99,19 +241,31 @@ class SphiaConfig with _$SphiaConfig {
 }
 
 extension GetUserAgent on SphiaConfig {
-  String getUserAgent() {
-    return userAgents[UserAgent.values[userAgent.index].name]!;
+  String? getUserAgent() {
+    switch (userAgent) {
+      case UserAgent.chrome:
+        return _chrome;
+      case UserAgent.firefox:
+        return _firefox;
+      case UserAgent.safari:
+        return _safari;
+      case UserAgent.edge:
+        return _edge;
+      case UserAgent.none:
+        return null;
+    }
   }
 }
 
-const Map<String, String> userAgents = {
-  'chrome':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
-  'firefox':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
-  'safari':
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
-  'edge':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.70',
-  'none': ''
-};
+const _chrome =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36';
+const _firefox =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0';
+const _safari =
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15';
+const _edge =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.70';
+
+extension EnumValues<T extends Enum> on List<T> {
+  List<T> get withoutLast => take(length - 1).toList();
+}

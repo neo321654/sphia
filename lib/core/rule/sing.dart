@@ -2,32 +2,32 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'sing.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class SingBoxRule {
-  String? inbound;
-  String? outbound;
-  List<String>? geosite;
-  List<String>? domain;
-  List<String>? geoip;
+  final String? inbound;
+  final String? outbound;
+  final List<String>? geosite;
+  final List<String>? domain;
+  final List<String>? geoip;
   @JsonKey(name: 'ip_cidr')
-  List<String>? ipCidr;
-  List<int>? port;
+  final List<String>? ipCidr;
+  final List<int>? port;
   @JsonKey(name: 'port_range')
-  List<String>? portRange;
+  final List<String>? portRange;
   @JsonKey(name: 'source_geoip')
-  List<String>? sourceGeoip;
+  final List<String>? sourceGeoip;
   @JsonKey(name: 'source_ip_cidr')
-  List<String>? sourceIpCidr;
+  final List<String>? sourceIpCidr;
   @JsonKey(name: 'source_port')
-  List<int>? sourcePort;
-  @JsonKey(name: "source_port_range")
-  List<String>? sourcePortRange;
-  String? network;
-  List<String>? protocol;
+  final List<int>? sourcePort;
+  @JsonKey(name: 'source_port_range')
+  final List<String>? sourcePortRange;
+  final String? network;
+  final List<String>? protocol;
   @JsonKey(name: 'process_name')
-  List<String>? processName;
+  final List<String>? processName;
 
-  SingBoxRule({
+  const SingBoxRule({
     this.inbound,
     this.outbound,
     this.domain,
@@ -45,23 +45,20 @@ class SingBoxRule {
     this.processName,
   });
 
-  factory SingBoxRule.fromJson(Map<String, dynamic> json) =>
-      _$SingBoxRuleFromJson(json);
-
   Map<String, dynamic> toJson() => _$SingBoxRuleToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class SingBoxDnsRule {
-  List<String>? geosite;
-  List<String>? geoip;
-  List<String>? domain;
-  String? server;
+  final List<String>? geosite;
+  final List<String>? geoip;
+  final List<String>? domain;
+  final String? server;
   @JsonKey(name: 'disable_cache')
-  bool? disableCache;
-  List<String>? outbound;
+  final bool? disableCache;
+  final List<String>? outbound;
 
-  SingBoxDnsRule({
+  const SingBoxDnsRule({
     this.geosite,
     this.geoip,
     this.domain,
@@ -69,9 +66,6 @@ class SingBoxDnsRule {
     this.disableCache,
     this.outbound,
   });
-
-  factory SingBoxDnsRule.fromJson(Map<String, dynamic> json) =>
-      _$SingBoxDnsRuleFromJson(json);
 
   Map<String, dynamic> toJson() => _$SingBoxDnsRuleToJson(this);
 }

@@ -3,24 +3,28 @@ import 'dart:core';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:sphia/app/helper/io.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/core/core.dart';
 import 'package:sphia/core/hysteria/config.dart';
+import 'package:sphia/core/hysteria/core_info.dart';
 import 'package:sphia/server/hysteria/server.dart';
-import 'package:sphia/util/system.dart';
+import 'package:sphia/server/server_model.dart';
 
-class HysteriaCore extends Core {
-  late final Ref ref;
-
-  HysteriaCore()
-      : super('hysteria', ['-c', p.join(tempPath, 'hysteria.json')],
-            'hysteria.json');
+class HysteriaCore extends Core with ProxyCore {
+  HysteriaCore(Ref ref)
+      : super(
+          info: const HysteriaInfo(),
+          args: ['-c', p.join(IoHelper.tempPath, 'hysteria.json')],
+          configFileName: 'hysteria.json',
+          ref: ref,
+        );
 
   @override
   Future<void> configure() async {
     final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
     final parameters = HysteriaConfigParameters(
-      server: servers.first as HysteriaServer,
+      server: runningServer as HysteriaServer,
       additionalSocksPort: sphiaConfig.additionalSocksPort,
       enableUdp: sphiaConfig.enableUdp,
     );
@@ -29,10 +33,10 @@ class HysteriaCore extends Core {
   }
 
   @override
-  Future<String> generateConfig(ConfigParameters parameters) async {
+  Future<String> generateConfig(CoreConfigParameters parameters) async {
     final paras = parameters as HysteriaConfigParameters;
     final server = paras.server;
-    if (server.protocol == 'hysteria') {
+    if (server.protocol == Protocol.hysteria) {
       final hysteriaConfig = HysteriaConfig(
         server: '${server.address}:${server.port}',
         protocol: server.hysteriaProtocol,
@@ -67,12 +71,12 @@ class HysteriaCore extends Core {
   }
 }
 
-class HysteriaConfigParameters extends ConfigParameters {
+class HysteriaConfigParameters extends CoreConfigParameters {
   final HysteriaServer server;
   final int additionalSocksPort;
   final bool enableUdp;
 
-  HysteriaConfigParameters({
+  const HysteriaConfigParameters({
     required this.server,
     required this.additionalSocksPort,
     required this.enableUdp,

@@ -1,6 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/database/database.dart';
+import 'package:sphia/app/helper/network.dart';
+import 'package:sphia/app/helper/proxy.dart';
+import 'package:sphia/app/helper/tray.dart';
 import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/proxy.dart';
@@ -8,12 +11,10 @@ import 'package:sphia/app/notifier/traffic.dart';
 import 'package:sphia/app/provider/core.dart';
 import 'package:sphia/app/state/core_state.dart';
 import 'package:sphia/core/core.dart';
+import 'package:sphia/core/core_info.dart';
 import 'package:sphia/server/custom_config/server.dart';
 import 'package:sphia/server/server_model.dart';
 import 'package:sphia/server/xray/server.dart';
-import 'package:sphia/util/network.dart';
-import 'package:sphia/util/system.dart';
-import 'package:sphia/util/tray.dart';
 import 'package:sphia/view/dialog/custom_config.dart';
 
 part 'core_state.g.dart';
@@ -46,40 +47,40 @@ class CoreStateNotifier extends _$CoreStateNotifier {
     }
   }
 
-  Future<void> startCores(ServerModel selectedServer) async {
+  Future<void> startCores(ServerModel server) async {
     final preState = state.valueOrNull;
     if (preState == null) {
       return;
     }
 
     state = const AsyncValue.loading();
-    final cores = await _addCores(selectedServer);
+    final cores = await _addCores(server);
     final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
-    late final String routingProviderName;
+    late final ProxyRes routingProvider;
 
-    final isCustom = selectedServer.protocol == 'custom';
+    final isCustom = server.protocol == Protocol.custom;
 
     try {
       logger.i('Starting cores');
       if (isCustom) {
-        cores.first.servers.add(selectedServer);
-        final jsonString = (selectedServer as CustomConfigServer).configString;
+        cores.first.servers.add(server);
+        final jsonString = (server as CustomConfigServer).configString;
         await cores.first.writeConfig(jsonString);
         await cores.first.start(manual: true);
-        routingProviderName = cores.first.name;
+        routingProvider = cores.first.name;
       } else {
         if (cores.length == 1) {
           // Only routing core
-          cores.first.servers.add(selectedServer);
+          cores.first.servers.add(server);
           await cores.first.start();
-          routingProviderName = cores.first.name;
+          routingProvider = cores.first.name;
         } else {
           for (int i = 0; i < cores.length; i++) {
             if (cores[i].isRouting) {
               await cores[i].start();
-              routingProviderName = cores[i].name;
+              routingProvider = cores[i].name;
             } else {
-              cores[i].servers.add(selectedServer);
+              cores[i].servers.add(server);
               await cores[i].start();
             }
           }
@@ -99,23 +100,22 @@ class CoreStateNotifier extends _$CoreStateNotifier {
       httpPort = state.value!.customHttpPort;
       if (httpPort == portUnset) {
         final proxyNotifier = ref.read(proxyNotifierProvider.notifier);
-        proxyNotifier.setCoreRunningAndCustomConfig(
-          coreRunning: true,
-          customConfig: true,
-        );
-        await TrayUtil.setIcon(coreRunning: true);
-        await TrayUtil.setToolTip(selectedServer.remark);
+        proxyNotifier
+          ..setCoreRunning(true)
+          ..setCustomConfig(true);
+        await TrayHelper.setIcon(coreRunning: true);
+        await TrayHelper.setToolTip(server.remark);
         return;
       }
     } else {
-      if (routingProviderName == 'sing-box') {
+      if (routingProvider == ProxyRes.sing) {
         httpPort = sphiaConfig.mixedPort;
       } else {
         httpPort = sphiaConfig.httpPort;
       }
     }
     final proxyNotifier = ref.read(proxyNotifierProvider.notifier);
-    final localServerAvailable = await NetworkUtil.isServerAvailable(
+    final localServerAvailable = await NetworkHelper.isServerAvailable(
       httpPort,
       maxRetry: 10,
     );
@@ -133,12 +133,11 @@ class CoreStateNotifier extends _$CoreStateNotifier {
       proxyNotifier.setTunMode(true);
     }
 
-    proxyNotifier.setCoreRunningAndCustomConfig(
-      coreRunning: true,
-      customConfig: isCustom,
-    );
-    await TrayUtil.setIcon(coreRunning: true);
-    await TrayUtil.setToolTip(selectedServer.remark);
+    proxyNotifier
+      ..setCoreRunning(true)
+      ..setCustomConfig(isCustom);
+    await TrayHelper.setIcon(coreRunning: true);
+    await TrayHelper.setToolTip(server.remark);
 
     final enableStatistics = isCustom || sphiaConfig.enableStatistics;
     // try to check statistics availability when using custom config
@@ -147,58 +146,49 @@ class CoreStateNotifier extends _$CoreStateNotifier {
       await trafficNotifier.start();
     }
 
+    final proxyHelper = ref.read(proxyHelperProvider.notifier);
     if (isTun) {
       // do not enable system proxy in tun mode
-      SystemUtil.disableSystemProxy();
+      await proxyHelper.disableSystemProxy();
       proxyNotifier.setSystemProxy(false);
     } else {
       proxyNotifier.setTunMode(false);
       if (sphiaConfig.autoConfigureSystemProxy) {
-        SystemUtil.enableSystemProxy(
-          sphiaConfig.listen,
-          httpPort,
-        );
+        await proxyHelper.enableSystemProxy();
         proxyNotifier.setSystemProxy(true);
       }
     }
   }
 
-  Future<List<Core>> _addCores(ServerModel selectedServer) async {
-    if (selectedServer.protocol == 'custom') {
-      selectedServer = selectedServer as CustomConfigServer;
-      final coreProvider = selectedServer.protocolProvider;
-      if (coreProvider == null) {
+  Future<List<Core>> _addCores(ServerModel server) async {
+    if (server.protocol == Protocol.custom) {
+      server = server as CustomConfigServer;
+      final coreProviderIdx = server.protocolProvider;
+      if (coreProviderIdx == null) {
         logger.f('Custom server must have a protocol provider');
         throw Exception('Custom server must have a protocol provider');
       }
-      final toCore = {
-        CustomServerProvider.sing.index: ref.read(singBoxCoreProvider)
-          ..configFileName = 'sing-box.${selectedServer.configFormat}',
-        CustomServerProvider.xray.index: ref.read(xrayCoreProvider)
-          ..configFileName = 'xray.${selectedServer.configFormat}',
-        CustomServerProvider.hysteria.index: ref.read(hysteriaCoreProvider)
-          ..configFileName = 'hysteria.${selectedServer.configFormat}',
+      final coreProvider = CustomServerProvider.values[coreProviderIdx];
+      final core = switch (coreProvider) {
+        CustomServerProvider.sing => ref.read(singBoxCoreProvider)
+          ..configFileName = 'sing-box.${server.configFormat}',
+        CustomServerProvider.xray => ref.read(xrayCoreProvider)
+          ..configFileName = 'xray.${server.configFormat}',
+        CustomServerProvider.hysteria => ref.read(hysteriaCoreProvider)
+          ..configFileName = 'hysteria.${server.configFormat}',
       };
-      final core = toCore[coreProvider];
-      if (core == null) {
-        logger.e('Unsupported custom server provider: $coreProvider');
-        throw Exception('Unsupported custom server provider: $coreProvider');
-      }
       return [core..isRouting = true];
     }
 
     final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
-    final protocol = selectedServer.protocol;
-    final routingProvider =
-        selectedServer.routingProvider ?? sphiaConfig.routingProvider.index;
+    final protocol = server.protocol;
+    final routingProviderIdx =
+        server.routingProvider ?? sphiaConfig.routingProvider.index;
+    final protocolProviderIdx = server.protocolProvider;
     ServerModel? additionalServer;
     final cores = <Core>[];
 
     if (sphiaConfig.enableTun) {
-      if (!SystemUtil.isRoot) {
-        logger.e('Tun mode requires administrator privileges');
-        throw Exception('Tun mode requires administrator privileges');
-      }
       cores.add(ref.read(singBoxCoreProvider)..isRouting = true);
     } else if (sphiaConfig.multiOutboundSupport) {
       if (sphiaConfig.routingProvider == RoutingProvider.sing) {
@@ -207,67 +197,59 @@ class CoreStateNotifier extends _$CoreStateNotifier {
         cores.add(ref.read(xrayCoreProvider)..isRouting = true);
       }
     } else {
-      final protocolToCore = {
-        'vmess': (ServerModel selectedServer, SphiaConfig sphiaConfig) =>
-            (selectedServer.protocolProvider ??
-                        sphiaConfig.vmessProvider.index) ==
-                    VmessProvider.xray.index
-                ? ref.read(xrayCoreProvider)
-                : ref.read(singBoxCoreProvider),
-        'vless': (ServerModel selectedServer, SphiaConfig sphiaConfig) =>
-            (selectedServer.protocolProvider ??
-                        sphiaConfig.vlessProvider.index) ==
-                    VlessProvider.xray.index
-                ? ref.read(xrayCoreProvider)
-                : ref.read(singBoxCoreProvider),
-        'shadowsocks': (ServerModel selectedServer, SphiaConfig sphiaConfig) {
-          final protocolProvider = selectedServer.protocolProvider ??
-              sphiaConfig.shadowsocksProvider.index;
-          if (protocolProvider == ShadowsocksProvider.xray.index) {
-            return ref.read(xrayCoreProvider);
-          } else if (protocolProvider == ShadowsocksProvider.sing.index) {
-            return ref.read(singBoxCoreProvider);
-          } else {
-            return ref.read(shadowsocksRustCoreProvider);
-          }
-        },
-        'trojan': (ServerModel selectedServer, SphiaConfig sphiaConfig) =>
-            (selectedServer.protocolProvider ??
-                        sphiaConfig.trojanProvider.index) ==
-                    TrojanProvider.xray.index
-                ? ref.read(xrayCoreProvider)
-                : ref.read(singBoxCoreProvider),
-        'hysteria': (ServerModel selectedServer, SphiaConfig sphiaConfig) =>
-            (selectedServer.protocolProvider ??
-                        sphiaConfig.hysteriaProvider.index) ==
-                    HysteriaProvider.sing.index
-                ? ref.read(singBoxCoreProvider)
-                : ref.read(hysteriaCoreProvider),
+      final core = switch (protocol) {
+        Protocol.vmess => VMessProvider.values[
+                    protocolProviderIdx ?? sphiaConfig.vmessProvider.index] ==
+                VMessProvider.xray
+            ? ref.read(xrayCoreProvider)
+            : ref.read(singBoxCoreProvider),
+        Protocol.vless => VlessProvider.values[
+                    protocolProviderIdx ?? sphiaConfig.vlessProvider.index] ==
+                VlessProvider.xray
+            ? ref.read(xrayCoreProvider)
+            : ref.read(singBoxCoreProvider),
+        Protocol.shadowsocks => switch (ShadowsocksProvider.values[
+              protocolProviderIdx ?? sphiaConfig.shadowsocksProvider.index]) {
+            ShadowsocksProvider.xray => ref.read(xrayCoreProvider),
+            ShadowsocksProvider.sing => ref.read(singBoxCoreProvider),
+            ShadowsocksProvider.ssrust => ref.read(shadowsocksRustCoreProvider),
+            _ => null
+          },
+        Protocol.trojan => TrojanProvider.values[
+                    protocolProviderIdx ?? sphiaConfig.trojanProvider.index] ==
+                TrojanProvider.xray
+            ? ref.read(xrayCoreProvider)
+            : ref.read(singBoxCoreProvider),
+        Protocol.hysteria => HysteriaProvider.values[protocolProviderIdx ??
+                    sphiaConfig.hysteriaProvider.index] ==
+                HysteriaProvider.sing
+            ? ref.read(singBoxCoreProvider)
+            : ref.read(hysteriaCoreProvider),
+        _ => null,
       };
-      final core = protocolToCore[protocol]?.call(selectedServer, sphiaConfig);
       if (core == null) {
         logger.e('Unsupported protocol: $protocol');
         throw Exception('Unsupported protocol: $protocol');
       }
-      final routingProviderName = _getProviderCoreName(routingProvider);
+      final routingProvider = _getProviderCore(routingProviderIdx).toString();
       // if routing provider is different from the selected server's provider
-      if (routingProviderName != core.name) {
+      if (routingProvider != core.name.toString()) {
         cores.add(core);
         late final int additionalServerPort;
         // determine the additional server port
         // if protocol provider is sing-box or xray-core
         // use the socks port or mixed port as the additional server port
         // otherwise use the additional socks port
-        if (routingProvider == RoutingProvider.sing.index) {
+        if (routingProviderIdx == RoutingProvider.sing.index) {
           cores.add(ref.read(singBoxCoreProvider)..isRouting = true);
-          if (core.name == 'xray-core') {
+          if (core.name == ProxyRes.xray) {
             additionalServerPort = sphiaConfig.socksPort;
           } else {
             additionalServerPort = sphiaConfig.additionalSocksPort;
           }
-        } else {
+        } else if (routingProviderIdx == RoutingProvider.xray.index) {
           cores.add(ref.read(xrayCoreProvider)..isRouting = true);
-          if (core.name == 'sing-box') {
+          if (core.name == ProxyRes.sing) {
             additionalServerPort = sphiaConfig.mixedPort;
           } else {
             additionalServerPort = sphiaConfig.additionalSocksPort;
@@ -300,10 +282,11 @@ class CoreStateNotifier extends _$CoreStateNotifier {
     if (preState.cores.isNotEmpty) {
       state = const AsyncValue.loading();
       final proxyNotifier = ref.read(proxyNotifierProvider.notifier);
+      final proxyHelper = ref.read(proxyHelperProvider.notifier);
       if (!keepSysProxy) {
-        if (SystemUtil.getSystemProxy()) {
+        if (proxyHelper.isSystemProxyEnabled()) {
           // automatically disable system proxy
-          SystemUtil.disableSystemProxy();
+          proxyHelper.disableSystemProxy();
           proxyNotifier.setSystemProxy(false);
         }
       }
@@ -315,10 +298,9 @@ class CoreStateNotifier extends _$CoreStateNotifier {
       final isCustom =
           ref.read(proxyNotifierProvider.select((value) => value.customConfig));
       if (isCustom) {
-        proxyNotifier.setCoreRunningAndCustomConfig(
-          coreRunning: false,
-          customConfig: false,
-        );
+        proxyNotifier
+          ..setCoreRunning(false)
+          ..setCustomConfig(false);
         // only one core
         await preState.cores.first.stop(checkPorts: false);
       } else {
@@ -327,8 +309,8 @@ class CoreStateNotifier extends _$CoreStateNotifier {
           await core.stop();
         }
       }
-      await TrayUtil.setIcon(coreRunning: false);
-      await TrayUtil.setToolTip('Sphia');
+      await TrayHelper.setIcon(coreRunning: false);
+      await TrayHelper.setToolTip('Sphia');
       proxyNotifier.setTunMode(false);
       state = const AsyncValue.data(CoreState(cores: []));
     }
@@ -353,8 +335,9 @@ class CoreStateNotifier extends _$CoreStateNotifier {
     }
   }
 
-  String _getProviderCoreName(int index) =>
-      index == RoutingProvider.sing.index ? 'sing-box' : 'xray-core';
+  RoutingProvider _getProviderCore(int index) {
+    return RoutingProvider.values[index];
+  }
 
   int _getRunningServerId() {
     final currentState = state.valueOrNull;
@@ -367,7 +350,7 @@ class CoreStateNotifier extends _$CoreStateNotifier {
       throw Exception('No running server');
     }
     // only single server is supported
-    return currentState.proxy.servers.first.id;
+    return currentState.proxy.runningServer.id;
   }
 
   Future<ServerModel> getRunningServerModel() async {

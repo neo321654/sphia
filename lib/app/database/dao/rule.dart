@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:sphia/app/database/dao/config.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/log.dart';
 import 'package:sphia/core/rule/rule_model.dart';
@@ -10,7 +11,7 @@ const outboundBlockId = 0;
 class RuleDao {
   final Database _db;
 
-  RuleDao(this._db);
+  const RuleDao(this._db);
 
   Future<List<Rule>> getRulesByGroupId(int groupId) {
     return (_db.select(_db.rules)..where((tbl) => tbl.groupId.equals(groupId)))
@@ -19,31 +20,26 @@ class RuleDao {
 
   Future<List<RuleModel>> getRuleModelsByGroupId(int groupId) {
     return getRulesByGroupId(groupId).then((value) {
-      return value.map((e) => RuleModel.fromRule(e)).toList();
+      return value.map(RuleModel.fromRule).toList();
     });
   }
 
-  Future<List<Rule>> getOrderedRulesByGroupId(int groupId) async {
-    final order = await getRulesOrder(groupId);
-    final rules = await getRulesByGroupId(groupId);
-    final orderedRules = <Rule>[];
-    for (final id in order) {
-      final rule = rules.firstWhere((element) => element.id == id);
-      orderedRules.add(rule);
-    }
-    return orderedRules;
+  Future<List<Rule>> getOrderedRulesByGroupId(int groupId) {
+    return getOrderedList(() => getRulesOrder(groupId),
+        () => getRulesByGroupId(groupId), (rule) => rule.id);
   }
 
   Future<List<RuleModel>> getOrderedRuleModelsByGroupId(int groupId) async {
     logger.i('Getting ordered rules by group id: $groupId');
     final order = await getRulesOrder(groupId);
     final rules = await getRuleModelsByGroupId(groupId);
-    final orderedRules = <RuleModel>[];
-    for (final id in order) {
-      final rule = rules.firstWhere((element) => element.id == id);
-      orderedRules.add(rule);
-    }
-    return orderedRules;
+    final ruleMap = {for (var rule in rules) rule.id: rule};
+
+    return order
+        .map((id) => ruleMap[id])
+        .where((rule) => rule != null)
+        .cast<RuleModel>()
+        .toList();
   }
 
   Future<Rule?> getRuleById(int id) {
@@ -70,17 +66,13 @@ class RuleDao {
   }
 
   Future<List<int>> getRulesOrder(int groupId) async {
-    return _db.select(_db.rulesOrder).get().then((value) {
-      if (value.isEmpty) {
-        return [];
-      }
-      final data =
-          value.firstWhere((element) => element.groupId == groupId).data;
-      if (data.isEmpty) {
-        return [];
-      }
-      return data.split(',').map((e) => int.parse(e)).toList();
-    });
+    final value = await _db.select(_db.rulesOrder).get();
+    if (value.isEmpty) return [];
+
+    final data = value.firstWhere((element) => element.groupId == groupId).data;
+    if (data.isEmpty) return [];
+
+    return data.split(',').map(int.parse).toList();
   }
 
   Future<void> createEmptyRulesOrder(int groupId) async {

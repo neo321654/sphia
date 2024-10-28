@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:sphia/server/server_model.dart';
 
 class Config extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -17,10 +18,10 @@ class ServerGroups extends Table {
 class Servers extends Table {
   IntColumn get id => integer().autoIncrement()();
 
-  IntColumn get groupId => integer().customConstraint(
-      'REFERENCES server_groups(id) ON DELETE CASCADE NOT NULL')();
+  IntColumn get groupId =>
+      integer().references(ServerGroups, #id, onDelete: KeyAction.cascade)();
 
-  TextColumn get protocol => text()();
+  TextColumn get protocol => textEnum<Protocol>()();
 
   TextColumn get remark => text()();
 
@@ -106,8 +107,8 @@ class RuleGroups extends Table {
 class Rules extends Table {
   IntColumn get id => integer().autoIncrement()();
 
-  IntColumn get groupId => integer().customConstraint(
-      'REFERENCES rule_groups(id) ON DELETE CASCADE NOT NULL')();
+  IntColumn get groupId =>
+      integer().references(RuleGroups, #id, onDelete: KeyAction.cascade)();
 
   TextColumn get name => text()();
 
@@ -141,8 +142,8 @@ class GroupsOrder extends Table {
 class ServersOrder extends Table {
   IntColumn get id => integer().autoIncrement()();
 
-  IntColumn get groupId => integer().customConstraint(
-      'REFERENCES server_groups(id) ON DELETE CASCADE NOT NULL')();
+  IntColumn get groupId =>
+      integer().references(ServerGroups, #id, onDelete: KeyAction.cascade)();
 
   TextColumn get data => text()();
 }
@@ -150,8 +151,8 @@ class ServersOrder extends Table {
 class RulesOrder extends Table {
   IntColumn get id => integer().autoIncrement()();
 
-  IntColumn get groupId => integer().customConstraint(
-      'REFERENCES rule_groups(id) ON DELETE CASCADE NOT NULL')();
+  IntColumn get groupId =>
+      integer().references(RuleGroups, #id, onDelete: KeyAction.cascade)();
 
   TextColumn get data => text()();
 }

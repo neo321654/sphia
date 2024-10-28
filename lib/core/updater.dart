@@ -5,51 +5,49 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sphia/app/helper/io.dart';
+import 'package:sphia/app/helper/network.dart';
+import 'package:sphia/app/helper/system.dart';
 import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/version_config.dart';
 import 'package:sphia/app/notifier/core_state.dart';
-import 'package:sphia/core/helper.dart';
-import 'package:sphia/util/network.dart';
-import 'package:sphia/util/system.dart';
+import 'package:sphia/core/core_info.dart';
+import 'package:sphia/core/rules_dat/core_info.dart';
 
 part 'updater.g.dart';
 
 @riverpod
-class CoreUpdater extends _$CoreUpdater {
+class CoreUpdater extends _$CoreUpdater with SystemHelper, ProxyResInfoList {
   @override
   void build() {}
 
   Future<void> scanCores() async {
-    final executableMap = {
-      'sing-box': p.join(binPath, CoreHelper.getCoreFileName('sing-box')),
-      'xray-core': p.join(binPath, CoreHelper.getCoreFileName('xray-core')),
-      'shadowsocks-rust':
-          p.join(binPath, CoreHelper.getCoreFileName('shadowsocks-rust')),
-      'hysteria': p.join(binPath, CoreHelper.getCoreFileName('hysteria')),
-    };
-
     logger.i('Scanning cores');
     final notifier = ref.read(versionConfigNotifierProvider.notifier);
-    for (var entry in executableMap.entries) {
-      final coreName = entry.key;
+    final binPath = IoHelper.binPath;
+
+    for (var info in proxyResInfoList) {
+      final coreName = info.name;
       // if core is not found, remove it from version config
-      if (!CoreHelper.coreExists(coreName)) {
+      if (!await info.exists()) {
         logger.i('Core not found: $coreName');
         notifier.removeVersion(coreName);
         continue;
       }
-      final executable = entry.value;
-      final arguments = coreVersionArgs[coreName]!;
+      if (info.isRulesDat) {
+        continue;
+      }
+      final executable = p.join(binPath, info.binFileName);
+      final arguments = [info.versionArg!];
       late final ProcessResult result;
       try {
-        result = await Process.run(executable, [arguments]);
+        result = await Process.run(executable, arguments);
       } on Exception catch (_) {
         logger.e('Failed to run command: $executable $arguments');
         continue;
       }
       if (result.exitCode == 0) {
-        final version =
-            parseVersionInfo(result.stdout.toString(), coreName, true);
+        final version = _parseVersion(result.stdout.toString(), info, true);
         if (version != null) {
           logger.i('Found $coreName: $version');
           notifier.updateVersion(coreName, version);
@@ -57,26 +55,26 @@ class CoreUpdater extends _$CoreUpdater {
       }
     }
     // for rules dat
-    if (!CoreHelper.coreExists('sing-box-rules')) {
-      notifier.removeVersion('sing-box-rules');
+    if (!await (proxyResInfoList[4] as SingBoxRulesInfo).exists()) {
+      notifier.removeVersion(ProxyRes.singRules);
     }
-    if (!CoreHelper.coreExists('v2ray-rules-dat')) {
-      notifier.removeVersion('v2ray-rules-dat');
+    if (!await (proxyResInfoList[5] as V2rayRulesDatInfo).exists()) {
+      notifier.removeVersion(ProxyRes.v2rayRules);
     }
   }
 
   Future<bool?> importCore({required bool isMulti}) async {
     FilePickerResult? result;
-    if (SystemUtil.os == OS.windows) {
+    if (isWindows) {
       result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['exe', "dat", "db"],
+        allowedExtensions: ['exe', 'dat', 'db'],
         allowMultiple: isMulti,
       );
     } else {
       result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['', "dat", "db"],
+        allowedExtensions: ['', 'dat', 'db'],
         allowMultiple: isMulti,
       );
     }
@@ -84,6 +82,7 @@ class CoreUpdater extends _$CoreUpdater {
       if (result.files.isEmpty) {
         return null;
       }
+      final binPath = IoHelper.binPath;
       if (isMulti) {
         for (var platformFile in result.files) {
           if (platformFile.path != null) {
@@ -98,9 +97,12 @@ class CoreUpdater extends _$CoreUpdater {
       final file = File(result.files.single.path!);
       final notifier = ref.read(versionConfigNotifierProvider.notifier);
       // check core version
-      for (var entry in coreVersionArgs.entries) {
-        final coreName = entry.key;
-        final arguments = entry.value;
+      for (var info in proxyResInfoList) {
+        if (info.isRulesDat) {
+          continue;
+        }
+        final coreName = info.name;
+        final arguments = info.versionArg!;
         late final ProcessResult result;
         try {
           result = await Process.run(file.path, [arguments]);
@@ -109,15 +111,13 @@ class CoreUpdater extends _$CoreUpdater {
           continue;
         }
         if (result.exitCode == 0) {
-          final version =
-              parseVersionInfo(result.stdout.toString(), coreName, false);
+          final version = _parseVersion(result.stdout.toString(), info, false);
           if (version != null) {
             logger.i('Found $coreName: $version');
             notifier.updateVersion(coreName, version);
-            final destPath =
-                p.join(binPath, CoreHelper.getCoreFileName(coreName));
+            final destPath = p.join(binPath, info.binFileName);
             // delete old core
-            deleteCore(coreName);
+            await deleteCore(info);
             // copy new core
             logger.i('Copying $file to \'$destPath\'');
             file.copySync(destPath);
@@ -131,38 +131,41 @@ class CoreUpdater extends _$CoreUpdater {
     return false;
   }
 
-  void deleteCore(String coreName) {
-    if (coreName == 'sing-box-rules') {
+  Future<void> deleteCore(ProxyResInfo coreInfo) async {
+    final coreName = coreInfo.name;
+    final binPath = IoHelper.binPath;
+    if (coreName == ProxyRes.singRules) {
       final geoipFilePath = p.join(binPath, 'geoip.db');
       final geositeFilePath = p.join(binPath, 'geosite.db');
-      SystemUtil.deleteFileIfExists(
+      await IoHelper.deleteFileIfExists(
           geoipFilePath, 'Deleting file: $geoipFilePath');
-      SystemUtil.deleteFileIfExists(
+      await IoHelper.deleteFileIfExists(
           geositeFilePath, 'Deleting file: $geositeFilePath');
-    } else if (coreName == 'v2ray-rules-dat') {
+    } else if (coreName == ProxyRes.v2rayRules) {
       final geoipFilePath = p.join(binPath, 'geoip.dat');
       final geositeFilePath = p.join(binPath, 'geosite.dat');
-      SystemUtil.deleteFileIfExists(
+      await IoHelper.deleteFileIfExists(
           geoipFilePath, 'Deleting file: $geoipFilePath');
-      SystemUtil.deleteFileIfExists(
+      await IoHelper.deleteFileIfExists(
           geositeFilePath, 'Deleting file: $geositeFilePath');
     } else {
-      final coreFileName = CoreHelper.getCoreFileName(coreName);
-      final coreFilePath = p.join(binPath, coreFileName);
-      SystemUtil.deleteFileIfExists(
+      final binFileName = coreInfo.binFileName;
+      final coreFilePath = p.join(binPath, binFileName);
+      await IoHelper.deleteFileIfExists(
           coreFilePath, 'Deleting file: $coreFilePath');
     }
   }
 
   Future<void> updateCore({
-    required String coreName,
+    required ProxyResInfo coreInfo,
     required String latestVersion,
   }) async {
+    final coreName = coreInfo.name;
     final versionConfigNotifier =
         ref.read(versionConfigNotifierProvider.notifier);
-    if (coreName == 'v2ray-rules-dat' || coreName == 'sing-box-rules') {
+    if (coreName == ProxyRes.singRules || coreName == ProxyRes.v2rayRules) {
       try {
-        await updateGeoFiles(coreName);
+        await _updateGeoFiles(coreName);
       } on Exception catch (e) {
         logger.e('Failed to update: $coreName\n$e');
         throw Exception('Failed to update: $coreName\n$e');
@@ -171,25 +174,24 @@ class CoreUpdater extends _$CoreUpdater {
       versionConfigNotifier.updateVersion(coreName, latestVersion);
     } else {
       try {
-        final coreArchiveFileName =
-            CoreHelper.getCoreArchiveFileName(coreName, latestVersion);
-        final coreFileName = CoreHelper.getCoreFileName(coreName);
+        final coreArchiveFileName = coreInfo.getArchiveFileName(latestVersion);
+        final binFileName = coreInfo.binFileName;
         final downloadUrl =
-            '${coreRepositories[coreName]!}/releases/download/$latestVersion/$coreArchiveFileName';
-        final networkUtil = ref.read(networkUtilProvider.notifier);
-        final bytes = await networkUtil.downloadFile(downloadUrl);
+            '${coreInfo.repoUrl}/releases/download/$latestVersion/$coreArchiveFileName';
+        final networkHelper = ref.read(networkHelperProvider.notifier);
+        final bytes = await networkHelper.downloadFile(downloadUrl);
 
         // Stop all cores
         final coreStateNotifier = ref.read(coreStateNotifierProvider.notifier);
         await coreStateNotifier.stopCores();
         // Replace core
-        await replaceCore(
+        await _replaceCore(
           coreArchiveFileName: coreArchiveFileName,
-          coreFileName: coreFileName,
+          coreBinFileName: binFileName,
           bytes: bytes,
         );
 
-        if (!CoreHelper.coreExists(coreName)) {
+        if (!await coreInfo.exists()) {
           logger.e('Core not found: $coreName');
           throw Exception('Core not found: $coreName');
         }
@@ -202,32 +204,35 @@ class CoreUpdater extends _$CoreUpdater {
     }
   }
 
-  Future<void> updateGeoFiles(String coreName) async {
+  Future<void> _updateGeoFiles(ProxyRes coreName) async {
     late final String geositeFilePath;
     late final String geoipFilePath;
     late final String geositeFileUrl;
     late final String geoipFileUrl;
+    final binPath = IoHelper.binPath;
 
-    if (coreName == 'sing-box-rules') {
+    if (coreName == ProxyRes.singRules) {
       geositeFilePath = p.join(binPath, 'geosite.db');
       geoipFilePath = p.join(binPath, 'geoip.db');
-      geositeFileUrl = geositeDBUrl;
-      geoipFileUrl = geoipDBUrl;
-    } else if (coreName == 'v2ray-rules-dat') {
+      final singBoxRules = proxyResInfoList[4] as SingBoxRulesInfo;
+      geositeFileUrl = singBoxRules.geositeDBUrl;
+      geoipFileUrl = singBoxRules.geoipDBUrl;
+    } else if (coreName == ProxyRes.v2rayRules) {
       geositeFilePath = p.join(binPath, 'geosite.dat');
       geoipFilePath = p.join(binPath, 'geoip.dat');
-      geositeFileUrl = geositeDatUrl;
-      geoipFileUrl = geoipDatUrl;
+      final v2rayRulesDat = proxyResInfoList[5] as V2rayRulesDatInfo;
+      geositeFileUrl = v2rayRulesDat.geositeDatUrl;
+      geoipFileUrl = v2rayRulesDat.geoipDatUrl;
     } else {
       throw Exception('Unsupported core: $coreName');
     }
 
     final geositeDatFile = File(geositeFilePath);
     final geoipDatFile = File(geoipFilePath);
-    final networkUtil = ref.read(networkUtilProvider.notifier);
+    final networkHelper = ref.read(networkHelperProvider.notifier);
     try {
-      final geositeDatBytes = await networkUtil.downloadFile(geositeFileUrl);
-      final geoipDatBytes = await networkUtil.downloadFile(geoipFileUrl);
+      final geositeDatBytes = await networkHelper.downloadFile(geositeFileUrl);
+      final geoipDatBytes = await networkHelper.downloadFile(geoipFileUrl);
       final coreStateNotifier = ref.read(coreStateNotifierProvider.notifier);
       await coreStateNotifier.stopCores();
       await geositeDatFile.writeAsBytes(geositeDatBytes);
@@ -237,11 +242,13 @@ class CoreUpdater extends _$CoreUpdater {
     }
   }
 
-  Future<void> replaceCore({
+  Future<void> _replaceCore({
     required String coreArchiveFileName,
-    required String coreFileName,
+    required String coreBinFileName,
     required Uint8List bytes,
   }) async {
+    final binPath = IoHelper.binPath;
+    final tempPath = IoHelper.tempPath;
     final tempFile = File(p.join(tempPath, coreArchiveFileName));
     late final Archive archive;
     bool flag = false;
@@ -255,12 +262,12 @@ class CoreUpdater extends _$CoreUpdater {
       archive = TarDecoder().decodeBytes(GZipDecoder().decodeBytes(bytes));
     } else {
       if (coreArchiveFileName.contains('hysteria')) {
-        final coreBinaryFile = File(p.join(binPath, coreFileName));
+        final coreBinaryFile = File(p.join(binPath, coreBinFileName));
         if (await coreBinaryFile.exists()) {
           await coreBinaryFile.delete();
         }
-        tempFile.copySync(p.join(binPath, coreFileName));
-        SystemUtil.setFilePermission(p.join(binPath, coreFileName));
+        tempFile.copySync(p.join(binPath, coreBinFileName));
+        setExecutablePermissionSync(p.join(binPath, coreBinFileName));
         await tempFile.delete();
         return;
       } else {
@@ -269,16 +276,16 @@ class CoreUpdater extends _$CoreUpdater {
       }
     }
 
-    final coreBinaryFile = File(p.join(binPath, coreFileName));
+    final coreBinaryFile = File(p.join(binPath, coreBinFileName));
     if (await coreBinaryFile.exists()) {
       await coreBinaryFile.delete();
     }
 
     for (var file in archive) {
       final filename = file.name;
-      if (file.isFile && filename == coreFileName) {
+      if (file.isFile && filename == coreBinFileName) {
         final data = file.content as List<int>;
-        File(p.join(binPath, coreFileName))
+        File(p.join(binPath, coreBinFileName))
           ..createSync(recursive: true)
           ..writeAsBytesSync(data);
         flag = true;
@@ -289,35 +296,28 @@ class CoreUpdater extends _$CoreUpdater {
     final extractDir = Directory(p.join(tempPath, 'extracted'));
     if (!flag) {
       await extractArchiveToDisk(archive, extractDir.path);
-      final extractedFile = _findFile(extractDir, coreFileName);
+      final extractedFile = _findFile(extractDir, coreBinFileName);
       if (extractedFile != null) {
-        extractedFile.copySync(p.join(binPath, coreFileName));
+        extractedFile.copySync(p.join(binPath, coreBinFileName));
         extractDir.deleteSync(recursive: true);
       }
     }
 
-    SystemUtil.setFilePermission(p.join(binPath, coreFileName));
+    setExecutablePermissionSync(p.join(binPath, coreBinFileName));
     await tempFile.delete();
   }
 
-  String? parseVersionInfo(String info, String coreName, bool logError) {
-    final patterns = {
-      'sing-box': RegExp(r'sing-box version (\d+\.\d+\.\d+)'),
-      'xray-core': RegExp(r'Xray (\d+\.\d+\.\d+)'),
-      'shadowsocks-rust': RegExp(r'shadowsocks (\d+\.\d+\.\d+)'),
-      'hysteria': RegExp(r'hysteria version v(\d+\.\d+\.\d+)'),
-    };
-    String result = '';
-    final regex = patterns[coreName];
-    if (regex != null) {
-      final match = regex.firstMatch(info);
-      if (match != null) {
-        result = match.group(1)!;
-      }
+  String? _parseVersion(String buffer, ProxyResInfo coreInfo, bool logError) {
+    late final String result;
+    final regex = RegExp(coreInfo.versionPattern!);
+    final match = regex.firstMatch(buffer);
+    if (match != null) {
+      result = match.group(1)!;
     }
+
     if (result.isEmpty) {
       if (logError) {
-        logger.e('Failed to parse version info for $coreName');
+        logger.e('Failed to parse version info for ${coreInfo.name}');
       }
       return null;
     }

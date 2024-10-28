@@ -1,39 +1,26 @@
 import 'package:drift/drift.dart';
+import 'package:sphia/app/database/dao/config.dart';
 import 'package:sphia/app/database/database.dart';
-import 'package:sphia/app/log.dart';
+
+const serverGroupsOrderId = 1;
 
 class ServerGroupDao {
   final Database _db;
 
-  ServerGroupDao(this._db);
+  const ServerGroupDao(this._db);
 
   Future<List<ServerGroup>> getServerGroups() {
     return _db.select(_db.serverGroups).get();
   }
 
-  Future<List<ServerGroup>> getOrderedServerGroups() async {
-    logger.i('Getting ordered server groups');
-    final order = await getServerGroupsOrder();
-    final groups = await getServerGroups();
-    final orderedGroups = <ServerGroup>[];
-    for (final id in order) {
-      final group = groups.firstWhere((element) => element.id == id);
-      orderedGroups.add(group);
-    }
-    return orderedGroups;
+  Future<List<ServerGroup>> getOrderedServerGroups() {
+    return getOrderedList(
+        getServerGroupsOrder, getServerGroups, (group) => group.id);
   }
 
   Future<ServerGroup?> getServerGroupById(int id) {
     return (_db.select(_db.serverGroups)..where((tbl) => tbl.id.equals(id)))
         .getSingleOrNull();
-  }
-
-  Future<String?> getServerGroupNameById(int id) async {
-    final serverGroup = await getServerGroupById(id);
-    if (serverGroup == null) {
-      return null;
-    }
-    return serverGroup.name;
   }
 
   Future<int> insertServerGroup(String name, String subscription) async {
@@ -43,7 +30,7 @@ class ServerGroupDao {
             subscription: subscription,
           ),
         );
-    await _db.serverDao.createEmptyServersOrder(groupId);
+    await serverDao.createEmptyServersOrder(groupId);
     return groupId;
   }
 

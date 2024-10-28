@@ -1,98 +1,78 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 import 'package:sphia/view/widget/widget.dart';
 
-class ServerGroupDialog extends StatefulWidget {
+class ServerGroupDialog extends HookWidget {
   final String title;
-  final Map<String, dynamic> serverGroupMap;
+  final (String groupName, String subscription) serverGroup;
 
   const ServerGroupDialog({
     super.key,
     required this.title,
-    required this.serverGroupMap,
+    required this.serverGroup,
   });
 
   @override
-  State<ServerGroupDialog> createState() => _ServerGroupDialogState();
-}
-
-class _ServerGroupDialogState extends State<ServerGroupDialog> {
-  final _groupNameController = TextEditingController();
-  final _subscriptionController = TextEditingController();
-  bool _fetchSubscription = false;
-  late final bool _isEdit;
-  final _formKey = GlobalKey<FormState>();
-
-  @override
-  void initState() {
-    super.initState();
-    _groupNameController.text = widget.serverGroupMap['groupName']!;
-    _subscriptionController.text = widget.serverGroupMap['subscription']!;
-    _isEdit = widget.serverGroupMap['groupName']!.isNotEmpty;
-  }
-
-  @override
-  void dispose() {
-    _groupNameController.dispose();
-    _subscriptionController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final groupNameController = useTextEditingController(text: serverGroup.$1);
+    final subscriptionController =
+        useTextEditingController(text: serverGroup.$2);
+    final fetchSubscription = useState(false);
+    final isEdit = serverGroup.$1.isNotEmpty;
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+
     return AlertDialog(
       scrollable: true,
-      title: Text(widget.title),
+      title: Text(title),
       content: Form(
-        key: _formKey,
+        key: formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             SphiaWidget.textInput(
-              controller: _groupNameController,
-              labelText: S.of(context).groupName,
+              controller: groupNameController,
+              labelText: L10n.of(context)!.groupName,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return S.of(context).groupNameEnterMsg;
+                  return L10n.of(context)!.groupNameEnterMsg;
                 }
                 return null;
               },
             ),
             SphiaWidget.textInput(
-              controller: _subscriptionController,
-              labelText: S.of(context).subscription,
+              controller: subscriptionController,
+              labelText: L10n.of(context)!.subscription,
             ),
-            if (!_isEdit)
+            if (!isEdit)
               SphiaWidget.dropdownButton(
-                value: S.of(context).no,
-                labelText: S.of(context).fetchSubscription,
-                items: [S.of(context).no, S.of(context).yes],
+                value: L10n.of(context)!.no,
+                labelText: L10n.of(context)!.fetchSubscription,
+                items: [L10n.of(context)!.no, L10n.of(context)!.yes],
                 onChanged: (value) {
                   if (value != null) {
-                    _fetchSubscription = value == S.of(context).yes;
+                    fetchSubscription.value = value == L10n.of(context)!.yes;
                   }
                 },
               ),
           ],
         ),
       ),
-      actions: <Widget>[
+      actions: [
         TextButton(
-          child: Text(S.of(context).cancel),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          child: Text(L10n.of(context)!.cancel),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         TextButton(
-          child: Text(S.of(context).save),
+          child: Text(L10n.of(context)!.save),
           onPressed: () {
-            if (_formKey.currentState!.validate()) {
+            if (formKey.currentState!.validate()) {
               Navigator.of(context).pop(
-                {
-                  'groupName': _groupNameController.text.trim(),
-                  'subscription': _subscriptionController.text.trim(),
-                  'fetchSubscription': _fetchSubscription,
-                },
+                (
+                  groupNameController.text.trim(),
+                  subscriptionController.text.trim(),
+                  fetchSubscription.value
+                ),
               );
             }
           },
