@@ -94,39 +94,42 @@ class NetworkHelper extends _$NetworkHelper {
   }
 
   Future<int> getLatency() async {
-    try {
-      logger.i('Getting latency');
-      final url = ref.read(
-          sphiaConfigNotifierProvider.select((value) => value.latencyTestUrl));
-      final uri = Uri.parse(url);
-      final client = _getHttpClient(url);
+    logger.i('Getting latency');
+    final url = ref.read(
+        sphiaConfigNotifierProvider.select((value) => value.latencyTestUrl));
+    final uri = Uri.parse(url);
+    final client = _getHttpClient(url);
 
-      try {
-        final stopwatch = Stopwatch()..start();
-        final request =
-            await client.getUrl(uri).timeout(const Duration(seconds: 3));
-        await request.close();
-        stopwatch.stop();
-        final latency = stopwatch.elapsedMilliseconds;
-        logger.i('Latency: $latency ms');
-        return latency;
-      } on TimeoutException catch (e) {
-        logger.e('Latency test timed out: $e');
-        throw Exception('Latency test timed out: $e');
-      } on SocketException catch (e) {
-        logger.e('Network error while testing latency: $e');
-        throw Exception('Network error while testing latency: $e');
-      } finally {
-        client.close();
+    try {
+      final stopwatch = Stopwatch()..start();
+      final request =
+          await client.getUrl(uri).timeout(const Duration(seconds: 3));
+      final response = await request.close();
+      stopwatch.stop();
+      final statusCode = response.statusCode;
+      if (statusCode != 204) {
+        throw Exception('Invalid status code: $statusCode');
       }
+      final latency = stopwatch.elapsedMilliseconds;
+      logger.i('Latency: $latency ms');
+      return latency;
+    } on TimeoutException catch (e) {
+      logger.e('Latency test timed out: $e');
+      throw Exception('Latency test timed out: $e');
+    } on SocketException catch (e) {
+      logger.e('Network error while testing latency: $e');
+      throw Exception('Network error while testing latency: $e');
     } catch (e) {
       logger.e('Failed to get latency: $e');
       throw Exception('Failed to get latency: $e');
+    } finally {
+      client.close();
     }
   }
 
   HttpClient _getHttpClient(String url) {
     final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
+    final latencyTestUrl = sphiaConfig.latencyTestUrl;
     final proxyState = ref.read(proxyNotifierProvider);
     final client = HttpClient();
     // init userAgent
@@ -134,8 +137,9 @@ class NetworkHelper extends _$NetworkHelper {
     client.userAgent = userAgent;
     if (proxyState.coreRunning &&
         (sphiaConfig.updateThroughProxy ||
+            url == latencyTestUrl ||
             url == 'https://api.ip.sb/ip' ||
-            url.contains('sphia'))) {
+            url.contains('YukidouSatoru/sphia'))) {
       final coreState = ref.read(coreStateNotifierProvider).valueOrNull;
       if (coreState == null) {
         logger.e('Core state is null');
