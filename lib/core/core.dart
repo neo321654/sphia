@@ -124,7 +124,7 @@ abstract class CoreConfigParameters {
 mixin RoutingCore on Core {
   StreamSubscription? _logSubscription;
   final _logStreamController = StreamController<String>.broadcast();
-  bool _isPreLog = false;
+  bool _isPreLog = true;
   final List<String> preLogList = [];
 
   Stream<String> get logStream => _logStreamController.stream;
