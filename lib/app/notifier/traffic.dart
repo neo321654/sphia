@@ -3,7 +3,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/traffic/traffic.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/core_state.dart';
@@ -29,7 +28,6 @@ class TrafficNotifier extends _$TrafficNotifier {
     final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
     final coreState = ref.read(coreStateNotifierProvider).valueOrNull;
     if (coreState == null) {
-      logger.e('Core state is null');
       throw Exception('Core state is null');
     }
     final proxyState = ref.read(proxyNotifierProvider);
@@ -50,7 +48,6 @@ class TrafficNotifier extends _$TrafficNotifier {
         );
         break;
       default:
-        logger.e('Unsupported API: ${routingProvider.toString()}');
         throw Exception('Unsupported API: ${routingProvider.toString()}');
     }
 
@@ -58,7 +55,6 @@ class TrafficNotifier extends _$TrafficNotifier {
       await state.traffic!.start();
     } catch (e) {
       state = const TrafficState();
-      logger.e('Failed to start/stop traffic: $e');
       return;
     }
   }
@@ -83,7 +79,6 @@ class TrafficNotifier extends _$TrafficNotifier {
     final coreState = ref.read(coreStateNotifierProvider).valueOrNull;
 
     if (coreState == null) {
-      logger.e('Core state is null');
       throw Exception('Core state is null');
     }
 

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sphia/app/database/database.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/notifier/data/server.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
@@ -39,7 +38,6 @@ class TrafficDialog extends ConsumerWidget {
   }
 
   Future<void> clearTraffic(ActionRange option, WidgetRef ref) async {
-    logger.i('Clearing Traffic: range=${option.name}');
     try {
       switch (option) {
         case ActionRange.selectedServer:
@@ -48,11 +46,9 @@ class TrafficDialog extends ConsumerWidget {
           final id = serverConfig.selectedServerId;
           final server = await serverDao.getServerModelById(id);
           if (server == null) {
-            logger.w('Selected server not exists');
             return;
           }
           if (server.protocol == Protocol.custom) {
-            logger.w('Custom server does not support traffic clearing');
             return;
           }
           await serverDao.updateTraffic(server.id, null, null);
@@ -67,7 +63,6 @@ class TrafficDialog extends ConsumerWidget {
           final servers = ref.read(serverNotifierProvider).valueOrNull ?? [];
           servers.removeWhere((server) => server.protocol == Protocol.custom);
           if (servers.isEmpty) {
-            logger.w('No server to clear traffic');
             return;
           }
           final notifier = ref.read(serverNotifierProvider.notifier);
@@ -87,8 +82,6 @@ class TrafficDialog extends ConsumerWidget {
         default:
           return;
       }
-    } catch (e) {
-      logger.e('Failed to clear traffic: $e');
-    }
+    } catch (_) {}
   }
 }

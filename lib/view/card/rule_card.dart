@@ -4,7 +4,6 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/rule.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/data/outbound_tag.dart';
 import 'package:sphia/app/notifier/data/rule.dart';
 import 'package:sphia/core/rule/rule_model.dart';
@@ -104,7 +103,6 @@ class RuleCard extends ConsumerWidget with RuleHelper {
             SphiaWidget.iconButton(
               icon: Symbols.delete,
               onTap: () async {
-                logger.i('Deleting Rule: ${rule.id}');
                 await ruleDao.deleteRule(rule.id);
                 await ruleDao.refreshRulesOrder(rule.groupId);
                 final notifier = ref.read(ruleNotifierProvider.notifier);
@@ -131,7 +129,6 @@ class RuleCard extends ConsumerWidget with RuleHelper {
     if (editedRule == null || editedRule == rule) {
       return null;
     }
-    logger.i('Editing Rule: ${rule.id}');
     await ruleDao.updateRule(editedRule);
     // await ruleDao.refreshRulesOrderByGroupId(editedRule.groupId);
     return editedRule;

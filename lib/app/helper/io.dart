@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/state/io_info.dart';
 
 class IoHelper {
@@ -41,7 +40,6 @@ class IoHelper {
     final dir = Directory(dirName);
     try {
       if (!dir.existsSync()) {
-        logger.i('Creating directory: $dirName');
         dir.createSync();
       }
     } on Exception catch (_) {
@@ -53,7 +51,6 @@ class IoHelper {
       [String? logMessage]) async {
     final file = File(filePath);
     if (await file.exists()) {
-      logger.i(logMessage);
       await file.delete();
     }
   }

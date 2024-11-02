@@ -12,7 +12,6 @@ import 'package:sphia/app/helper/io.dart';
 import 'package:sphia/app/helper/latency.dart';
 import 'package:sphia/app/helper/server.dart';
 import 'package:sphia/app/helper/uri/uri.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/data/server.dart';
@@ -232,7 +231,6 @@ class ServerCard extends ConsumerWidget with ServerHelper {
                 if (confirm == null || !confirm) {
                   return;
                 }
-                logger.i('Deleting Server: ${server.id}');
                 await serverDao.deleteServer(server.id);
                 await serverDao.refreshServersOrder(server.groupId);
                 final serverNotifier =
@@ -293,7 +291,6 @@ class ServerCard extends ConsumerWidget with ServerHelper {
     if (editedServer == null || editedServer == server) {
       return null;
     }
-    logger.i('Editing Server: ${server.id}');
     await serverDao.updateServer(editedServer);
     return editedServer;
   }
@@ -331,7 +328,6 @@ class ServerCard extends ConsumerWidget with ServerHelper {
     required String uri,
     required BuildContext context,
   }) async {
-    logger.i('Sharing QRCode: $uri');
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -399,13 +395,11 @@ class ServerCard extends ConsumerWidget with ServerHelper {
       _ => null
     };
     if (core == null) {
-      logger.e('No supported core for protocol: $protocol');
       return false;
     }
     core.configFileName = 'export.json';
     core.isRouting = true;
     core.servers.add(server);
-    logger.i('Sharing Configuration: ${server.id}');
     await core.configure();
     return true;
   }

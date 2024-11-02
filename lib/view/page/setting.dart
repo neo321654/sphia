@@ -403,9 +403,9 @@ class SettingPage extends ConsumerWidget with SystemHelper {
         },
         tooltip: L10n.of(context)!.enableCoreLogMsg,
       ),
-      ItemsCard<LogLevel>(
+      ItemsCard<CoreLogLevel>(
         title: L10n.of(context)!.logLevel,
-        items: LogLevel.values,
+        items: CoreLogLevel.values,
         idxSelector: (value) => value.logLevel.index,
         updater: (value) {
           notifier.updateValue('logLevel', value.name);

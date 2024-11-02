@@ -7,7 +7,6 @@ import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/database/dao/rule.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/io.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/rule_config.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/core/core.dart';
@@ -78,7 +77,7 @@ class XrayCore extends Core with RoutingCore {
     final paras = parameters as XrayConfigParameters;
     final sphiaConfig = paras.sphiaConfig;
     final log = Log(
-      access: sphiaConfig.saveCoreLog ? SphiaLog.getLogPath(name) : null,
+      access: sphiaConfig.saveCoreLog ? getLogPath() : null,
       loglevel: sphiaConfig.logLevel.name,
     );
 

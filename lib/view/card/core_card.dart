@@ -5,8 +5,8 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/config/version.dart';
 import 'package:sphia/app/helper/update.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/version_config.dart';
+import 'package:sphia/app/notifier/log.dart';
 import 'package:sphia/app/state/core_info_state.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 import 'package:sphia/view/card/shadow_card.dart';
@@ -43,7 +43,9 @@ class CoreInfoCard extends ConsumerWidget with UpdateHelper {
                     try {
                       await launchUrl(Uri.parse(coreInfo.repoUrl));
                     } on Exception catch (e) {
-                      logger.e('Failed to launch url: $e');
+                      ref
+                          .read(logNotifierProvider.notifier)
+                          .error('Failed to launch URL: $e');
                       if (!context.mounted) {
                         return;
                       }

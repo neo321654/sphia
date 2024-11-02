@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiver/collection.dart';
 import 'package:sphia/app/database/dao/rule.dart';
 import 'package:sphia/app/database/database.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/rule_config.dart';
 import 'package:sphia/app/notifier/data/rule.dart';
 import 'package:sphia/app/notifier/data/rule_group.dart';
@@ -29,7 +28,6 @@ mixin RuleHelper {
     if (rule == null) {
       return;
     }
-    logger.i('Adding Rule: ${rule.name}');
     final ruleId = await ruleDao.insertRule(rule);
     await ruleDao.refreshRulesOrder(groupId);
     final notifier = ref.read(ruleNotifierProvider.notifier);
@@ -87,7 +85,6 @@ mixin RuleHelper {
     if (newGroupName == null) {
       return;
     }
-    logger.i('Adding Rule Group: $newGroupName');
     final groupId = await ruleGroupDao.insertRuleGroup(newGroupName);
     await ruleGroupDao.refreshRuleGroupsOrder();
     final notifier = ref.read(ruleGroupNotifierProvider.notifier);
@@ -115,7 +112,6 @@ mixin RuleHelper {
     if (newGroupName == null || newGroupName == ruleGroup.name) {
       return false;
     }
-    logger.i('Editing Rule Group: ${ruleGroup.id}');
     await ruleGroupDao.updateRuleGroup(ruleGroup.id, newGroupName);
     final notifier = ref.read(ruleGroupNotifierProvider.notifier);
     notifier.updateGroup(RuleGroup(
@@ -138,7 +134,6 @@ mixin RuleHelper {
       }
       return;
     }
-    logger.i('Deleting Rule Group: $groupId');
     await ruleGroupDao.deleteRuleGroup(groupId);
     await ruleGroupDao.refreshRuleGroupsOrder();
     final notifier = ref.read(ruleGroupNotifierProvider.notifier);
@@ -202,8 +197,6 @@ mixin RuleHelper {
     if (listsEqual(oldOrder, newOrder)) {
       return;
     }
-
-    logger.i('Reordered Rule Group');
     await ruleGroupDao.updateRuleGroupsOrder(newOrder);
     final notifier = ref.read(ruleGroupNotifierProvider.notifier);
     notifier.setGroups(ruleGroups);
@@ -234,7 +227,6 @@ mixin RuleHelper {
     if (confirm == null || !confirm) {
       return;
     }
-    logger.i('Resetting Rules');
     final ruleGroups = ref.read(ruleGroupNotifierProvider);
     // delete all rules and groups
     for (final ruleGroup in ruleGroups) {

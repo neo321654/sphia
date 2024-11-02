@@ -8,9 +8,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/helper/io.dart';
 import 'package:sphia/app/helper/network.dart';
 import 'package:sphia/app/helper/system.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/version_config.dart';
 import 'package:sphia/app/notifier/core_state.dart';
+import 'package:sphia/app/notifier/log.dart';
 import 'package:sphia/core/core_info.dart';
 import 'package:sphia/core/rules_dat/core_info.dart';
 
@@ -21,8 +21,10 @@ class CoreUpdater extends _$CoreUpdater with SystemHelper, ProxyResInfoList {
   @override
   void build() {}
 
+  LogNotifier get logNotifier => ref.read(logNotifierProvider.notifier);
+
   Future<void> scanCores() async {
-    logger.i('Scanning cores');
+    logNotifier.info('Scanning cores');
     final notifier = ref.read(versionConfigNotifierProvider.notifier);
     final binPath = IoHelper.binPath;
 
@@ -30,7 +32,6 @@ class CoreUpdater extends _$CoreUpdater with SystemHelper, ProxyResInfoList {
       final coreName = info.name;
       // if core is not found, remove it from version config
       if (!await info.exists()) {
-        logger.i('Core not found: $coreName');
         notifier.removeVersion(coreName);
         continue;
       }
@@ -43,13 +44,13 @@ class CoreUpdater extends _$CoreUpdater with SystemHelper, ProxyResInfoList {
       try {
         result = await Process.run(executable, arguments);
       } on Exception catch (_) {
-        logger.e('Failed to run command: $executable $arguments');
+        logNotifier.error('Failed to run command: $executable $arguments');
         continue;
       }
       if (result.exitCode == 0) {
         final version = _parseVersion(result.stdout.toString(), info, true);
         if (version != null) {
-          logger.i('Found $coreName: $version');
+          logNotifier.info('Found $coreName: $version');
           notifier.updateVersion(coreName, version);
         }
       }
@@ -88,7 +89,7 @@ class CoreUpdater extends _$CoreUpdater with SystemHelper, ProxyResInfoList {
           if (platformFile.path != null) {
             final file = File(platformFile.path!);
             final destPath = p.join(binPath, p.basename(file.path));
-            logger.i('Copying $file to \'$destPath\'');
+            logNotifier.info('Copying $file to \'$destPath\'');
             file.copySync(destPath);
           }
         }
@@ -107,19 +108,18 @@ class CoreUpdater extends _$CoreUpdater with SystemHelper, ProxyResInfoList {
         try {
           result = await Process.run(file.path, [arguments]);
         } on Exception catch (_) {
-          logger.e('Failed to run command: ${file.path} $arguments');
+          logNotifier.error('Failed to run command: ${file.path} $arguments');
           continue;
         }
         if (result.exitCode == 0) {
           final version = _parseVersion(result.stdout.toString(), info, false);
           if (version != null) {
-            logger.i('Found $coreName: $version');
             notifier.updateVersion(coreName, version);
             final destPath = p.join(binPath, info.binFileName);
             // delete old core
             await deleteCore(info);
             // copy new core
-            logger.i('Copying $file to \'$destPath\'');
+            logNotifier.info('Copying $file to \'$destPath\'');
             file.copySync(destPath);
             return true;
           }
@@ -167,10 +167,10 @@ class CoreUpdater extends _$CoreUpdater with SystemHelper, ProxyResInfoList {
       try {
         await _updateGeoFiles(coreName);
       } on Exception catch (e) {
-        logger.e('Failed to update: $coreName\n$e');
+        logNotifier.error('Failed to update: $coreName\n$e');
         throw Exception('Failed to update: $coreName\n$e');
       }
-      logger.i('Updated $coreName to $latestVersion successfully');
+      logNotifier.info('Updated $coreName to $latestVersion successfully');
       versionConfigNotifier.updateVersion(coreName, latestVersion);
     } else {
       try {
@@ -192,14 +192,14 @@ class CoreUpdater extends _$CoreUpdater with SystemHelper, ProxyResInfoList {
         );
 
         if (!await coreInfo.exists()) {
-          logger.e('Core not found: $coreName');
+          logNotifier.error('Core not found: $coreName');
           throw Exception('Core not found: $coreName');
         }
       } on Exception catch (e) {
-        logger.e('Failed to update: $coreName\n$e');
+        logNotifier.error('Failed to update: $coreName\n$e');
         throw Exception('Failed to update: $coreName\n$e');
       }
-      logger.i('Updated $coreName to $latestVersion successfully');
+      logNotifier.info('Updated $coreName to $latestVersion successfully');
       versionConfigNotifier.updateVersion(coreName, latestVersion);
     }
   }
@@ -271,7 +271,7 @@ class CoreUpdater extends _$CoreUpdater with SystemHelper, ProxyResInfoList {
         await tempFile.delete();
         return;
       } else {
-        logger.e('Unsupported archive format');
+        logNotifier.error('Unsupported archive format');
         throw Exception('Unsupported archive format');
       }
     }
@@ -317,7 +317,7 @@ class CoreUpdater extends _$CoreUpdater with SystemHelper, ProxyResInfoList {
 
     if (result.isEmpty) {
       if (logError) {
-        logger.e('Failed to parse version info for ${coreInfo.name}');
+        logNotifier.error('Failed to parse version info for ${coreInfo.name}');
       }
       return null;
     }

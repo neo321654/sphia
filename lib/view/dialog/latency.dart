@@ -6,11 +6,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/latency.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/config/version_config.dart';
 import 'package:sphia/app/notifier/data/server.dart';
+import 'package:sphia/app/notifier/log.dart';
 import 'package:sphia/app/provider/core.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 import 'package:sphia/server/server_model.dart';
@@ -56,7 +56,6 @@ class LatencyDialog extends HookConsumerWidget {
     Future<void> latencyTest() async {
       final range = options.$2;
       final type = options.$3!;
-      logger.i('Testing Latency: range=${range.name}, type=${type.name}');
 
       final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
       final testUrl = sphiaConfig.latencyTestUrl;
@@ -67,12 +66,10 @@ class LatencyDialog extends HookConsumerWidget {
           final id = serverConfig.selectedServerId;
           final server = await serverDao.getServerModelById(id);
           if (server == null) {
-            logger.w('Selected server not exists');
             completer.complete();
             return;
           }
           if (server.protocol == Protocol.custom) {
-            logger.w('Custom config server does not support latency test');
             completer.complete();
             return;
           }
@@ -80,11 +77,19 @@ class LatencyDialog extends HookConsumerWidget {
           late final int latency;
           switch (type) {
             case LatencyType.icmp:
-              latency = await IcmpLatency.testIcmpLatency(server.address);
+              latency = await IcmpLatency.testIcmpLatency(server.address)
+                  .onError((e, st) {
+                ref.read(logNotifierProvider.notifier).error(e.toString());
+                return latencyFailure;
+              });
               break;
             case LatencyType.tcp:
               latency =
-                  await TcpLatency.testTcpLatency(server.address, server.port);
+                  await TcpLatency.testTcpLatency(server.address, server.port)
+                      .onError((e, st) {
+                ref.read(logNotifierProvider.notifier).error(e.toString());
+                return latencyFailure;
+              });
               break;
             case LatencyType.url:
               final core = ref.read(latencyTestCoreProvider);
@@ -93,10 +98,15 @@ class LatencyDialog extends HookConsumerWidget {
               final tag = 'proxy-${server.id}';
               final versionConfig = ref.read(versionConfigNotifierProvider);
               await urlLatency.init(sphiaConfig, versionConfig).catchError((e) {
-                logger.e('Failed to init UrlLatency: $e');
+                ref
+                    .read(logNotifierProvider.notifier)
+                    .error('Failed to init UrlLatency: $e');
                 completer.complete();
               });
-              latency = await urlLatency.testUrlLatency(tag);
+              latency = await urlLatency.testUrlLatency(tag).onError((e, st) {
+                ref.read(logNotifierProvider.notifier).error(e.toString());
+                return latencyFailure;
+              });
               urlLatency.stop();
               break;
           }
@@ -109,7 +119,6 @@ class LatencyDialog extends HookConsumerWidget {
           final servers = ref.read(serverNotifierProvider).valueOrNull ?? [];
           servers.removeWhere((server) => server.protocol == Protocol.custom);
           if (servers.isEmpty) {
-            logger.w('No server to test latency');
             completer.complete();
             return;
           }
@@ -121,7 +130,9 @@ class LatencyDialog extends HookConsumerWidget {
                 UrlLatency(servers: servers, testUrl: testUrl, core: core);
             final versionConfig = ref.read(versionConfigNotifierProvider);
             await urlLatency.init(sphiaConfig, versionConfig).catchError((e) {
-              logger.e('Failed to init UrlLatency: $e');
+              ref
+                  .read(logNotifierProvider.notifier)
+                  .error('Failed to init UrlLatency: $e');
               completer.complete();
             });
           }
@@ -137,15 +148,26 @@ class LatencyDialog extends HookConsumerWidget {
             late final int latency;
             switch (type) {
               case LatencyType.icmp:
-                latency = await IcmpLatency.testIcmpLatency(server.address);
+                latency = await IcmpLatency.testIcmpLatency(server.address)
+                    .onError((e, st) {
+                  ref.read(logNotifierProvider.notifier).error(e.toString());
+                  return latencyFailure;
+                });
                 break;
               case LatencyType.tcp:
-                latency = await TcpLatency.testTcpLatency(
-                    server.address, server.port);
+                latency =
+                    await TcpLatency.testTcpLatency(server.address, server.port)
+                        .onError((e, st) {
+                  ref.read(logNotifierProvider.notifier).error(e.toString());
+                  return latencyFailure;
+                });
                 break;
               case LatencyType.url:
                 final tag = 'proxy-${server.id}';
-                latency = await urlLatency.testUrlLatency(tag);
+                latency = await urlLatency.testUrlLatency(tag).onError((e, st) {
+                  ref.read(logNotifierProvider.notifier).error(e.toString());
+                  return latencyFailure;
+                });
                 break;
             }
             await serverDao.updateLatency(server.id, latency);
@@ -166,7 +188,6 @@ class LatencyDialog extends HookConsumerWidget {
 
     Future<void> clearLatency() async {
       final range = options.$2;
-      logger.i('Clearing Latency: range=${range.name}');
 
       final serverConfig = ref.read(serverConfigNotifierProvider);
       switch (range) {
@@ -175,12 +196,10 @@ class LatencyDialog extends HookConsumerWidget {
           final id = serverConfig.selectedServerId;
           final server = await serverDao.getServerModelById(id);
           if (server == null) {
-            logger.w('Selected server not exists');
             completer.complete();
             return;
           }
           if (server.protocol == Protocol.custom) {
-            logger.w('Custom config server does not support latency clearing');
             completer.complete();
             return;
           }
@@ -193,7 +212,6 @@ class LatencyDialog extends HookConsumerWidget {
           final servers = ref.read(serverNotifierProvider).valueOrNull ?? [];
           servers.removeWhere((server) => server.protocol == Protocol.custom);
           if (servers.isEmpty) {
-            logger.w('No server to clear latency');
             completer.complete();
             return;
           }

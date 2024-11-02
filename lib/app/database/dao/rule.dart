@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:sphia/app/database/dao/config.dart';
 import 'package:sphia/app/database/database.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/core/rule/rule_model.dart';
 
 const outboundProxyId = -2;
@@ -30,7 +29,6 @@ class RuleDao {
   }
 
   Future<List<RuleModel>> getOrderedRuleModelsByGroupId(int groupId) async {
-    logger.i('Getting ordered rules by group id: $groupId');
     final order = await getRulesOrder(groupId);
     final rules = await getRuleModelsByGroupId(groupId);
     final ruleMap = {for (var rule in rules) rule.id: rule};

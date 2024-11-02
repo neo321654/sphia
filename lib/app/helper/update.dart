@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/config/version.dart';
 import 'package:sphia/app/helper/network.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/version_config.dart';
+import 'package:sphia/app/notifier/log.dart';
 import 'package:sphia/app/notifier/proxy.dart';
 import 'package:sphia/app/state/core_info_state.dart';
 import 'package:sphia/core/core_info.dart';
@@ -76,6 +76,7 @@ mixin UpdateHelper {
       notifier.removeVersion(coreName);
     }
     final coreInfoNotifier = ref.read(coreInfoStateListProvider.notifier);
+    final logNotifier = ref.read(logNotifierProvider.notifier);
     if (coreName == ProxyRes.hysteria) {
       if (config.getVersion(coreName) == hysteriaLatestVersion && coreExists) {
         if (context.mounted) {
@@ -87,7 +88,7 @@ mixin UpdateHelper {
         }
         return;
       }
-      logger.i('Latest version of hysteria: $hysteriaLatestVersion');
+      logNotifier.info('Latest version of hysteria: $hysteriaLatestVersion');
       coreInfoNotifier.updateLatestVersion(
           ProxyRes.hysteria, hysteriaLatestVersion);
       if (showDialog && context.mounted) {
@@ -99,7 +100,8 @@ mixin UpdateHelper {
       }
       return;
     }
-    logger.i('Checking update: $coreName');
+    logNotifier.info('Checking update: $coreName');
+
     final networkHelper = ref.read(networkHelperProvider.notifier);
     try {
       try {
@@ -108,7 +110,7 @@ mixin UpdateHelper {
             const Duration(seconds: 5),
             onTimeout: () => throw Exception('Connection timed out'));
       } on Exception catch (e) {
-        logger.e('Failed to connect to Github: $e');
+        logNotifier.error('Failed to connect to Github: $e');
         if (!context.mounted) {
           return;
         }
@@ -119,7 +121,7 @@ mixin UpdateHelper {
         return;
       }
       final latestVersion = await networkHelper.getLatestVersion(coreInfo);
-      logger.i('Latest version of $coreName: $latestVersion');
+      logNotifier.info('Latest version of $coreName: $latestVersion');
       if (config.getVersion(coreName) == latestVersion && coreExists) {
         if (!context.mounted) {
           return;
@@ -140,7 +142,7 @@ mixin UpdateHelper {
         }
       }
     } on Exception catch (e) {
-      logger.e('Failed to check update: $e');
+      logNotifier.error('Failed to check update: $e');
       if (!context.mounted) {
         return;
       }

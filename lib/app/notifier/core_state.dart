@@ -4,8 +4,8 @@ import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/network.dart';
 import 'package:sphia/app/helper/proxy.dart';
 import 'package:sphia/app/helper/tray.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
+import 'package:sphia/app/notifier/log.dart';
 import 'package:sphia/app/notifier/proxy.dart';
 import 'package:sphia/app/notifier/traffic.dart';
 import 'package:sphia/app/provider/core.dart';
@@ -23,6 +23,8 @@ part 'core_state.g.dart';
 class CoreStateNotifier extends _$CoreStateNotifier {
   @override
   Future<CoreState> build() async => const CoreState(cores: []);
+
+  LogNotifier get logNotifier => ref.read(logNotifierProvider.notifier);
 
   Future<void> toggleCores(ServerModel selectedServer) async {
     try {
@@ -61,7 +63,7 @@ class CoreStateNotifier extends _$CoreStateNotifier {
     final isCustom = server.protocol == Protocol.custom;
 
     try {
-      logger.i('Starting cores');
+      logNotifier.info('Starting cores');
       if (isCustom) {
         cores.first.servers.add(server);
         final jsonString = (server as CustomConfigServer).configString;
@@ -122,9 +124,8 @@ class CoreStateNotifier extends _$CoreStateNotifier {
     if (!localServerAvailable) {
       // stop cores
       await stopCores();
-      logger.e('Port $httpPort is not available');
-      logger.e('Local server is not available');
-      throw Exception('Local server is not available');
+      logNotifier.error('Local port $httpPort is not available');
+      throw Exception('Local port $httpPort is not available');
     }
 
     final isTun = !isCustom && sphiaConfig.enableTun;
@@ -165,7 +166,7 @@ class CoreStateNotifier extends _$CoreStateNotifier {
       server = server as CustomConfigServer;
       final coreProviderIdx = server.protocolProvider;
       if (coreProviderIdx == null) {
-        logger.f('Custom server must have a protocol provider');
+        logNotifier.error('Custom server must have a protocol provider');
         throw Exception('Custom server must have a protocol provider');
       }
       final coreProvider = CustomServerProvider.values[coreProviderIdx];
@@ -228,7 +229,7 @@ class CoreStateNotifier extends _$CoreStateNotifier {
         _ => null,
       };
       if (core == null) {
-        logger.e('Unsupported protocol: $protocol');
+        logNotifier.error('Unsupported protocol: $protocol');
         throw Exception('Unsupported protocol: $protocol');
       }
       final routingProvider = _getProviderCore(routingProviderIdx).toString();
@@ -294,7 +295,8 @@ class CoreStateNotifier extends _$CoreStateNotifier {
       await Future.delayed(const Duration(milliseconds: 200));
       final trafficNotifier = ref.read(trafficNotifierProvider.notifier);
       await trafficNotifier.stop();
-      logger.i('Stopping cores');
+      final notifier = ref.read(logNotifierProvider.notifier);
+      notifier.info('Stopping cores');
       final isCustom =
           ref.read(proxyNotifierProvider.select((value) => value.customConfig));
       if (isCustom) {
@@ -323,14 +325,12 @@ class CoreStateNotifier extends _$CoreStateNotifier {
       return;
     }
     if (currState.cores.isNotEmpty) {
-      logger.i('Restarting cores');
       final runningServer = await getRunningServerModel();
       try {
         await stopCores(keepSysProxy: true);
         await startCores(runningServer);
-      } on Exception catch (e) {
-        logger.e('Failed to restart cores: $e');
-        throw Exception('Failed to restart cores: $e');
+      } on Exception catch (_) {
+        rethrow;
       }
     }
   }
@@ -342,11 +342,11 @@ class CoreStateNotifier extends _$CoreStateNotifier {
   int _getRunningServerId() {
     final currentState = state.valueOrNull;
     if (currentState == null) {
-      logger.e('No proxy state');
+      logNotifier.error('No proxy state');
       throw Exception('No proxy state');
     }
     if (currentState.cores.isEmpty) {
-      logger.e('No running server');
+      logNotifier.error('No running server');
       throw Exception('No running server');
     }
     // only single server is supported
@@ -359,7 +359,7 @@ class CoreStateNotifier extends _$CoreStateNotifier {
     final runningServerModel =
         await serverDao.getServerModelById(runningServerId);
     if (runningServerModel == null) {
-      logger.e('Failed to get running server');
+      logNotifier.error('Failed to get running server');
       throw Exception('Failed to get running server');
     }
     return runningServerModel;

@@ -6,7 +6,6 @@ import 'package:sphia/app/helper/uri/shadowsocks.dart';
 import 'package:sphia/app/helper/uri/trojan.dart';
 import 'package:sphia/app/helper/uri/vless.dart';
 import 'package:sphia/app/helper/uri/vmess.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/server/hysteria/server.dart';
 import 'package:sphia/server/server_model.dart';
 import 'package:sphia/server/shadowsocks/server.dart';
@@ -50,14 +49,12 @@ class UriHelper {
           return HysteriaHelper.parseUri(uriString);
       }
     } on Exception catch (e) {
-      logger.e('$e: $uriString');
       throw Exception('$e: $uriString');
     }
     return null;
   }
 
   static void exportUriToClipboard(String uri) async {
-    logger.i('Exporting to clipboard: $uri');
     Clipboard.setData(ClipboardData(text: uri));
   }
 
@@ -68,7 +65,6 @@ class UriHelper {
       final uris = text.split('\n');
       return uris;
     } else {
-      logger.w('Clipboard is empty');
       return [];
     }
   }
@@ -93,7 +89,6 @@ class UriHelper {
         final base64String = _convertBase64UrlToBase64(base64UrlString);
         return utf8.decode(base64Url.decode(base64String));
       } on Exception catch (_) {
-        logger.e('Failed to decode base64');
         throw Exception('Failed to decode base64');
       }
     }

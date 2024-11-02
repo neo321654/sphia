@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sphia/app/helper/system.dart';
 import 'package:sphia/app/helper/tray.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/tray.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
@@ -24,7 +23,6 @@ class _TrayWrapperState extends ConsumerState<TrayWrapper>
     trayManager.addListener(this);
     if (isLinux) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        logger.i('Building tray');
         await TrayHelper.setIcon(coreRunning: false);
       });
     }

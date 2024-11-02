@@ -10,7 +10,6 @@ import 'package:sphia/app/database/dao/rule.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/io.dart';
 import 'package:sphia/app/helper/latency.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/rule_config.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/config/version_config.dart';
@@ -124,13 +123,13 @@ class SingBoxCore extends Core with RoutingCore, ProxyResInfoList {
     final paras = parameters as SingConfigParameters;
     final sphiaConfig = paras.sphiaConfig;
 
-    final level = sphiaConfig.logLevel == LogLevel.warning
+    final level = sphiaConfig.logLevel == CoreLogLevel.warning
         ? 'warn'
         : sphiaConfig.logLevel.name;
     final log = Log(
       disabled: level == 'none',
       level: level == 'none' ? null : level,
-      output: sphiaConfig.saveCoreLog ? SphiaLog.getLogPath(name) : null,
+      output: sphiaConfig.saveCoreLog ? getLogPath() : null,
       timestamp: true,
     );
 
@@ -202,7 +201,6 @@ class SingBoxCore extends Core with RoutingCore, ProxyResInfoList {
       final versionConfig = paras.versionConfig;
       final singBoxVersion = versionConfig.singBoxVersion?.replaceAll('v', '');
       if (singBoxVersion == null) {
-        logger.e('SingBox version is null');
         throw Exception('SingBox version is null');
       }
       final tempPath = IoHelper.tempPath;

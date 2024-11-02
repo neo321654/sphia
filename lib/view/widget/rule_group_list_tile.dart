@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/rule_config.dart';
 import 'package:sphia/app/notifier/core_state.dart';
 import 'package:sphia/view/card/dashboard_card/rule_group.dart';
@@ -25,7 +24,6 @@ class RuleGroupListTile extends ConsumerWidget {
       ),
       onTap: () async {
         if (!isSelected) {
-          logger.i('Switching rule group to ${ruleGroup.name}');
           final ruleConfigNotifier =
               ref.read(ruleConfigNotifierProvider.notifier);
           ruleConfigNotifier.updateSelectedRuleGroupId(ruleGroup.id);

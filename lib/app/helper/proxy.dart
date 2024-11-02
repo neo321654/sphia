@@ -4,9 +4,9 @@ import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/helper/system.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/core_state.dart';
+import 'package:sphia/app/notifier/log.dart';
 import 'package:sphia/app/notifier/proxy.dart';
 import 'package:sphia/app/state/core_state.dart';
 import 'package:sphia/view/dialog/custom_config.dart';
@@ -19,11 +19,11 @@ class ProxyHelper extends _$ProxyHelper with SystemHelper {
   void build() {}
 
   Future<void> enableSystemProxy() async {
-    logger.i('Enabling system proxy');
     final coreState = ref.read(coreStateNotifierProvider).valueOrNull;
+    final notifier = ref.read(logNotifierProvider.notifier);
     if (coreState == null) {
-      logger.e('Core state is null');
-      throw Exception('Core state is null');
+      notifier.error('Core state is null');
+      return;
     }
     final sphiaConfig = ref.read(sphiaConfigNotifierProvider);
     final listen = sphiaConfig.listen;
@@ -37,7 +37,7 @@ class ProxyHelper extends _$ProxyHelper with SystemHelper {
             : sphiaConfig.httpPort);
 
     if (httpPort == -1) {
-      logger.w('HTTP port is not set');
+      notifier.warning('HTTP port is not set');
       return;
     }
 
@@ -49,10 +49,10 @@ class ProxyHelper extends _$ProxyHelper with SystemHelper {
       await _enableMacOSProxy(listen, httpPort);
     }
     ref.read(proxyNotifierProvider.notifier).setSystemProxy(true);
+    notifier.info('System proxy enabled: $listen:$httpPort');
   }
 
   Future<void> disableSystemProxy() async {
-    logger.i('Disabling system proxy');
     if (isWindows) {
       await _disableWindowsProxy();
     } else if (isLinux) {
@@ -61,6 +61,7 @@ class ProxyHelper extends _$ProxyHelper with SystemHelper {
       await _disableMacOSProxy();
     }
     ref.read(proxyNotifierProvider.notifier).setSystemProxy(false);
+    ref.read(logNotifierProvider.notifier).info('System proxy disabled');
   }
 
   bool isSystemProxyEnabled() {
@@ -108,7 +109,9 @@ class ProxyHelper extends _$ProxyHelper with SystemHelper {
           return false;
         }
       } else {
-        logger.w('Unsupported desktop environment');
+        ref
+            .read(logNotifierProvider.notifier)
+            .error('Unsupported desktop environment: $linuxDe');
         return false;
       }
     } else if (isMacOS) {
@@ -217,8 +220,10 @@ class ProxyHelper extends _$ProxyHelper with SystemHelper {
         '1',
       ]);
     } else {
-      logger.e('Unsupported desktop environment');
-      throw Exception('Unsupported desktop environment');
+      ref
+          .read(logNotifierProvider.notifier)
+          .error('Unsupported desktop environment: $linuxDe');
+      return;
     }
   }
 
@@ -242,8 +247,10 @@ class ProxyHelper extends _$ProxyHelper with SystemHelper {
         '0',
       ]);
     } else {
-      logger.e('Unsupported desktop environment');
-      throw Exception('Unsupported desktop environment');
+      ref
+          .read(logNotifierProvider.notifier)
+          .error('Unsupported desktop environment: $linuxDe');
+      return;
     }
   }
 

@@ -6,7 +6,6 @@ import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/config/version.dart';
 import 'package:sphia/app/database/dao/rule.dart';
 import 'package:sphia/app/database/database.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/core/sing/config.dart';
 import 'package:sphia/core/sing/core.dart';
 import 'package:sphia/core/sing/generate.dart';
@@ -30,15 +29,13 @@ class IcmpLatency {
       ).stream.first;
       final latency = result.response?.time?.inMilliseconds;
       if (latency != null) {
-        logger.i('ICMP latency for $address: ${latency}ms');
         return latency;
       } else {
-        logger.e('Failed to get ICMP latency for $address: $result');
+        throw Exception('Failed to get ICMP latency for $address: $result');
       }
     } catch (e) {
-      logger.e('Failed to get ICMP latency for $address: $e');
+      throw Exception('Failed to get ICMP latency for $address: $e');
     }
-    return latencyFailure;
   }
 }
 
@@ -50,12 +47,10 @@ class TcpLatency {
       stopwatch.stop();
       final latency = stopwatch.elapsedMilliseconds;
       await socket.close();
-      logger.i('TCP latency for $address:$port: ${latency}ms');
       return latency;
     } catch (e) {
-      logger.e('Failed to get TCP latency for $address:$port: $e');
+      throw Exception('Failed to get TCP latency for $address:$port: $e');
     }
-    return latencyFailure;
   }
 }
 
@@ -81,23 +76,20 @@ class UrlLatency {
       final request = await client.getUrl(uri);
       final response = await request.close();
       if (response.statusCode != HttpStatus.ok) {
-        logger.e(
+        throw Exception(
             'Failed to get real link latency for $tag: ${response.statusCode}');
-        return latencyFailure;
       }
       final responseBody = await response.transform(utf8.decoder).join();
       final json = jsonDecode(responseBody);
       final latency = json['delay'] as int?;
       if (latency != null) {
-        logger.i('Latency for $tag: ${latency}ms');
         return latency;
       } else {
-        logger.e('Failed to get real link latency for $tag: $json');
+        throw Exception('Failed to get real link latency for $tag: $json');
       }
     } catch (e) {
-      logger.e('Failed to get real link latency for $tag: $e');
+      throw Exception('Failed to get real link latency for $tag: $e');
     }
-    return latencyFailure;
   }
 
   Future<void> init(
@@ -138,7 +130,6 @@ class UrlLatency {
       await core.writeConfig(jsonString);
       await core.start(manual: true);
     } catch (e) {
-      logger.e('Failed to test real link latency: $e');
       client.close();
       await core.stop();
       rethrow;

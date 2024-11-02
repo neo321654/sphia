@@ -46,7 +46,7 @@ enum DomainMatcher {
   const DomainMatcher(this._value);
 }
 
-enum LogLevel {
+enum CoreLogLevel {
   none('none'),
   warning('warning'),
   debug('debug'),
@@ -58,7 +58,7 @@ enum LogLevel {
 
   final String _value;
 
-  const LogLevel(this._value);
+  const CoreLogLevel(this._value);
 }
 
 enum RoutingProvider {
@@ -213,7 +213,7 @@ class SphiaConfig with _$SphiaConfig {
     @Default(DomainStrategy.IPIfNonMatch) DomainStrategy domainStrategy,
     @Default(DomainMatcher.hybrid) DomainMatcher domainMatcher,
     @Default(true) bool enableCoreLog,
-    @Default(LogLevel.warning) LogLevel logLevel,
+    @Default(CoreLogLevel.warning) CoreLogLevel logLevel,
     @Default(64) int maxLogCount,
     @Default(false) bool saveCoreLog,
     @Default(RoutingProvider.sing) RoutingProvider routingProvider,

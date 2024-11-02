@@ -5,7 +5,6 @@ import 'package:grpc/grpc.dart';
 import 'package:http/http.dart' as http;
 import 'package:sphia/app/helper/network.dart';
 import 'package:sphia/app/helper/traffic/xray/command.pbgrpc.dart';
-import 'package:sphia/app/log.dart';
 
 typedef TrafficData = (
   int uplink,
@@ -55,7 +54,6 @@ class XrayTrafficHelper extends TrafficHelper {
   @override
   Future<void> start() async {
     await super.start();
-    logger.i('Starting XrayTraffic');
     _timer = Timer.periodic(const Duration(seconds: 1), (_) async {
       try {
         late final int curUplink;
@@ -84,7 +82,6 @@ class XrayTrafficHelper extends TrafficHelper {
 
   @override
   Future<void> stop() async {
-    logger.i('Stopping XrayTraffic');
     _timer.cancel();
     await _apiStreamController.close();
     await _channel.shutdown();
@@ -127,7 +124,6 @@ class XrayTrafficHelper extends TrafficHelper {
             int.tryParse(response.writeToJsonMap()['1'][0]['2'] ?? '0');
         return data!;
       } catch (e) {
-        logger.e('Failed to get uplink from $outboundTag: $e');
         return 0;
       }
     });
@@ -154,7 +150,6 @@ class SingBoxTrafficHelper extends TrafficHelper {
   @override
   Future<void> start() async {
     await super.start();
-    logger.i('Starting SingBoxTraffic');
     try {
       final request = http.Request('GET', _url);
       final response = await _client.send(request);
@@ -179,7 +174,6 @@ class SingBoxTrafficHelper extends TrafficHelper {
 
   @override
   Future<void> stop() async {
-    logger.i('Stopping SingBoxTraffic');
     await _subscription?.cancel();
     await _apiStreamController.close();
     _client.close();

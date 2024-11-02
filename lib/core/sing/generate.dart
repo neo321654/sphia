@@ -1,7 +1,6 @@
 import 'package:path/path.dart' as p;
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/io.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/core/rule/extension.dart';
 import 'package:sphia/core/rule/sing.dart';
 import 'package:sphia/core/sing/config.dart';
@@ -204,9 +203,6 @@ extension SingBoxGenerate on SingBoxCore {
           final splitPath = server.path!.split('?ed=');
           final path = splitPath.first;
           final earlyData = int.tryParse(splitPath.last);
-          if (earlyData == null) {
-            logger.w('Invalid early data: ${splitPath.last}');
-          }
           transport = Transport(
             type: 'ws',
             earlyDataHeaderName: 'Sec-WebSocket-Protocol',

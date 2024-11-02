@@ -12,6 +12,7 @@ import 'package:sphia/app/theme.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 import 'package:sphia/view/page/about.dart';
 import 'package:sphia/view/page/dashboard.dart';
+import 'package:sphia/view/page/log.dart';
 import 'package:sphia/view/page/rule.dart';
 import 'package:sphia/view/page/server.dart';
 import 'package:sphia/view/page/setting.dart';
@@ -168,6 +169,11 @@ class _SphiaAppState extends ConsumerState<SphiaApp>
                           themeColor,
                         ),
                         _getNavigationDrawerDestination(
+                          Symbols.description,
+                          l10n.log,
+                          themeColor,
+                        ),
+                        _getNavigationDrawerDestination(
                           Symbols.settings,
                           l10n.settings,
                           themeColor,
@@ -202,6 +208,7 @@ class _SphiaAppState extends ConsumerState<SphiaApp>
                         Dashboard(),
                         ServerPage(),
                         RulePage(),
+                        LogPage(),
                         SettingPage(),
                         UpdatePage(),
                         SlideAboutPage(),

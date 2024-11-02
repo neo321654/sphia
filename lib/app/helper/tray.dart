@@ -1,11 +1,9 @@
 import 'dart:io';
 
-import 'package:sphia/app/log.dart';
 import 'package:tray_manager/tray_manager.dart';
 
 class TrayHelper {
   static Future<void> setIcon({required bool coreRunning}) async {
-    logger.i('Setting tray icon');
     await trayManager.setIcon(getIconPath(coreRunning));
   }
 

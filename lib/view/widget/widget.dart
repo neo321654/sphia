@@ -2,9 +2,10 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:sphia/app/config/sphia.dart';
-import 'package:sphia/app/log.dart';
+import 'package:sphia/app/notifier/log.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 
 class SphiaWidget {
@@ -145,37 +146,42 @@ class SphiaWidget {
                 }
               },
             ),
-            popupMenuIconButton<String>(
-              icon: Symbols.edit,
-              items: [
-                const PopupMenuItem(
-                  value: '/usr/bin/kate',
-                  child: Text('kate'),
-                ),
-                const PopupMenuItem(
-                  value: 'C:\\Windows\\System32\\notepad.exe',
-                  child: Text('notepad'),
-                ),
-                PopupMenuItem(
-                  value: editorPath,
-                  child: Text(editorPath),
-                ),
-              ],
-              onItemSelected: (value) async {
-                final path = controller.text;
-                if (path.isEmpty) {
-                  logger.w('Path is empty');
-                  return;
-                }
-                if (await File(value).exists()) {
-                  try {
-                    await Process.start(value, [controller.text]);
-                  } catch (e) {
-                    logger.e('Failed to open file: $e');
-                  }
-                } else {
-                  logger.e('Invalid editor path: $value');
-                }
+            Consumer(
+              builder: (context, ref, child) {
+                return popupMenuIconButton<String>(
+                  icon: Symbols.edit,
+                  items: [
+                    const PopupMenuItem(
+                      value: '/usr/bin/kate',
+                      child: Text('kate'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'C:\\Windows\\System32\\notepad.exe',
+                      child: Text('notepad'),
+                    ),
+                    PopupMenuItem(
+                      value: editorPath,
+                      child: Text(editorPath),
+                    ),
+                  ],
+                  onItemSelected: (value) async {
+                    final path = controller.text;
+                    final notifier = ref.read(logNotifierProvider.notifier);
+                    if (path.isEmpty) {
+                      notifier.warning('Path is empty');
+                      return;
+                    }
+                    if (await File(value).exists()) {
+                      try {
+                        await Process.start(value, [controller.text]);
+                      } catch (e) {
+                        notifier.error('Failed to open file: $e');
+                      }
+                    } else {
+                      notifier.error('Invalid editor path: $value');
+                    }
+                  },
+                );
               },
             ),
           ],

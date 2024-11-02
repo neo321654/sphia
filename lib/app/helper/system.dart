@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:launch_at_startup/launch_at_startup.dart';
-import 'package:sphia/app/log.dart';
 
 mixin SystemHelper {
   String get osName => Platform.operatingSystem;
@@ -31,10 +30,8 @@ mixin SystemHelper {
       appPath: execPath,
     );
     if (enabled) {
-      logger.i('Enabling startup');
       await launchAtStartup.enable();
     } else {
-      logger.i('Disabling startup');
       await launchAtStartup.disable();
     }
   }
@@ -56,7 +53,6 @@ mixin SystemHelper {
   Future<void> runCommand(String executable, List<String> arguments) async {
     final result = await Process.run(executable, arguments, runInShell: true);
     if (result.exitCode != 0) {
-      logger.e('Failed to run command: $executable $arguments');
       throw Exception('Failed to run command: $executable $arguments');
     }
   }
@@ -64,7 +60,6 @@ mixin SystemHelper {
   void runCommandSync(String executable, List<String> arguments) {
     final result = Process.runSync(executable, arguments, runInShell: true);
     if (result.exitCode != 0) {
-      logger.e('Failed to run command: $executable $arguments');
       throw Exception('Failed to run command: $executable $arguments');
     }
   }

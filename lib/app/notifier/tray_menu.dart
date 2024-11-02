@@ -1,7 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/proxy.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/rule_config.dart';
 import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/notifier/core_state.dart';
@@ -42,7 +41,6 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
           final id = serverConfig.selectedServerId;
           final server = await serverDao.getServerModelById(id);
           if (server == null) {
-            logger.w('Selected server not exists');
             return;
           }
           if (!proxyState.coreRunning) {
@@ -105,7 +103,6 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
       MenuItem(
         label: l10n.exit,
         onClick: (menuItem) async {
-          logger.i('Exiting Sphia');
           // Stop cores
           final coreStateNotifier =
               ref.read(coreStateNotifierProvider.notifier);
@@ -114,8 +111,6 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
           await SphiaDatabase.close();
           // Destory tray
           await trayManager.destroy();
-          // Close logger
-          logger.close();
           // Destory window
           await windowManager.destroy();
         },
@@ -172,7 +167,6 @@ class TrayMenuNotifier extends _$TrayMenuNotifier {
               ref.read(coreStateNotifierProvider.notifier);
           // if put proxyStateNotifier into if statement, it will cause error
           if (!(menuItem.checked!)) {
-            logger.i('Switching rule group to ${ruleGroup.name}');
             ruleConfigNotifier.updateSelectedRuleGroupId(ruleGroup.id);
             await coreStateNotifier.restartCores();
           }

@@ -1,11 +1,9 @@
 import 'package:drift/drift.dart';
 import 'package:sphia/app/database/database.dart';
-import 'package:sphia/app/log.dart';
 
 class Migration {
   static Future<void> from2To3(
       Migrator m, $ServersTable servers, $RulesTable rules) async {
-    logger.i('Migrating database from version 2 to 3');
     final latency = GeneratedColumn(
       'latency',
       'servers',
@@ -49,8 +47,6 @@ class Migration {
       $RulesTable rules,
       $ServersOrderTable serversOrder,
       $RulesOrderTable rulesOrder) async {
-    logger.i('Migrating database from version 3 to 4');
-
     await m.database.customStatement('''
       CREATE TABLE servers_old AS SELECT * FROM servers;
     ''');

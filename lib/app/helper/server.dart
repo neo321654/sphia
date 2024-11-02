@@ -6,10 +6,10 @@ import 'package:quiver/collection.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/subscription.dart';
 import 'package:sphia/app/helper/uri/uri.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/notifier/data/server.dart';
 import 'package:sphia/app/notifier/data/server_group.dart';
+import 'package:sphia/app/notifier/log.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 import 'package:sphia/server/custom_config/server.dart';
 import 'package:sphia/server/hysteria/server.dart';
@@ -89,13 +89,14 @@ mixin ServerHelper {
                 servers.add(server..groupId = groupId);
               }
             } on Exception catch (e) {
-              logger.e('Failed to parse uri: $uri\n$e');
+              ref
+                  .read(logNotifierProvider.notifier)
+                  .error('Failed to parse URI: $e');
             }
           }
           if (servers.isEmpty) {
             return;
           }
-          logger.i('Adding Servers from Clipboard');
           final idList = await serverDao.insertServers(servers);
           await serverDao.refreshServersOrder(groupId);
           final notifier = ref.read(serverNotifierProvider.notifier);
@@ -111,7 +112,6 @@ mixin ServerHelper {
     if (server == null) {
       return;
     }
-    logger.i('Adding Server: ${server.remark}');
     final serverId = await serverDao.insertServer(server);
     await serverDao.refreshServersOrder(groupId);
     final notifier = ref.read(serverNotifierProvider.notifier);
@@ -216,7 +216,6 @@ mixin ServerHelper {
     final newGroupName = serverGroupRecord.$1;
     final subscription = serverGroupRecord.$2;
     final fetchSubscription = serverGroupRecord.$3;
-    logger.i('Adding Server Group: $newGroupName');
     final groupId =
         await serverGroupDao.insertServerGroup(newGroupName, subscription);
     await serverGroupDao.refreshServerGroupsOrder();
@@ -267,7 +266,6 @@ mixin ServerHelper {
         subscription == serverGroup.subscription)) {
       return;
     }
-    logger.i('Editing Server Group: ${serverGroup.id}');
     await serverGroupDao.updateServerGroup(
         serverGroup.id, newGroupName, subscription);
     final notifier = ref.read(serverGroupNotifierProvider.notifier);
@@ -290,18 +288,18 @@ mixin ServerHelper {
         final id = serverGroup.id;
         final subscription = serverGroup.subscription;
         if (subscription.isEmpty) {
-          logger.w('Subscription is empty');
           return;
         }
         final groupName = serverGroup.name;
-        logger.i('Updating Server Group: $groupName');
         try {
           await subscriptionHelper.updateSingleGroup(
             groupId: id,
             subscription: subscription,
           );
         } on Exception catch (e) {
-          logger.e('Failed to update group: $groupName\n$e');
+          ref
+              .read(logNotifierProvider.notifier)
+              .error('Failed to update group $groupName: $e');
           rethrow;
         }
         final serverNotifier = ref.read(serverNotifierProvider.notifier);
@@ -330,7 +328,6 @@ mixin ServerHelper {
           if (subscription.isEmpty) {
             continue;
           }
-          logger.i('Updating Server Group: ${serverGroup.name}');
           try {
             await subscriptionHelper.updateSingleGroup(
               groupId: serverGroup.id,
@@ -339,7 +336,9 @@ mixin ServerHelper {
             flag = true;
             count++;
           } on Exception catch (e) {
-            logger.e('Failed to update group: ${serverGroup.name}\n$e');
+            ref
+                .read(logNotifierProvider.notifier)
+                .error('Failed to update group ${serverGroup.name}: $e');
             continue;
           }
         }
@@ -377,7 +376,6 @@ mixin ServerHelper {
       }
       return;
     }
-    logger.i('Deleting Server Group: $groupId');
     await serverGroupDao.deleteServerGroup(groupId);
     await serverGroupDao.refreshServerGroupsOrder();
     final notifier = ref.read(serverGroupNotifierProvider.notifier);
@@ -440,8 +438,6 @@ mixin ServerHelper {
     if (listsEqual(oldOrder, newOrder)) {
       return false;
     }
-
-    logger.i('Reordered Server Groups');
     await serverGroupDao.updateServerGroupsOrder(newOrder);
     final notifier = ref.read(serverGroupNotifierProvider.notifier);
     notifier.setGroups(serverGroups);

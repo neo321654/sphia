@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:sphia/app/database/dao/rule.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/io.dart';
 import 'package:sphia/app/helper/network.dart';
 import 'package:sphia/app/helper/system.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/core/core_info.dart';
 import 'package:sphia/server/server_model.dart';
 
@@ -38,7 +38,6 @@ abstract class Core with SystemHelper {
 
   Future<void> start({bool manual = false}) async {
     if (!await info.exists()) {
-      logger.e('Core $name does not exist');
       throw Exception('Core $name does not exist');
     }
 
@@ -46,16 +45,13 @@ abstract class Core with SystemHelper {
       await configure();
     }
 
-    logger.i('Starting core: $name');
     try {
       _process = await _runCore();
     } on ProcessException catch (e) {
-      logger.e('Failed to start $name: ${e.message}');
       throw Exception('Failed to start $name: ${e.message}');
     }
 
     if (_process == null) {
-      logger.e('Core Process is null');
       throw Exception('Core Process is null');
     }
   }
@@ -70,17 +66,15 @@ abstract class Core with SystemHelper {
 
   Future<void> stop({bool checkPorts = true}) async {
     if (_process == null) {
-      logger.w('Core process is null');
       return;
     }
-    logger.i('Stopping core: $name');
+
     _process!.kill();
     final pid = _process!.pid;
     _process = null;
     // check if port is still in use
     await Future.delayed(const Duration(milliseconds: 100));
     if (checkPorts && await _isRunning(usedPorts)) {
-      logger.w('Detected core $name is still running, killing process: $pid');
       await killProcess(pid);
     }
 
@@ -111,7 +105,6 @@ abstract class Core with SystemHelper {
     }
     await IoHelper.deleteFileIfExists(p.join(_configFilePath, configFileName!),
         'Deleting config file: $configFileName');
-    logger.i('Writing config file: $configFileName');
     final file = File(_configFilePath);
     await file.writeAsString(configString);
   }
@@ -131,10 +124,12 @@ mixin RoutingCore on Core {
 
   void listenToProcessStream(Stream<List<int>> stream) {
     _logSubscription = stream.transform(utf8.decoder).listen((data) {
-      if (data.trim().isNotEmpty) {
-        _logStreamController.add(data);
+      data = data.trim();
+      if (data.isNotEmpty) {
         if (_isPreLog) {
           preLogList.add(data);
+        } else {
+          _logStreamController.add(data);
         }
       }
     });
@@ -164,7 +159,6 @@ mixin RoutingCore on Core {
     if (!_logStreamController.isClosed) {
       await _logStreamController.close();
     }
-    // preLogList.clear();
   }
 
   Future<List<int>> getRuleOutboundTagList(List<Rule> rules) async {
@@ -189,6 +183,12 @@ mixin RoutingCore on Core {
     } else {
       return 'proxy-$outboundTag';
     }
+  }
+
+  String getLogPath() {
+    final now = DateFormat('yyyy-MM-dd-HH-mm-ss').format(DateTime.now());
+    final logPath = IoHelper.logPath;
+    return p.join(logPath, '${info.name.toString()}-$now.log');
   }
 }
 

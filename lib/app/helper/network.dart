@@ -5,9 +5,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sphia/app/config/sphia.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/core_state.dart';
+import 'package:sphia/app/notifier/log.dart';
 import 'package:sphia/app/notifier/proxy.dart';
 import 'package:sphia/app/state/core_state.dart';
 import 'package:sphia/core/core_info.dart';
@@ -24,15 +24,12 @@ class NetworkHelper extends _$NetworkHelper {
     const timeout = Duration(milliseconds: 10);
     // send a request to the port
     try {
-      logger.i('Checking if port $port is in use');
       final socket = await Socket.connect('127.0.0.1', port).timeout(timeout);
       socket.destroy();
       return true;
     } on SocketException catch (_) {
-      logger.i('Port $port is not in use');
       return false;
     } on TimeoutException catch (_) {
-      logger.i('Port $port is not in use');
       return false;
     }
   }
@@ -66,10 +63,11 @@ class NetworkHelper extends _$NetworkHelper {
 
   Future<Uint8List> downloadFile(String url) async {
     try {
-      logger.i('Downloading from $url');
+      final notifier = ref.read(logNotifierProvider.notifier);
+      notifier.info('Downloading file from $url');
       final response = await getHttpResponse(url);
       final bytes = await consolidateHttpClientResponseBytes(response);
-      logger.i('Downloaded ${bytes.length} bytes from $url');
+      notifier.info('Downloaded ${bytes.length} bytes from $url');
       return bytes;
     } on Exception catch (_) {
       rethrow;
@@ -78,7 +76,6 @@ class NetworkHelper extends _$NetworkHelper {
 
   Future<String> getIp() async {
     try {
-      logger.i('Getting ip');
       final response = await getHttpResponse('https://api.ip.sb/ip');
       final responseBody =
           (await response.transform(utf8.decoder).join()).trim();
@@ -88,17 +85,17 @@ class NetworkHelper extends _$NetworkHelper {
       }
       return responseBody;
     } on Exception catch (e) {
-      logger.e('Failed to get ip: $e');
+      ref.read(logNotifierProvider.notifier).error('Failed to get ip: $e');
       throw Exception('Failed to get ip: $e');
     }
   }
 
   Future<int> getLatency() async {
-    logger.i('Getting latency');
     final url = ref.read(
         sphiaConfigNotifierProvider.select((value) => value.latencyTestUrl));
     final uri = Uri.parse(url);
     final client = _getHttpClient(url);
+    final notifier = ref.read(logNotifierProvider.notifier);
 
     try {
       final stopwatch = Stopwatch()..start();
@@ -111,16 +108,15 @@ class NetworkHelper extends _$NetworkHelper {
         throw Exception('Invalid status code: $statusCode');
       }
       final latency = stopwatch.elapsedMilliseconds;
-      logger.i('Latency: $latency ms');
       return latency;
     } on TimeoutException catch (e) {
-      logger.e('Latency test timed out: $e');
+      notifier.error('Latency test timed out: $e');
       throw Exception('Latency test timed out: $e');
     } on SocketException catch (e) {
-      logger.e('Network error while testing latency: $e');
+      notifier.error('Network error while testing latency: $e');
       throw Exception('Network error while testing latency: $e');
     } catch (e) {
-      logger.e('Failed to get latency: $e');
+      notifier.error('Failed to get latency: $e');
       throw Exception('Failed to get latency: $e');
     } finally {
       client.close();
@@ -142,15 +138,16 @@ class NetworkHelper extends _$NetworkHelper {
             url.contains('YukidouSatoru/sphia'))) {
       final coreState = ref.read(coreStateNotifierProvider).valueOrNull;
       if (coreState == null) {
-        logger.e('Core state is null');
-        throw Exception('Core state is null');
+        return client;
       }
 
       late final int port;
       if (proxyState.customConfig) {
         port = coreState.customHttpPort;
         if (port == -1) {
-          logger.w('HTTP port is not set');
+          ref
+              .read(logNotifierProvider.notifier)
+              .warning('HTTP port is not set');
         } else {
           final proxyUrl = '${sphiaConfig.listen}:${port.toString()}';
           client.findProxy = (uri) => 'PROXY $proxyUrl';

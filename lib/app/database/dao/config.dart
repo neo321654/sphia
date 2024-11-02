@@ -6,7 +6,6 @@ import 'package:sphia/app/config/server.dart';
 import 'package:sphia/app/config/sphia.dart';
 import 'package:sphia/app/config/version.dart';
 import 'package:sphia/app/database/database.dart';
-import 'package:sphia/app/log.dart';
 
 const sphiaConfigId = 1;
 const serverConfigId = 2;
@@ -35,7 +34,6 @@ class SphiaConfigDao {
   }
 
   Future<SphiaConfig> loadConfig() async {
-    logger.i('Loading Sphia config');
     const defaultConfig = SphiaConfig();
     try {
       final json = await getConfigJson();
@@ -43,8 +41,6 @@ class SphiaConfigDao {
       final defaultData = defaultConfig.toJson();
       defaultData.forEach((key, value) {
         if (data[key] == null) {
-          logger
-              .w('Sphia config missing key: $key, using default value: $value');
           data[key] = value;
         }
       });
@@ -52,8 +48,6 @@ class SphiaConfigDao {
       try {
         sphiaConfig = SphiaConfig.fromJson(data);
       } catch (e) {
-        logger.e('Failed to load sphia config: $e');
-        logger.i('Resetting sphia config');
         sphiaConfig = defaultConfig;
         await (_db.update(_db.config)
               ..where((tbl) => tbl.id.equals(sphiaConfigId)))
@@ -72,7 +66,6 @@ class SphiaConfigDao {
             ..where((tbl) => tbl.id.equals(sphiaConfigId)))
           .write(ConfigCompanion(config: Value(jsonString)));
     } catch (e) {
-      logger.f('Failed to save sphia config: $e');
       rethrow;
     }
   }
@@ -100,7 +93,6 @@ class ServerConfigDao {
   }
 
   Future<ServerConfig> loadConfig() async {
-    logger.i('Loading server config');
     const defaultConfig = ServerConfig();
     try {
       final json = await getConfigJson();
@@ -108,8 +100,6 @@ class ServerConfigDao {
       final defaultData = defaultConfig.toJson();
       defaultData.forEach((key, value) {
         if (data[key] == null) {
-          logger.w(
-              'Server config missing key: $key, using default value: $value');
           data[key] = value;
         }
       });
@@ -126,7 +116,6 @@ class ServerConfigDao {
             ..where((tbl) => tbl.id.equals(serverConfigId)))
           .write(ConfigCompanion(config: Value(jsonString)));
     } catch (e) {
-      logger.f('Failed to save server config: $e');
       rethrow;
     }
   }
@@ -154,7 +143,6 @@ class RuleConfigDao {
   }
 
   Future<RuleConfig> loadConfig() async {
-    logger.i('Loading rule config');
     const defaultConfig = RuleConfig();
     try {
       final json = await getConfigJson();
@@ -162,8 +150,6 @@ class RuleConfigDao {
       final defaultData = defaultConfig.toJson();
       defaultData.forEach((key, value) {
         if (data[key] == null) {
-          logger
-              .w('Rule config missing key: $key, using default value: $value');
           data[key] = value;
         }
       });
@@ -180,7 +166,6 @@ class RuleConfigDao {
             ..where((tbl) => tbl.id.equals(ruleConfigId)))
           .write(ConfigCompanion(config: Value(jsonString)));
     } catch (e) {
-      logger.f('Failed to save rule config: $e');
       rethrow;
     }
   }
@@ -208,7 +193,6 @@ class VersionConfigDao {
   }
 
   Future<VersionConfig> loadConfig() async {
-    logger.i('Loading version config');
     try {
       final json = await getConfigJson();
       var data = jsonDecode(json);
@@ -225,7 +209,6 @@ class VersionConfigDao {
             ..where((tbl) => tbl.id.equals(versionConfigId)))
           .write(ConfigCompanion(config: Value(jsonString)));
     } catch (e) {
-      logger.f('Failed to save version config: $e');
       rethrow;
     }
   }

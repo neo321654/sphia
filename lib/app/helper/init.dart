@@ -14,17 +14,12 @@ import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/io.dart';
 import 'package:sphia/app/helper/system.dart';
 import 'package:sphia/app/helper/tray.dart';
-import 'package:sphia/app/log.dart';
+import 'package:sphia/app/notifier/log.dart';
 import 'package:sphia/app/provider/config.dart';
 import 'package:sphia/app/provider/data.dart';
 import 'package:sphia/app/state/io_info.dart';
 import 'package:sphia/view/page/about.dart';
 import 'package:window_manager/window_manager.dart';
-
-const _methodCount = 2;
-const _errorMethodCount = 2;
-const _debugMethodCount = 5;
-const _debugErrorMethodCount = 5;
 
 class InitHelper with SystemHelper {
   const InitHelper();
@@ -71,17 +66,11 @@ class InitHelper with SystemHelper {
   }
 
   Future<void> configureApp() async {
+    final initLogs = <SphiaLogEntry>[];
+
     // Get paths
     final ioInfo = await getIoInfo();
     IoHelper.init(ioInfo);
-
-    // Init logger
-    SphiaLog.logPath = ioInfo.logPath;
-    if (const bool.fromEnvironment('dart.vm.product')) {
-      SphiaLog.initLogger(true, _methodCount, _errorMethodCount);
-    } else {
-      SphiaLog.initLogger(false, _debugMethodCount, _debugErrorMethodCount);
-    }
 
     // Check dir exists
     IoHelper.createDirectorySync(ioInfo.binPath);
@@ -89,27 +78,25 @@ class InitHelper with SystemHelper {
     IoHelper.createDirectorySync(ioInfo.logPath);
     IoHelper.createDirectorySync(ioInfo.tempPath);
 
-    String systemInfoLog = '''
-    OS: $osName
-    Architecture: $archName''';
+    String infoLog = '''
+OS: $osName
+Architecture: $archName''';
     if (isLinux) {
-      systemInfoLog += '''
-      Desktop Environment: $linuxDe''';
+      infoLog += '\nDesktop Environment: $linuxDe';
     }
 
-    final sphiaInfoLog = '''
-    Sphia - a Proxy Handling Intuitive Application
-    Full version: $sphiaFullVersion
-    Last commit hash: $sphiaLastCommitHash
-    System Info: $systemInfoLog
-    App Path: ${ioInfo.appPath}
-    Exec Path: ${ioInfo.execPath}
-    Bin path: ${ioInfo.binPath}
-    Config path: ${ioInfo.configPath}
-    Log path: ${ioInfo.logPath}
-    Temp path: ${ioInfo.tempPath}''';
-
-    logger.i(sphiaInfoLog);
+    final sphiaInfoLog = '''Init Sphia:
+Sphia - a Proxy Handling Intuitive Application
+Full version: $sphiaFullVersion
+Last commit hash: $sphiaLastCommitHash
+System Info: $infoLog
+App Path: ${ioInfo.appPath}
+Exec Path: ${ioInfo.execPath}
+Bin path: ${ioInfo.binPath}
+Config path: ${ioInfo.configPath}
+Log path: ${ioInfo.logPath}
+Temp path: ${ioInfo.tempPath}''';
+    initLogs.add(SphiaLogEntry(SphiaLogLevel.info, sphiaInfoLog));
 
     // Init database
     await SphiaDatabase.init(ioInfo.configPath);
@@ -152,8 +139,6 @@ class InitHelper with SystemHelper {
       An error occurred while loading config: $e
       Current database file has been backuped to ${p.join(ioInfo.tempPath, 'sphia.db.bak')}
       Please restart Sphia to create a new database file''';
-      logger.e(errorMsg);
-      logger.e(st);
       await showErrorMsg(errorMsg, st.toString());
       return;
     }
@@ -161,7 +146,7 @@ class InitHelper with SystemHelper {
     // Print versions of cores
     final versions = versionConfig.generateLog();
     if (versions.isNotEmpty) {
-      logger.i(versions);
+      initLogs.add(SphiaLogEntry(SphiaLogLevel.info, 'Versions:\n$versions'));
     }
 
     // Load data
@@ -185,7 +170,6 @@ class InitHelper with SystemHelper {
 
     if (!isLinux) {
       // Build tray
-      logger.i('Building tray');
       await TrayHelper.setIcon(coreRunning: false);
       await TrayHelper.setToolTip('Sphia');
     }
@@ -200,6 +184,7 @@ class InitHelper with SystemHelper {
           versionConfigProvider.overrideWithValue(versionConfig),
           serverGroupsProvider.overrideWithValue(serverGroups),
           ruleGroupsProvider.overrideWithValue(ruleGroups),
+          initLogsProvider.overrideWithValue(initLogs),
         ],
         child: const SphiaApp(),
       ),

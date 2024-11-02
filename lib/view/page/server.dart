@@ -4,7 +4,6 @@ import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:quiver/collection.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/server.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/notifier/core_state.dart';
 import 'package:sphia/app/notifier/data/server.dart';
@@ -75,7 +74,6 @@ class ServerPage extends HookConsumerWidget with ServerHelper {
             }
           },
           error: (error, _) {
-            logger.e('Failed to get core state: $error');
             return const Icon(Icons.flash_off);
           },
           loading: () {
@@ -102,7 +100,6 @@ class ServerPage extends HookConsumerWidget with ServerHelper {
         if (!context.mounted) {
           return;
         }
-        logger.w('No server selected');
         await SphiaWidget.showDialogWithMsg(
           context: context,
           message: L10n.of(context)!.noServerSelected,

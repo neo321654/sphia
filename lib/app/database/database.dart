@@ -11,7 +11,6 @@ import 'package:sphia/app/database/dao/server.dart';
 import 'package:sphia/app/database/dao/server_group.dart';
 import 'package:sphia/app/database/migration.dart';
 import 'package:sphia/app/database/tables.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/server/server_model.dart';
 
 part 'database.g.dart';
@@ -39,7 +38,6 @@ class SphiaDatabase {
   }
 
   static Future<void> close() async {
-    logger.i('Closing database');
     await _database.close();
   }
 
@@ -48,15 +46,12 @@ class SphiaDatabase {
     await _database.close();
     final file = File(p.join(configPath, 'sphia.db'));
     if (!await file.exists()) {
-      logger.i('Database file does not exist');
       return;
     }
     final backupFile = File(p.join(configPath, 'sphia.db.bak'));
     if (await backupFile.exists()) {
-      logger.i('Backup file already exists, deleting it');
       await backupFile.delete();
     }
-    logger.i('Creating backup file: ${backupFile.path}');
     await file.rename(backupFile.path);
   }
 }
@@ -97,7 +92,6 @@ QueryExecutor _openDatabase(String configPath) {
   return LazyDatabase(() async {
     final file = File(p.join(configPath, 'sphia.db'));
     if (!await file.exists()) {
-      logger.i('Creating database file: ${file.path}');
       final blob = await rootBundle.load('assets/sphia.db');
       final buffer = blob.buffer;
       await file.writeAsBytes(

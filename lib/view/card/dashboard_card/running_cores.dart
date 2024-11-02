@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/core_state.dart';
 import 'package:sphia/l10n/generated/l10n.dart';
 import 'package:sphia/view/card/dashboard_card/card.dart';
@@ -49,7 +48,6 @@ class RunningCoresCard extends ConsumerWidget {
           );
         },
         error: (error, stackTrace) {
-          logger.e('Failed to get running cores: $error\n$stackTrace');
           return Center(
             child: IconButton(
               icon: const Icon(

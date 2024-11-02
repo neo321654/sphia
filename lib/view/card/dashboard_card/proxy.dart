@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:sphia/app/database/database.dart';
 import 'package:sphia/app/helper/proxy.dart';
-import 'package:sphia/app/log.dart';
 import 'package:sphia/app/notifier/config/server_config.dart';
 import 'package:sphia/app/notifier/config/sphia_config.dart';
 import 'package:sphia/app/notifier/core_state.dart';
@@ -213,7 +212,6 @@ class ToggleButton extends ConsumerWidget {
         if (!context.mounted) {
           return;
         }
-        logger.w('No server selected');
         await SphiaWidget.showDialogWithMsg(
           context: context,
           message: L10n.of(context)!.noServerSelected,
