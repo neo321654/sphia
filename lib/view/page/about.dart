@@ -6,7 +6,7 @@ import 'package:sphia/view/page/license.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const sphiaVersion = '1.0.0';
-const sphiaBuildNumber = 12;
+const sphiaBuildNumber = 13;
 const sphiaFullVersion = '$sphiaVersion+$sphiaBuildNumber';
 const sphiaLastCommitHash = 'SELF_BUILD';
 
