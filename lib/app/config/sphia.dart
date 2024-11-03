@@ -213,7 +213,7 @@ class SphiaConfig with _$SphiaConfig {
     @Default(DomainStrategy.IPIfNonMatch) DomainStrategy domainStrategy,
     @Default(DomainMatcher.hybrid) DomainMatcher domainMatcher,
     @Default(true) bool enableCoreLog,
-    @Default(CoreLogLevel.warning) CoreLogLevel logLevel,
+    @Default(CoreLogLevel.info) CoreLogLevel logLevel,
     @Default(64) int maxLogCount,
     @Default(false) bool saveCoreLog,
     @Default(RoutingProvider.sing) RoutingProvider routingProvider,
