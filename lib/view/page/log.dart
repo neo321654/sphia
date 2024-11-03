@@ -15,20 +15,24 @@ class LogPage extends HookConsumerWidget {
     final logs = ref.watch(logNotifierProvider);
     final scrollController = useScrollController();
     final isUserScrolling = useState<bool>(false);
-    final hasScrollListener = useState<bool>(false);
 
     useEffect(() {
-      if (!hasScrollListener.value) {
-        scrollController.addListener(() {
-          if (scrollController.position.userScrollDirection !=
-              ScrollDirection.idle) {
-            isUserScrolling.value = true;
+      void scrollListener() {
+        if (scrollController.position.userScrollDirection !=
+            ScrollDirection.idle) {
+          isUserScrolling.value = true;
+        } else {
+          final maxScroll = scrollController.position.maxScrollExtent;
+          final currentScroll = scrollController.position.pixels;
+          if (currentScroll >= maxScroll * 0.9) {
+            isUserScrolling.value = false;
           }
-        });
-        hasScrollListener.value = true;
+        }
       }
-      return () {};
-    }, [hasScrollListener.value]);
+
+      scrollController.addListener(scrollListener);
+      return () => scrollController.removeListener(scrollListener);
+    }, []);
 
     useEffect(() {
       if (!isUserScrolling.value) {
