@@ -17,6 +17,7 @@ import 'package:sphia/view/page/rule.dart';
 import 'package:sphia/view/page/server.dart';
 import 'package:sphia/view/page/setting.dart';
 import 'package:sphia/view/page/update.dart';
+import 'package:sphia/view/widget/updat.dart';
 import 'package:sphia/view/widget/window_caption.dart';
 import 'package:sphia/view/wrapper/tray.dart';
 import 'package:window_manager/window_manager.dart';
@@ -219,6 +220,9 @@ class _SphiaAppState extends ConsumerState<SphiaApp>
               )
             ],
           ),
+          floatingActionButton: SphiaUpdatWidget(darkMode),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.miniStartFloat,
         ),
       ),
     );
