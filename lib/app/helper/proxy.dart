@@ -195,6 +195,18 @@ class ProxyHelper extends _$ProxyHelper with SystemHelper {
       ]);
       await runCommand('gsettings', [
         'set',
+        'org.gnome.system.proxy.https',
+        'host',
+        listen,
+      ]);
+      await runCommand('gsettings', [
+        'set',
+        'org.gnome.system.proxy.https',
+        'port',
+        httpPort.toString(),
+      ]);
+      await runCommand('gsettings', [
+        'set',
         'org.gnome.system.proxy',
         'mode',
         'manual',
