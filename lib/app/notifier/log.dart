@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -67,37 +68,32 @@ class LogNotifier extends _$LogNotifier {
   StreamSubscription<String>? _logSubscription;
 
   @override
-  List<SphiaLogEntry> build() {
+  Queue<SphiaLogEntry> build() {
     ref.onDispose(() {
       _logSubscription?.cancel();
     });
     final initLogs = ref.read(initLogsProvider);
-    return initLogs;
+    return Queue.of(initLogs);
   }
 
   void addLog(SphiaLogEntry entry) {
-    final maxLogCount = ref
+    state.addLast(entry);
+    final logMaxCount = ref
         .read(sphiaConfigNotifierProvider.select((value) => value.maxLogCount));
-    if (state.length >= maxLogCount) {
-      state = [...state.skip(1), entry];
-    } else {
-      state = [...state, entry];
+    while (state.length > logMaxCount) {
+      state.removeFirst();
     }
+    state = Queue.of(state);
   }
 
   void addLogs(List<SphiaLogEntry> entries) {
-    final maxLogCount = ref
+    state.addAll(entries);
+    final logMaxCount = ref
         .read(sphiaConfigNotifierProvider.select((value) => value.maxLogCount));
-    final newState = [...state, ...entries];
-    if (newState.length > maxLogCount) {
-      state = newState.sublist(newState.length - maxLogCount);
-    } else {
-      state = newState;
+    while (state.length > logMaxCount) {
+      state.removeFirst();
     }
-  }
-
-  void clear() {
-    state = [];
+    state = Queue.of(state);
   }
 
   void debug(String message) {

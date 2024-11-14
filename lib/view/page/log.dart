@@ -18,15 +18,15 @@ class LogPage extends HookConsumerWidget {
 
     useEffect(() {
       void scrollListener() {
+        final maxScroll = scrollController.position.maxScrollExtent;
+        final currentScroll = scrollController.position.pixels;
+        final isNearBottom = currentScroll >= maxScroll * 0.9;
         if (scrollController.position.userScrollDirection !=
-            ScrollDirection.idle) {
+                ScrollDirection.idle &&
+            !isNearBottom) {
           isUserScrolling.value = true;
-        } else {
-          final maxScroll = scrollController.position.maxScrollExtent;
-          final currentScroll = scrollController.position.pixels;
-          if (currentScroll >= maxScroll * 0.9) {
-            isUserScrolling.value = false;
-          }
+        } else if (isNearBottom) {
+          isUserScrolling.value = false;
         }
       }
 
@@ -39,7 +39,7 @@ class LogPage extends HookConsumerWidget {
         if (scrollController.hasClients) {
           scrollController.animateTo(
             scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 500),
+            duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           );
         }
@@ -64,27 +64,6 @@ class LogPage extends HookConsumerWidget {
       },
     );
 
-    final logLines = logs.map((log) {
-      final message = log.message;
-      if (log.level == SphiaLogLevel.none) {
-        return TextSpan(
-          text: '$message\n',
-        );
-      }
-      final color = log.level.color;
-      final prefix = '[${log.level.prefix}]';
-      return TextSpan(
-        children: [
-          TextSpan(
-            text: prefix,
-            style: TextStyle(color: color),
-          ),
-          const TextSpan(text: ' '),
-          TextSpan(text: '$message\n'),
-        ],
-      );
-    }).toList();
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -95,23 +74,46 @@ class LogPage extends HookConsumerWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(32),
-        child: Align(
-          alignment: Alignment.topLeft,
-          child: SingleChildScrollView(
-            controller: scrollController,
-            child: SelectableText.rich(
-              TextSpan(
-                children: logLines,
-              ),
-              style: const TextStyle(
-                fontFamily: 'Courier New',
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
+        child: SizedBox(
+          width: double.infinity,
+          child: SelectionArea(
+            child: ListView.builder(
+              controller: scrollController,
+              itemCount: logs.length,
+              itemBuilder: (context, index) {
+                return Text.rich(
+                  _getLog(logs.elementAt(index)),
+                  style: const TextStyle(
+                    fontFamily: 'Courier New',
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              },
             ),
           ),
         ),
       ),
     );
+  }
+
+  TextSpan _getLog(SphiaLogEntry logEntry) {
+    final message = '${logEntry.message}\r';
+    if (logEntry.level == SphiaLogLevel.none) {
+      return TextSpan(text: message);
+    } else {
+      final color = logEntry.level.color;
+      final prefix = '[${logEntry.level.prefix}]';
+      return TextSpan(
+        children: [
+          TextSpan(
+            text: prefix,
+            style: TextStyle(color: color),
+          ),
+          const TextSpan(text: ' '),
+          TextSpan(text: message),
+        ],
+      );
+    }
   }
 }
