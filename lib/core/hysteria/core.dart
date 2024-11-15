@@ -42,12 +42,8 @@ class HysteriaCore extends Core with ProxyCore {
         protocol: server.hysteriaProtocol,
         obfs: server.obfs,
         alpn: server.alpn,
-        auth: server.authType != 'none'
-            ? (server.authType == 'base64' ? server.authPayload : null)
-            : null,
-        authStr: server.authType != 'none'
-            ? (server.authType == 'str' ? server.authPayload : null)
-            : null,
+        auth: server.authType == 'base64' ? server.authPayload : null,
+        authStr: server.authType == 'str' ? server.authPayload : null,
         serverName: server.serverName,
         insecure: server.insecure,
         upMbps: server.upMbps,

@@ -291,12 +291,8 @@ extension SingBoxGenerate on SingBoxCore {
       upMbps: server.upMbps,
       downMbps: server.downMbps,
       obfs: server.obfs,
-      auth: server.authType == 'none'
-          ? (server.authType == 'base64' ? server.authPayload : null)
-          : null,
-      authStr: server.authType == 'none'
-          ? (server.authType == 'str' ? server.authPayload : null)
-          : null,
+      auth: server.authType == 'base64' ? server.authPayload : null,
+      authStr: server.authType == 'str' ? server.authPayload : null,
       recvWindowConn: server.recvWindowConn,
       recvWindow: server.recvWindow,
       tls: tls,
