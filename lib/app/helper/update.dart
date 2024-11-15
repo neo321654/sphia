@@ -20,9 +20,7 @@ const hysteriaLatestVersion = 'v1.3.5';
 class CoreInfoStateList extends _$CoreInfoStateList with ProxyResInfoList {
   @override
   List<CoreInfoState> build() {
-    final coreAndDatInfoList =
-        List.from(proxyResInfoList.take(proxyResInfoList.length - 1));
-    return coreAndDatInfoList
+    return proxyResInfoList
         .map(
           (info) => CoreInfoState(
             info: info,

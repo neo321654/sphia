@@ -6,7 +6,6 @@ import 'package:sphia/app/helper/system.dart';
 import 'package:sphia/core/hysteria/core_info.dart';
 import 'package:sphia/core/rules_dat/core_info.dart';
 import 'package:sphia/core/sing/core_info.dart';
-import 'package:sphia/core/sphia/core_info.dart';
 import 'package:sphia/core/ssrust/core_info.dart';
 import 'package:sphia/core/xray/core_info.dart';
 
@@ -151,6 +150,5 @@ mixin ProxyResInfoList {
         HysteriaInfo(),
         SingBoxRulesInfo(),
         V2rayRulesDatInfo(),
-        SphiaInfo(),
       ];
 }

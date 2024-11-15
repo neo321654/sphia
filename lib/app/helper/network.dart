@@ -134,8 +134,7 @@ class NetworkHelper extends _$NetworkHelper {
     if (proxyState.coreRunning &&
         (sphiaConfig.updateThroughProxy ||
             url == latencyTestUrl ||
-            url == 'https://api.ip.sb/ip' ||
-            url.contains('YukidouSatoru/sphia'))) {
+            url == 'https://api.ip.sb/ip')) {
       final coreState = ref.read(coreStateNotifierProvider).valueOrNull;
       if (coreState == null) {
         return client;
