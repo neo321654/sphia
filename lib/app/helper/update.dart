@@ -188,6 +188,7 @@ mixin UpdateHelper {
         }
         await SphiaWidget.showDialogWithMsg(
             context: context, message: '${L10n.of(context)!.updateFailed}: $e');
+        return;
       }
       final coreInfoStateListNotifier =
           ref.read(coreInfoStateListProvider.notifier);
@@ -267,6 +268,7 @@ mixin UpdateHelper {
         context: context,
         message: '${L10n.of(context)!.deleteCoreFailed}: $e',
       );
+      return;
     }
     notifier.removeVersion(coreName);
     if (!context.mounted) {
