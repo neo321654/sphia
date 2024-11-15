@@ -5,8 +5,8 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:sphia/view/page/license.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const sphiaVersion = '1.0.1';
-const sphiaBuildNumber = 14;
+const sphiaVersion = '1.0.2';
+const sphiaBuildNumber = 15;
 const sphiaFullVersion = '$sphiaVersion+$sphiaBuildNumber';
 const sphiaLastCommitHash = 'SELF_BUILD';
 
