@@ -1,6 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_v2ray/flutter_v2ray.dart';
+import 'package:sphia/view/widget/widget.dart';
+
+import 'app/database/database.dart';
+import 'app/notifier/config/server_config.dart';
+import 'app/notifier/core_state.dart';
+import 'app/notifier/proxy.dart';
+import 'l10n/generated/l10n.dart';
 
 void main() {
   runApp(const MyApp());
@@ -260,7 +270,10 @@ class _HomePageState extends State<HomePage> {
                 runSpacing: 5,
                 children: [
                   ElevatedButton(
-                    onPressed: connect,
+                    // onPressed: connect,
+                    onPressed: (){
+                      _toggleServer(context);
+                    },
                     child: const Text('Connect'),
                   ),
                   ElevatedButton(
@@ -294,3 +307,136 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
+Future<void> _toggleServer(context) async {
+  // final context = ref.context;
+  // final serverConfig = ref.read(serverConfigNotifierProvider);
+  // final coreStateNotifier = ref.read(coreStateNotifierProvider.notifier);
+  // final id = serverConfig.selectedServerId;
+  // final server = await serverDao.getServerModelById(id);
+  // if (server == null) {
+  //   final proxyState = ref.read(proxyNotifierProvider);
+  //   if (proxyState.coreRunning) {
+  //     await coreStateNotifier.stopCores();
+  //   } else {
+  //     if (!context.mounted) {
+  //       return;
+  //     }
+  //     await SphiaWidget.showDialogWithMsg(
+  //       context: context,
+  //       message: L10n.of(context)!.noServerSelected,
+  //     );
+  //   }
+  //   return;
+  // }
+  // try {
+  //   await coreStateNotifier.toggleCores(server);
+  // } on Exception catch (e) {
+  //   if (!context.mounted) {
+  //     return;
+  //   }
+  //   await SphiaWidget.showDialogWithMsg(
+  //     context: context,
+  //     message: '${L10n.of(context)!.coreStartFailed}: $e',
+  //   );
+  // }
+
+  // await coreStateNotifier.toggleCores(server);
+
+
+  Server server = Server.fromJson(jsonDecode(jsonConfig));
+
+}
+
+
+
+String jsonConfig = """
+{
+  "log": {
+    "access": "",
+    "error": "",
+    "loglevel": "error",
+    "dnsLog": false
+  },
+  "inbounds": [
+    {
+      "tag": "in_proxy",
+      "port": 1080,
+      "protocol": "socks",
+      "listen": "127.0.0.1",
+      "settings": {
+        "auth": "noauth",
+        "udp": true,
+        "userLevel": 8
+      },
+      "sniffing": {
+        "enabled": false
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "netherlands-07.ptu.ink",
+            "port": 443,
+            "users": [
+              {
+                "id": "0f64c99d-bca6-49ba-8766-efe50b2e745c",
+                "security": "auto",
+                "level": 8,
+                "encryption": "none",
+                "flow": "xtls-rprx-vision"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "tcpSettings": {
+          "header": {
+            "type": "none"
+          }
+        },
+        "realitySettings": {
+          "allowInsecure": true,
+          "serverName": "www.microsoft.com",
+          "fingerprint": "chrome",
+          "show": false,
+          "publicKey": "4e6cn5kOyJ8z_KUcrXNbJ1P2MhYSpLtbf46xe5ntU2w",
+          "shortId": "b37ca0618a39587e",
+          "spiderX": ""
+        }
+      },
+      "mux": {
+        "enabled": false,
+        "concurrency": 8
+      }
+    },
+    {
+      "tag": "direct",
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIp"
+      }
+    },
+    {
+      "tag": "blackhole",
+      "protocol": "blackhole"
+    }
+  ],
+  "dns": {
+    "servers": [
+      "8.8.8.8",
+      "8.8.4.4"
+    ]
+  },
+  "routing": {
+    "domainStrategy": "UseIp"
+  }
+}""";

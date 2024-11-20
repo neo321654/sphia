@@ -118,6 +118,7 @@ class ServerPage extends HookConsumerWidget with ServerHelper {
         message: '${L10n.of(context)!.coreStartFailed}: $e',
       );
     }
+
   }
 
   Widget _getToolbar(WidgetRef ref) {
