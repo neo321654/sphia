@@ -2,8 +2,20 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_v2ray/flutter_v2ray.dart';
+import 'package:sphia/server/custom_config/server.dart';
+import 'package:sphia/server/hysteria/server.dart';
+import 'package:sphia/server/server_model.dart';
+import 'package:sphia/server/shadowsocks/server.dart';
+import 'package:sphia/server/trojan/server.dart';
+import 'package:sphia/server/xray/server.dart';
+import 'package:sphia/view/dialog/custom_config.dart';
+import 'package:sphia/view/dialog/hysteria.dart';
+import 'package:sphia/view/dialog/shadowsocks.dart';
+import 'package:sphia/view/dialog/trojan.dart';
+import 'package:sphia/view/dialog/xray.dart';
 import 'package:sphia/view/widget/widget.dart';
 
 import 'app/database/database.dart';
@@ -20,17 +32,27 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter V2Ray',
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
+    return ProviderScope(
+      child: MaterialApp(
+        localizationsDelegates: const [
+          L10n.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: L10n.supportedLocales,
+      
+        title: 'Flutter V2Ray',
+        theme: ThemeData(
+          useMaterial3: true,
+          brightness: Brightness.dark,
+          inputDecorationTheme: const InputDecorationTheme(
+            border: OutlineInputBorder(),
+          ),
         ),
-      ),
-      home: const Scaffold(
-        body: HomePage(),
+        home: const Scaffold(
+          body: HomePage(),
+        ),
       ),
     );
   }
@@ -342,12 +364,62 @@ Future<void> _toggleServer(context) async {
   // }
 
   // await coreStateNotifier.toggleCores(server);
+  late final ServerModel? server;
+
+  server = await _showEditServerDialog(
+    title:
+    // '${L10n.of(context)!.add} ${L10n.of(context)!.customConfig} ${L10n.of(context)!.server}',
+    'Title dialog',
+    server: CustomConfigServer.defaults()..groupId = 1,
+    context: context,
+  );
 
 
-  Server server = Server.fromJson(jsonDecode(jsonConfig));
 
 }
 
+
+
+
+Future<ServerModel?> _showEditServerDialog({
+  required String title,
+  required ServerModel server,
+  required BuildContext context,
+}) async {
+  if (server.protocol == Protocol.vmess ||
+      server.protocol == Protocol.vless) {
+    return showDialog<ServerModel>(
+      context: context,
+      builder: (context) =>
+          XrayServerDialog(title: title, server: server as XrayServer),
+    );
+  } else if (server.protocol == Protocol.shadowsocks) {
+    return showDialog<ServerModel>(
+      context: context,
+      builder: (context) => ShadowsocksServerDialog(
+          title: title, server: server as ShadowsocksServer),
+    );
+  } else if (server.protocol == Protocol.trojan) {
+    return showDialog<ServerModel>(
+      context: context,
+      builder: (context) =>
+          TrojanServerDialog(title: title, server: server as TrojanServer),
+    );
+  } else if (server.protocol == Protocol.hysteria) {
+    return showDialog<ServerModel>(
+      context: context,
+      builder: (context) => HysteriaServerDialog(
+          title: title, server: server as HysteriaServer),
+    );
+  } else if (server.protocol == Protocol.custom) {
+    return showDialog<ServerModel>(
+      context: context,
+      builder: (context) => CustomConfigServerDialog(
+          title: title, server: server as CustomConfigServer),
+    );
+  }
+  return null;
+}
 
 
 String jsonConfig = """
