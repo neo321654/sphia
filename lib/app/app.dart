@@ -134,91 +134,89 @@ class _SphiaAppState extends ConsumerState<SphiaApp>
         themeColor,
         context,
       ),
-      home: TrayWrapper(
-        child: Scaffold(
-          appBar: titleBar,
-          body: Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 40),
-                child: Consumer(
-                  builder: (context, ref, child) {
-                    final index = ref.watch(navigationIndexNotifierProvider);
-                    final l10n = ref.watch(l10nProvider).value!;
-                    return NavigationDrawer(
-                      selectedIndex: index,
-                      onDestinationSelected: (idx) {
-                        ref
-                            .read(navigationIndexNotifierProvider.notifier)
-                            .setIndex(idx);
-                      },
-                      children: [
-                        _getNavigationDrawerDestination(
-                          Symbols.dashboard,
-                          l10n.dashboard,
-                          themeColor,
-                        ),
-                        _getNavigationDrawerDestination(
-                          Symbols.webhook,
-                          l10n.servers,
-                          themeColor,
-                        ),
-                        _getNavigationDrawerDestination(
-                          Symbols.rule,
-                          l10n.rules,
-                          themeColor,
-                        ),
-                        _getNavigationDrawerDestination(
-                          Symbols.description,
-                          l10n.log,
-                          themeColor,
-                        ),
-                        _getNavigationDrawerDestination(
-                          Symbols.settings,
-                          l10n.settings,
-                          themeColor,
-                        ),
-                        _getNavigationDrawerDestination(
-                          Symbols.upgrade,
-                          l10n.update,
-                          themeColor,
-                        ),
-                        // _getNavigationDrawerDestination(
-                        //   Symbols.info,
-                        //   l10n.about,
-                        //   themeColor,
-                        // ),
-                      ],
-                    );
-                  },
-                ),
+      home: Scaffold(
+        appBar: titleBar,
+        body: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 40),
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final index = ref.watch(navigationIndexNotifierProvider);
+                  final l10n = ref.watch(l10nProvider).value!;
+                  return NavigationDrawer(
+                    selectedIndex: index,
+                    onDestinationSelected: (idx) {
+                      ref
+                          .read(navigationIndexNotifierProvider.notifier)
+                          .setIndex(idx);
+                    },
+                    children: [
+                      _getNavigationDrawerDestination(
+                        Symbols.dashboard,
+                        l10n.dashboard,
+                        themeColor,
+                      ),
+                      _getNavigationDrawerDestination(
+                        Symbols.webhook,
+                        l10n.servers,
+                        themeColor,
+                      ),
+                      _getNavigationDrawerDestination(
+                        Symbols.rule,
+                        l10n.rules,
+                        themeColor,
+                      ),
+                      _getNavigationDrawerDestination(
+                        Symbols.description,
+                        l10n.log,
+                        themeColor,
+                      ),
+                      _getNavigationDrawerDestination(
+                        Symbols.settings,
+                        l10n.settings,
+                        themeColor,
+                      ),
+                      _getNavigationDrawerDestination(
+                        Symbols.upgrade,
+                        l10n.update,
+                        themeColor,
+                      ),
+                      // _getNavigationDrawerDestination(
+                      //   Symbols.info,
+                      //   l10n.about,
+                      //   themeColor,
+                      // ),
+                    ],
+                  );
+                },
               ),
-              VerticalDivider(
-                width: 3,
-                thickness: 3,
-                color: Color(themeColor),
+            ),
+            VerticalDivider(
+              width: 3,
+              thickness: 3,
+              color: Color(themeColor),
+            ),
+            Expanded(
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final index = ref.watch(navigationIndexNotifierProvider);
+                  return IndexedStack(
+                    index: index,
+                    children: const [
+                      Dashboard(),
+                      ServerPage(),
+                      RulePage(),
+                      LogPage(),
+                      SettingPage(),
+                      UpdatePage(),
+                      // SlideAboutPage(),
+                    ],
+                  );
+                },
               ),
-              Expanded(
-                child: Consumer(
-                  builder: (context, ref, child) {
-                    final index = ref.watch(navigationIndexNotifierProvider);
-                    return IndexedStack(
-                      index: index,
-                      children: const [
-                        Dashboard(),
-                        ServerPage(),
-                        RulePage(),
-                        LogPage(),
-                        SettingPage(),
-                        UpdatePage(),
-                        // SlideAboutPage(),
-                      ],
-                    );
-                  },
-                ),
-              )
-            ],
-          ),
+            )
+          ],
         ),
       ),
     );

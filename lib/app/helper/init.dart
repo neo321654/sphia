@@ -146,7 +146,7 @@ Temp path: ${ioInfo.tempPath}''';
     // Print versions of cores
     final versions = versionConfig.generateLog();
     if (versions.isNotEmpty) {
-      initLogs.add(SphiaLogEntry(SphiaLogLevel.info, 'Versions:\n$versions'));
+      // initLogs.add(SphiaLogEntry(SphiaLogLevel.info, 'Versions:\n$versions'));
     }
 
     // Load data
@@ -156,6 +156,9 @@ Temp path: ${ioInfo.tempPath}''';
     await windowManager.ensureInitialized();
 
     const windowOptions = WindowOptions(
+      skipTaskbar: true,
+      titleBarStyle: TitleBarStyle.hidden,
+      title: '',
       size: Size(1152, 720),
       center: true,
       minimumSize: Size(980, 720),

@@ -19,131 +19,133 @@ class UpdatePage extends ConsumerWidget with UpdateHelper {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appBar = AppBar(
-      title: Text(
-        L10n.of(context)!.update,
-      ),
-      elevation: 0,
-      actions: [
-        Builder(
-          builder: (context) => SphiaWidget.popupMenuButton<MenuAction>(
-            context: context,
-            items: [
-              PopupMenuItem(
-                value: MenuAction.scanCore,
-                child: Text(L10n.of(context)!.scanCores),
-              ),
-              PopupMenuItem(
-                value: MenuAction.importCore,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(L10n.of(context)!.import),
-                    const Icon(Symbols.arrow_left),
-                  ],
-                ),
-              ),
-            ],
-            onItemSelected: (value) async {
-              switch (value) {
-                case MenuAction.scanCore:
-                  await ref.read(coreUpdaterProvider.notifier).scanCores();
-                  if (context.mounted) {
-                    await SphiaWidget.showDialogWithMsg(
-                      context: context,
-                      message: L10n.of(context)!.scanCoresCompleted,
-                    );
-                  }
-                  break;
-                case MenuAction.importCore:
-                  final renderBox = context.findRenderObject() as RenderBox;
-                  final position = renderBox.localToGlobal(Offset.zero);
-                  showMenu<ImportCoreAction>(
-                    context: context,
-                    position: RelativeRect.fromLTRB(
-                      position.dx,
-                      position.dy,
-                      position.dx + renderBox.size.width,
-                      position.dy + renderBox.size.height,
-                    ),
-                    items: [
-                      PopupMenuItem(
-                        value: ImportCoreAction.singleCore,
-                        child: Text(L10n.of(context)!.singleCore),
-                      ),
-                      PopupMenuItem(
-                        value: ImportCoreAction.multipleCores,
-                        child: Text(L10n.of(context)!.multipleCores),
-                      ),
-                    ],
-                  ).then((value) async {
-                    if (value == null) {
-                      return;
-                    }
-                    switch (value) {
-                      case ImportCoreAction.singleCore:
-                        final res = await ref
-                            .read(coreUpdaterProvider.notifier)
-                            .importCore(isMulti: false);
-                        if (res == null || !context.mounted) {
-                          return;
-                        }
-                        if (res) {
-                          await SphiaWidget.showDialogWithMsg(
-                            context: context,
-                            message: L10n.of(context)!.importCoreSuccessfully,
-                          );
-                        } else {
-                          await SphiaWidget.showDialogWithMsg(
-                            context: context,
-                            message: L10n.of(context)!.importCoreFailed,
-                          );
-                        }
-                        break;
-                      case ImportCoreAction.multipleCores:
-                        final res = await ref
-                            .read(coreUpdaterProvider.notifier)
-                            .importCore(isMulti: true);
-                        if (res == null) {
-                          return;
-                        }
-                        if (res) {
-                          await ref
-                              .read(coreUpdaterProvider.notifier)
-                              .scanCores();
-                          if (!context.mounted) {
-                            return;
-                          }
-                          final binPath = IoHelper.binPath;
-                          await SphiaWidget.showDialogWithMsg(
-                            context: context,
-                            message:
-                                L10n.of(context)!.importMultiCoresMsg(binPath),
-                          );
-                        }
-                        break;
-                      default:
-                        break;
-                    }
-                  });
-                  break;
-                default:
-                  break;
-              }
-            },
-          ),
-        )
-      ],
-    );
+    // final appBar = AppBar(
+    //   title: Text(
+    //     L10n.of(context)!.update,
+    //   ),
+    //   elevation: 0,
+    //   actions: [
+    //     Builder(
+    //       builder: (context) => SphiaWidget.popupMenuButton<MenuAction>(
+    //         context: context,
+    //         items: [
+    //           PopupMenuItem(
+    //             value: MenuAction.scanCore,
+    //             child: Text(L10n.of(context)!.scanCores),
+    //           ),
+    //           PopupMenuItem(
+    //             value: MenuAction.importCore,
+    //             child: Row(
+    //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    //               children: [
+    //                 Text(L10n.of(context)!.import),
+    //                 const Icon(Symbols.arrow_left),
+    //               ],
+    //             ),
+    //           ),
+    //         ],
+    //         onItemSelected: (value) async {
+    //           switch (value) {
+    //             case MenuAction.scanCore:
+    //               await ref.read(coreUpdaterProvider.notifier).scanCores();
+    //               if (context.mounted) {
+    //                 await SphiaWidget.showDialogWithMsg(
+    //                   context: context,
+    //                   message: L10n.of(context)!.scanCoresCompleted,
+    //                 );
+    //               }
+    //               break;
+    //             case MenuAction.importCore:
+    //               final renderBox = context.findRenderObject() as RenderBox;
+    //               final position = renderBox.localToGlobal(Offset.zero);
+    //               showMenu<ImportCoreAction>(
+    //                 context: context,
+    //                 position: RelativeRect.fromLTRB(
+    //                   position.dx,
+    //                   position.dy,
+    //                   position.dx + renderBox.size.width,
+    //                   position.dy + renderBox.size.height,
+    //                 ),
+    //                 items: [
+    //                   PopupMenuItem(
+    //                     value: ImportCoreAction.singleCore,
+    //                     child: Text(L10n.of(context)!.singleCore),
+    //                   ),
+    //                   PopupMenuItem(
+    //                     value: ImportCoreAction.multipleCores,
+    //                     child: Text(L10n.of(context)!.multipleCores),
+    //                   ),
+    //                 ],
+    //               ).then((value) async {
+    //                 if (value == null) {
+    //                   return;
+    //                 }
+    //                 switch (value) {
+    //                   case ImportCoreAction.singleCore:
+    //                     final res = await ref
+    //                         .read(coreUpdaterProvider.notifier)
+    //                         .importCore(isMulti: false);
+    //                     if (res == null || !context.mounted) {
+    //                       return;
+    //                     }
+    //                     if (res) {
+    //                       await SphiaWidget.showDialogWithMsg(
+    //                         context: context,
+    //                         message: L10n.of(context)!.importCoreSuccessfully,
+    //                       );
+    //                     } else {
+    //                       await SphiaWidget.showDialogWithMsg(
+    //                         context: context,
+    //                         message: L10n.of(context)!.importCoreFailed,
+    //                       );
+    //                     }
+    //                     break;
+    //                   case ImportCoreAction.multipleCores:
+    //                     final res = await ref
+    //                         .read(coreUpdaterProvider.notifier)
+    //                         .importCore(isMulti: true);
+    //                     if (res == null) {
+    //                       return;
+    //                     }
+    //                     if (res) {
+    //                       await ref
+    //                           .read(coreUpdaterProvider.notifier)
+    //                           .scanCores();
+    //                       if (!context.mounted) {
+    //                         return;
+    //                       }
+    //                       final binPath = IoHelper.binPath;
+    //                       await SphiaWidget.showDialogWithMsg(
+    //                         context: context,
+    //                         message:
+    //                             L10n.of(context)!.importMultiCoresMsg(binPath),
+    //                       );
+    //                     }
+    //                     break;
+    //                   default:
+    //                     break;
+    //                 }
+    //               });
+    //               break;
+    //             default:
+    //               break;
+    //           }
+    //         },
+    //       ),
+    //     )
+    //   ],
+    // );
     final coreInfoStateList = ref.watch(coreInfoStateListProvider);
     return Scaffold(
-      appBar: appBar,
+      // appBar: appBar,
       body: Padding(
         padding: const EdgeInsets.all(32),
         child: ListView.builder(
-          itemCount: coreInfoStateList.length,
+          // itemCount: coreInfoStateList.length,
+          itemCount: 1,
           itemBuilder: (BuildContext context, int index) {
-            final info = coreInfoStateList[index];
+            // final info = coreInfoStateList[index];
+            final info = coreInfoStateList[1];
             return ProviderScope(
               overrides: [
                 currentCoreProvider.overrideWithValue(info),
