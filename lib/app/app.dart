@@ -183,11 +183,11 @@ class _SphiaAppState extends ConsumerState<SphiaApp>
                           l10n.update,
                           themeColor,
                         ),
-                        _getNavigationDrawerDestination(
-                          Symbols.info,
-                          l10n.about,
-                          themeColor,
-                        ),
+                        // _getNavigationDrawerDestination(
+                        //   Symbols.info,
+                        //   l10n.about,
+                        //   themeColor,
+                        // ),
                       ],
                     );
                   },
@@ -211,7 +211,7 @@ class _SphiaAppState extends ConsumerState<SphiaApp>
                         LogPage(),
                         SettingPage(),
                         UpdatePage(),
-                        SlideAboutPage(),
+                        // SlideAboutPage(),
                       ],
                     );
                   },
