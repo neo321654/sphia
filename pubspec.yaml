@@ -42,6 +42,9 @@ dependencies:
   validator_regex: ^1.1.1
   window_manager: ^0.4.2
 
+  flutter_v2ray:
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
