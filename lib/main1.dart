@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_v2ray/flutter_v2ray.dart';
 import 'package:sphia/server/custom_config/server.dart';
 import 'package:sphia/server/hysteria/server.dart';
 import 'package:sphia/server/server_model.dart';
@@ -22,6 +21,7 @@ import 'app/database/database.dart';
 import 'app/notifier/config/server_config.dart';
 import 'app/notifier/core_state.dart';
 import 'app/notifier/proxy.dart';
+import 'flutter_v2ray/lib/flutter_v2ray.dart';
 import 'l10n/generated/l10n.dart';
 
 void main() {

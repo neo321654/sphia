@@ -1,4 +1,4 @@
-import 'package:flutter_v2ray/url/url.dart';
+import 'url.dart';
 
 class VlessURL extends V2RayURL {
   VlessURL({required super.url}) {

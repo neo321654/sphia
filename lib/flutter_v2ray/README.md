@@ -72,7 +72,7 @@ dependencies:
 ### URL Parser
 
 ``` dart
-import 'package:flutter_v2ray/flutter_v2ray.dart';
+import 'flutter_v2ray.dart';
 
 // v2ray share link like vmess://, vless://, ...
 String link = "link_here";
@@ -106,7 +106,7 @@ parser.getFullConfiguration()
 
 ### Making V2Ray connection
 ``` dart
-import 'package:flutter_v2ray/flutter_v2ray.dart';
+import 'flutter_v2ray.dart';
 
 final FlutterV2ray flutterV2ray = FlutterV2ray(
     onStatusChanged: (status) {
